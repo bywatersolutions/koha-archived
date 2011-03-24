@@ -199,7 +199,8 @@ melm 652$9      Koha-Auth-Number
 #melm 652       subject-heading,subject-heading:p
 melm 653$a      Index-term-uncontrolled:w,Index-term-uncontrolled:p,Subject,Subject:p
 melm 653$9      Koha-Auth-Number
-melm 653        Subject,Subject:p
+melm 653        Subject,Subject:su-pi
+melm 653$a	Methodology
 melm 654$9      Koha-Auth-Number
 melm 654        Subject,Subject:p
 melm 655$a      Index-term-genre:w,Index-term-genre:p,Subject,Subject:p
