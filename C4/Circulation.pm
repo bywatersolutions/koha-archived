@@ -169,6 +169,8 @@ sub barcodedecode {
     return $barcode unless ( $filter || C4::Context->preference('itembarcodelength') ); # ensure filter is defined, else return untouched barcode
 	if ($filter eq 'whitespace') {
 		$barcode =~ s/\s//g;
+        } elsif ($filter eq 'leadingzeros') {
+                $barcode =~ s/^000//;
 	} elsif ($filter eq 'cuecat') {
 		chomp($barcode);
 	    my @fields = split( /\./, $barcode );
