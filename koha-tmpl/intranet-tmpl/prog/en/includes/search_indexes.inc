@@ -19,6 +19,7 @@
         <option value="su-na">&nbsp;&nbsp;&nbsp;&nbsp; Subject and narrower terms</option>
         <option value="su-rl">&nbsp;&nbsp;&nbsp;&nbsp; Subject and related terms</option>
     [% END %]
+    <option value="su">Methodology</option>
     <option value="bc">Barcode</option>
     <option value="location">Shelving location</option>
     [% IF (numbersphr) %]
