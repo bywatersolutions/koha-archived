@@ -2042,6 +2042,7 @@ sub AddReturn {
     #adding message if holdingbranch is non equal a userenv branch to return the document to homebranch
     #we check, if we don't have reserv or transfert for this document, if not, return it to homebranch .
 
+    $hbr = $item->{homebranch}; # since that's what all the following code does
     if ( !$is_in_rotating_collection && ($doreturn or $messages->{'NotIssued'}) and !$resfound and ($branch ne $hbr) and not $messages->{'WrongTransfer'}){
         if ( C4::Context->preference("AutomaticItemReturn"    ) or
             (C4::Context->preference("UseBranchTransferLimits") and
