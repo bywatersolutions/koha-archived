@@ -13,8 +13,7 @@
 
 <h3>[% LibraryName %]</h3>
 [% IF ( branchname ) %][% branchname %]<br />[% END %]
-Checked out to [% firstname %] [% surname %] <br />
-(<a href="/cgi-bin/koha/circ/circulation.pl?findborrower=[% cardnumber %]">[% cardnumber %]</a>)<br />
+Checked out to [% firstname %] <br />
 
 [% todaysdate %]<br />
 
@@ -24,21 +23,21 @@ Checked out to [% firstname %] [% surname %] <br />
 [% IF ( issueloo.red ) %][% ELSE %]
 [% IF ( issueloo.today ) %]
 <p><a href="/cgi-bin/koha/catalogue/detail.pl?item=[% issueloo.itemnumber %]&amp;biblionumber=[% issueloo.biblionumber %]&amp;bi=[% issueloo.biblioitemnumber %]">[% issueloo.title |html %]</a><br />
-Barcode: [% issueloo.barcode %]<br />
 Date due: [% issueloo.date_due %]<br /></p>
     [% END %]
     [% END %]
     [% END %]
+
 
 [% ELSE %]
 <h4>Checked out</h4>
 [% FOREACH issueloo IN issueloop %]
 [% IF ( issueloo.red ) %][% ELSE %]
 <p><a href="/cgi-bin/koha/catalogue/detail.pl?item=[% issueloo.itemnumber %]&amp;biblionumber=[% issueloo.biblionumber %]&amp;bi=[% issueloo.biblioitemnumber %]">[% issueloo.title |html %]</a><br />
-Barcode: [% issueloo.barcode %]<br />
 Date due: [% issueloo.date_due %]<br /></p>
     [% END %]
     [% END %]
+
 
 [% END %]
 
@@ -49,7 +48,6 @@ Date due: [% issueloo.date_due %]<br /></p>
     [% FOREACH issueloo IN issueloop %]
     [% IF ( issueloo.red ) %]
 <p><a href="/cgi-bin/koha/catalogue/detail.pl?item=[% issueloo.itemnumber %]&amp;biblionumber=[% issueloo.biblionumber %]&amp;bi=[% issueloo.biblioitemnumber %]">[% issueloo.title |html %]</a><br />
-Barcode: [% issueloo.barcode %]<br />
 Date due: [% issueloo.date_due %]</p>
 [% END %]
 [% END %]
