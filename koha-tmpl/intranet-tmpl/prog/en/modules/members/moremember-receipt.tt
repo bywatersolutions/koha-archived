@@ -23,7 +23,7 @@ Checked out to [% firstname %] <br />
 [% IF ( issueloo.red ) %][% ELSE %]
 [% IF ( issueloo.today ) %]
 <p><a href="/cgi-bin/koha/catalogue/detail.pl?item=[% issueloo.itemnumber %]&amp;biblionumber=[% issueloo.biblionumber %]&amp;bi=[% issueloo.biblioitemnumber %]">[% issueloo.title |html %]</a><br />
-Date due: [% issueloo.date_due %]<br /></p>
+Due: [% issueloo.date_due %] at [% issueloo.holdingbranch %]<br /></p>
     [% END %]
     [% END %]
     [% END %]
@@ -34,7 +34,7 @@ Date due: [% issueloo.date_due %]<br /></p>
 [% FOREACH issueloo IN issueloop %]
 [% IF ( issueloo.red ) %][% ELSE %]
 <p><a href="/cgi-bin/koha/catalogue/detail.pl?item=[% issueloo.itemnumber %]&amp;biblionumber=[% issueloo.biblionumber %]&amp;bi=[% issueloo.biblioitemnumber %]">[% issueloo.title |html %]</a><br />
-Date due: [% issueloo.date_due %]<br /></p>
+Due: [% issueloo.date_due %] at [% issueloo.holdingbranch %]<br /></p>
     [% END %]
     [% END %]
 
@@ -48,7 +48,7 @@ Date due: [% issueloo.date_due %]<br /></p>
     [% FOREACH issueloo IN issueloop %]
     [% IF ( issueloo.red ) %]
 <p><a href="/cgi-bin/koha/catalogue/detail.pl?item=[% issueloo.itemnumber %]&amp;biblionumber=[% issueloo.biblionumber %]&amp;bi=[% issueloo.biblioitemnumber %]">[% issueloo.title |html %]</a><br />
-Date due: [% issueloo.date_due %]</p>
+Overdue: [% issueloo.date_due %] at [% issueloo.holdingbranch %] </p>
 [% END %]
 [% END %]
 [% END %]
