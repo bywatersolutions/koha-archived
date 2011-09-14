@@ -145,7 +145,6 @@ elsif (C4::Context->preference("marcflavour") eq "MARC21" ) {
     $template->param('usmarc' => 1);
 }
 $template->param( 'AllowOnShelfHolds' => C4::Context->preference('AllowOnShelfHolds') );
-$template->param( 'OPACNoResultsFound' => C4::Context->preference('OPACNoResultsFound') );
 
 $template->param(
     OpacStarRatings => C4::Context->preference("OpacStarRatings") );
@@ -490,7 +489,16 @@ if (C4::Context->preference('OpacSuppression')) {
 }
 
 $template->param ( LIMIT_INPUTS => \@limit_inputs );
-$template->param ( OPACResultsSidebar => C4::Context->preference('OPACResultsSidebar'));
+# gets the HTML from OPACResultsSidebar, replaces {QUERY} tokens and adds result to template
+my $opacresultssidebar = C4::Context->preference('OPACResultsSidebar');
+$opacresultssidebar = SubstituteQueryTokens($opacresultssidebar, $query_cgi, $limit_cgi);
+$template->param ( 'OPACResultsSidebar' => $opacresultssidebar );
+
+# gets the HTML from OPACNoResultsFound, replaces {QUERY} tokens and adds result to template
+my $opacnoresults = C4::Context->preference('OPACNoResultsFound');
+$opacnoresults = SubstituteQueryTokens($opacnoresults, $query_cgi, $limit_cgi);
+$template->param( 'OPACNoResultsFound' => $opacnoresults );
+
 
 ## II. DO THE SEARCH AND GET THE RESULTS
 my $total = 0; # the total results for the whole set

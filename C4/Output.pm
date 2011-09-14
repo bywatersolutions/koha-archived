@@ -55,6 +55,10 @@ BEGIN {
     push @EXPORT, qw(
         &output_html_with_http_headers &output_ajax_with_http_headers &output_with_http_headers FormatData FormatNumber
     );
+    push @EXPORT, qw(
+       SubstituteQueryTokens
+    );
+}
 
 }
 
@@ -350,6 +354,92 @@ sub parametrized_url {
     $ret =~ s/\{[^\{]*\}//g; # remove not defined vars
     return $ret;
 }
+
+sub SubstituteQueryTokens {
+    my ( $text, $query, $limits ) = @_;
+    $text =~ s/\{QUERY\:(\w+)\}/_parsetokens($query,$limits,$1)/ge;
+    return $text;
+}
+
+sub _parsetokens {
+    my ( $query, $limits, $parsetype ) = @_;
+    my $output;
+    # Reform CCL queries obtained from links in items detail pages
+    $query =~ s/q\=ccl\=(\w+)\:(.*)/idx\=$1&q\=$2/g;
+
+    if ($parsetype eq 'sirsi') {
+      # title to TI
+      $query =~ s/idx\=ti(\,wrdl|\,phr)?\&q\=([\w ]+)(\&op\=(\w+))?/srchfield\*\=TI\&searchdata\*\=$2\&searchoper\*\=$4/g;
+
+      # subject to SU
+      $query =~ s/idx\=su(\,wrdl|\,phr)?\&q\=([\w ]+)(\&op\=(\w+))?/srchfield\*\=SU\&searchdata\*\=$2\&searchoper\*\=$4/g;
+
+      # author, corporate|conference|personal name to AU
+      $query =~ s/idx\=(au|cpn|cfn|pn)(\,wrdl|\,phr)?\&q\=([\w ]+)(\&op\=(\w+))?/srchfield\*\=AU\&searchdata\*\=$3\&searchoper\*\=$5/g;
+
+      # series to SER
+      $query =~ s/idx\=se\,wrdl&q\=([\w ]+)(\&op\=(\w+))?/srchfield\*\=SER\&searchdata\*\=$1\&searchoper\*\=$3/g;
+
+      # keyword to GENERAL
+      $query =~ s/idx\=(kw|nt|pb\,wrdl|pl\,wrdl|sn|lcn\,phr|callnum|ns|nb)\&q\=([\w ]+)(\&op\=(\w+))?/srchfield\*\=GENERAL\&searchdata\*\=$2\&searchoper\*\=$4/g;
+
+      $output = $query;
+      # Replace *'s with actual numbers
+      my $stn= 1;
+      while ($output =~ s/(srchfield)\*(\=\w+\&searchdata)\*(\=[\w ]+\&searchoper)\*(\=)/$1$stn$2$stn$3$stn$4/){
+         $stn++;
+      }
+      # remove trailing 'searchop'
+      $output =~ s/\&searchoper\d+\=$//;
+
+      # add in what limits we can
+      # date ranges to pubyear
+      if ($limits =~ m/yr\,st-numeric=(\d{4})/) {
+         $output .= "\&pubyear=$1";
+      } elsif ($limits =~ m/yr\,st-numeric\,ge=(\d{4}) and yr\,st-numeric\,le=(\d{4})/) {
+         $output .= "\&pubyear=$1\-$2";
+      }
+      # TODO: sort_by
+
+    } elsif ($parsetype eq 'agent') {
+
+      # title to Title
+      $query =~ s/idx\=ti(\,wrdl|\,phr)?&q\=(\w+)/title\=$2/g;
+
+      # author, corporate|conference|personal names into Author Last Name
+      $query =~ s/idx\=(au|cpn|cfn|pn)(\,wrdl|\,phr)?&q\=(\w+)/authl\=$3/g;
+      # subject to Subject
+      $query =~ s/idx\=su(\,wrdl|\,phr)?&q\=(\w+)/subj\=$2/g;
+
+      # series title goes into title
+      $query =~ s/idx\=se\,wrdl&q\=(\w+)/title=\$1/g;
+
+      # keywords, notes, publisher, non-standard numbers like LCCN and callnumber go into Keywords
+      $query =~ s/idx\=(kw|nt|pb\,wrdl|pl\,wrdl|sn|lcn\,phr|callnum)&q\=(\w+)/kw\=$2/g;
+
+      # handle ISBN and ISSN
+      $query =~ s/idx\=nb&q\=(\w+)/isbn\=$1/g;
+      $query =~ s/idx\=ns&q\=(\w+)/issn\=$1/g;
+
+      # remove op
+      $query =~ s/\&op\=(and|or|not)//g;
+
+      $output = $query;
+
+      # replace ' ' with '+'
+      $output =~ s/\s/\+/g;
+
+      # add what limits we can
+      if ($limits =~ m/yr\,st-numeric=(\d{4})/) {
+         $output .= "&date\=$1";
+      }
+    } elsif ($parsetype eq 'raw') {
+      # Raw output, mostly for debugging
+      $output = $query.$limits;
+    }
+    return $output;
+}
+
 
 END { }    # module clean-up code here (global destructor)
 
