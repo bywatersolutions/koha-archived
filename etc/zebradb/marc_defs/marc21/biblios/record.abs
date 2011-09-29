@@ -264,9 +264,9 @@ melm 780        Title,Title:p,Title-former,Related-periodical
 melm 785$w      Record-control-number
 melm 785        Title,Title:p,Title-later,Related-periodical
 melm 787$w      Record-control-number
-melm 791$b	PacificaProgram
-melm 796$a	ThesisAdvisor
-melm 796$e	ThesisAdvisor
+melm 791$b	PacificaProgram:w,PacificaProgram:p
+melm 796$a	ThesisAdvisor:w,ThesisAdvisor:p
+melm 796$e	ThesisAdvisor:w,ThesisAdvisor:p
 
 melm 800$a      Name-and-title,Title-series:w,Title-series:p
 #melm 800$t     author,Author-title,Name-and-title,Title,Title-series
