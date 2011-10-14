@@ -148,8 +148,8 @@ $(document).ready(function () {
 [% IF ( WrongTransfer ) %]<div id="return2" class="dialog message"><!-- WrongTransfer --><h3>Please return <a href="/cgi-bin/koha/catalogue/detail.pl?type=intra&amp;biblionumber=[% itembiblionumber %]">[% title |html %]</a> to [% Branches.GetName( TransferWaitingAt ) %]</h3><h3><a href="#" onclick="Dopop('transfer-slip.pl?transferitem=[% itemnumber %]&amp;&amp;branchcode=[% homebranch %]&amp;op=slip'); return true;">Print slip</a> or <a href="/cgi-bin/koha/circ/returns.pl?itemnumber=[% itemnumber %]&amp;canceltransfer=1">Cancel transfer</a></h3>
 [% IF ( wborcnum ) %]<h5>Hold for:</h5>
         <ul><li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">
-            [% borsurname %], [% borfirstname %]</a> ([% borcnum %])</li>
-        <li>[% wborstnum %] [% wboraddress %][% IF ( wboraddress2 ) %]<br />
+            [% borsurname %], [% borfirstname %]</a> ([% borcnum %]) <span class="patron-category"> - [% wborcategory %]</span> </li>
+                <li>[% wborstnum %] [% wboraddress %][% IF ( wboraddress2 ) %]<br />
 		[% wboraddress2 %]<br />[% END %]
         [% wborcity %]  [% wborzip %]</li>
         [% IF ( wborphone ) %]<li>[% wborphone %]</li>[% END %]
@@ -183,7 +183,7 @@ $(document).ready(function () {
         [% IF ( reservenotes ) %]<h4>Notes: [% reservenotes %]</h4>[% END %]
         <h4>Hold for:</h4>
 			<ul>
-            <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">[% borsurname %], [% borfirstname %]</a> ([% borcnum %])</li>
+            <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">[% borsurname %], [% borfirstname %]</a> ([% borcnum %]) <span class="patron-category"> - [% wborcategory %]</span> </li>
             <li>[% borstnum %] [% boraddress %]<br />
 			[% IF ( boraddress2 ) %][% boraddress2 %]<br />[% END %]
             [% borcity %] [% borzip %]</li>
@@ -227,7 +227,7 @@ $(document).ready(function () {
 		<h3>Hold needing transfer found: <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% itembiblionumber %]">[% title |html %]</a></h3>
                 <h4>Hold for: </h4>
                     <ul>
-                        <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">[% borsurname %], [% borfirstname %]</a> ([% borcnum %])</li>
+                        <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">[% borsurname %], [% borfirstname %]</a> ([% borcnum %]) <span class="patron-category"> - [% wborcategory %]</span> </li>
                         <li>[% borstnum %] [% boraddress %]<br />
 						[% IF ( boraddress2 ) %][% boraddress2 %]<br />[% END %]
 						[% borcity %]  [% borzip %]</li>
@@ -344,7 +344,7 @@ $(document).ready(function () {
 		<ul>
             <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">
                 [% borsurname %], [% borfirstname %]
-            </a> ([% borcnum %])</li>
+            </a> ([% borcnum %]) <span class="patron-category"> - [% wborcategory %]</span></li>
             <li>[% borstnum %] [% boraddress %]<br />
 			[% IF ( boraddress2 ) %][% boraddress2 %]<br />[% END %]
 			[% borcity %] [% borzip %]</li>

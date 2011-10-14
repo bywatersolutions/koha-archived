@@ -159,6 +159,7 @@ if ( $query->param('resbarcode') ) {
             borcnum        => $borr->{'cardnumber'},
             borfirstname   => $borr->{'firstname'},
             borsurname     => $borr->{'surname'},
+            borcategory    => $borr->{'description'},
             diffbranch     => 1,
         );
     }
@@ -379,6 +380,7 @@ if ( $messages->{'WrongTransfer'} and not $messages->{'WasTransfered'}) {
             wname           => $name,
             wborfirstname   => $borr->{'firstname'},
             wborsurname     => $borr->{'surname'},
+            wborcategory    => $borr->{'description'},
             wbortitle       => $borr->{'title'},
             wborphone       => $borr->{'phone'},
             wboremail       => $borr->{'email'},
@@ -423,6 +425,7 @@ if ( $messages->{'ResFound'}) {
             name           => $borr->{'surname'} . ", " . $borr->{'title'} . " " . $borr->{'firstname'},
             borfirstname   => $borr->{'firstname'},
             borsurname     => $borr->{'surname'},
+            borcategory    => $borr->{'description'},
             bortitle       => $borr->{'title'},
             borphone       => $borr->{'phone'},
             boremail       => $borr->{'email'},
