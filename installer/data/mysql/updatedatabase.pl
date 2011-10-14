@@ -7896,6 +7896,16 @@ if ( CheckVersion($DBversion) ) {
     SetVersion($DBversion);
 }
 
+$DBversion = "3.99.00.XXX";
+if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
+    $dbh->do("ALTER TABLE `branches` ADD `itembarcodeprefix` VARCHAR( 10 ) NULL AFTER `branchnotes`");
+    $dbh->do("ALTER TABLE `branches` ADD `patronbarcodeprefix` VARCHAR( 10 ) NULL AFTER `itembarcodeprefix`");
+    $dbh->do("INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('itembarcodelength','','Number of characters in system-wide barcode schema (item barcodes).','','Integer')");
+    $dbh->do("INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('patronbarcodelength','','Number of characters in system-wide barcode schema (patron cardnumbers).','','Integer')");
+    print "Upgrade to $DBversion done (Add barcode prefix feature. Add fields itembarcodeprefix and patronbarcodeprefix to table branches, add sysprefs itembarcodelength and patronbarcodelength)\n";
+    SetVersion($DBversion);
+}
+
 =head1 FUNCTIONS
 
 =head2 TableExists($table)

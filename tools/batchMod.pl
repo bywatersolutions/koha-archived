@@ -230,6 +230,7 @@ if ($op eq "show"){
 
         if ($filecontent eq 'barcode_file') {
             foreach my $barcode (@contentlist) {
+                $barcode = barcodedecode( $barcode ) if ( C4::Context->preference('itemBarcodeInputFilter') || C4::Context->preference('itembarcodelength') );
 
                 my $itemnumber = GetItemnumberFromBarcode($barcode);
                 if ($itemnumber) {
@@ -253,6 +254,7 @@ if ($op eq "show"){
             push my @barcodelist, uniq( split(/\s\n/, $list) );
 
             foreach my $barcode (@barcodelist) {
+                $barcode = barcodedecode( $barcode ) if ( C4::Context->preference('itemBarcodeInputFilter') || C4::Context->preference('itembarcodelength') );
 
                 my $itemnumber = GetItemnumberFromBarcode($barcode);
                 if ($itemnumber) {

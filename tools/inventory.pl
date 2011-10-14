@@ -163,6 +163,13 @@ if ( $uploadbarcodes && length($uploadbarcodes) > 0 ) {
     while (my $barcode=<$uploadbarcodes>){
         $barcode =~ s/\r?\n$//;
         next unless $barcode;
+
+        if ( C4::Context->preference('itembarcodelength') && ( length($barcode) < C4::Context->preference('itembarcodelength') ) ) {
+                my $prefix = GetBranchDetail(C4::Context->userenv->{'branch'})->{'itembarcodeprefix'} ;
+                my $padding = C4::Context->preference('itembarcodelength') - length($prefix) - length($barcode) ;
+                $barcode = $prefix . '0' x $padding . $barcode if($padding >= 0) ;
+        }
+
         if ( $qwithdrawn->execute($barcode) && $qwithdrawn->rows ) {
             push @errorloop, { 'barcode' => $barcode, 'ERR_WTHDRAWN' => 1 };
         } else {
