@@ -148,6 +148,7 @@ $(document).ready(function () {
 [% IF ( wborcnum ) %]<h5>Hold for:</h5>
         <ul><li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">
             [% borsurname %], [% borfirstname %]</a> ([% borcnum %])</li>
+        <li class="patron-category">[% wborcategory %]</li>
         <li>[% wboraddress %][% IF ( wboraddress2 ) %]<br />
 		[% wboraddress2 %]<br />[% END %]
         [% wborcity %]  [% wborzip %]</li>
@@ -181,6 +182,7 @@ $(document).ready(function () {
         <h4>Hold for:</h4>
 			<ul>
             <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">[% borsurname %], [% borfirstname %]</a> ([% borcnum %])</li>
+            <li class="patron-category">[% borcategory %]</li>
             <li>[% boraddress %]<br />
 			[% IF ( boraddress2 ) %][% boraddress2 %]<br />[% END %]
             [% borcity %] [% borzip %]</li>
@@ -222,6 +224,7 @@ $(document).ready(function () {
                 <h4>Hold for: </h4>
                     <ul>
                         <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">[% borsurname %], [% borfirstname %]</a> ([% borcnum %])</li>
+                        <li class="patron-category">[% borcategory %]</li>
                         <li>[% boraddress %]<br />
 						[% IF ( boraddress2 ) %][% boraddress2 %]<br />[% END %]
 						[% borcity %]  [% borzip %]</li>
@@ -330,6 +333,7 @@ $(document).ready(function () {
             <li><a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">
                 [% borsurname %], [% borfirstname %]
             </a> ([% borcnum %])</li>
+            <li class="patron-category">[% borcategory %]</li>
             <li>[% boraddress %]<br />
 			[% IF ( boraddress2 ) %][% boraddress2 %]<br />[% END %]
 			[% borcity %] [% borzip %]</li>
