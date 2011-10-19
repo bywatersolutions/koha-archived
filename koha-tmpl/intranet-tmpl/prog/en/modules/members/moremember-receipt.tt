@@ -13,7 +13,7 @@
 
 <h3>[% LibraryName %]</h3>
 [% IF ( branchname ) %][% branchname %]<br />[% END %]
-Checked out to [% firstname %] [% surname %] <br />
+Checked out to <!--[% firstname %] [% surname %] <br />-->
 (<a href="/cgi-bin/koha/circ/circulation.pl?findborrower=[% cardnumber %]">[% cardnumber %]</a>)<br />
 
 [% todaysdate %]<br />
