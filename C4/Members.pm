@@ -125,6 +125,7 @@ BEGIN {
     #Insert data
     push @EXPORT, qw(
         &AddMember
+        &AddMember_Auto
         &AddMember_Opac
         &MoveMemberToDeleted
         &ExtendMemberSubscriptionTo
@@ -2454,6 +2455,16 @@ sub GetBorrowersWithEmail {
     return @result;
 }
 
+sub AddMember_Auto {
+    my ( %borrower ) = @_;
+
+    $borrower{'cardnumber'} ||= fixup_cardnumber();
+
+    $borrower{'borrowernumber'} = AddMember(%borrower);
+
+    return %borrower;
+}
+
 sub AddMember_Opac {
     my ( %borrower ) = @_;
 
@@ -2464,11 +2475,9 @@ sub AddMember_Opac {
     my $password = $sr->randpattern("AAAAAAAAAA");
     $borrower{'password'} = $password;
 
-    $borrower{'cardnumber'} = fixup_cardnumber();
+    %borrower = AddMember_Auto(%borrower);
 
-    my $borrowernumber = AddMember(%borrower);
-
-    return ( $borrowernumber, $password );
+    return ( $borrower{'borrowernumber'}, $borrower{'password'} );
 }
 
 =head2 AddEnrolmentFeeIfNeeded
