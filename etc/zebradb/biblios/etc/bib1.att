@@ -364,3 +364,6 @@ att 9653    Index-term-uncontrolled
 att 9655    Index-term-genre
 att 9906    ln-audio
 att 9907    ln-subtitle
+
+##BWS changes
+att 9014    Masscat-number
