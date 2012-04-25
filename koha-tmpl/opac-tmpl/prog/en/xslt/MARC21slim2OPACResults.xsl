@@ -1022,7 +1022,7 @@
                               </xsl:if>
                                     <xsl:choose>
                                     <xsl:when test="position()=last()"><xsl:text> </xsl:text></xsl:when>
-                                    <xsl:otherwise> | </xsl:otherwise>
+                                    <xsl:otherwise><br/></xsl:otherwise>
                                     </xsl:choose>
                             </xsl:for-each>
                             </span>
