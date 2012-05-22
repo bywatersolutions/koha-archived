@@ -464,23 +464,13 @@ sub TooMany {
     # Now count total loans against the limit for the branch
     my $branch_borrower_circ_rule = GetBranchBorrowerCircRule($branch, $cat_borrower);
     if (defined($branch_borrower_circ_rule->{maxissueqty})) {
-        my @bind_params = ();
-        my $branch_count_query = "SELECT COUNT(*) FROM issues
-                                  JOIN items USING (itemnumber)
-                                  WHERE borrowernumber = ? ";
-        push @bind_params, $borrower->{borrowernumber};
+        my $branch_count_query = "
+            SELECT COUNT(*) FROM issues
+            WHERE borrowernumber = ?
+        ";
 
-        if (C4::Context->preference('CircControl') eq 'PickupLibrary') {
-            $branch_count_query .= " AND issues.branchcode = ? ";
-            push @bind_params, $branch;
-        } elsif (C4::Context->preference('CircControl') eq 'PatronLibrary') {
-            ; # if branch is the patron's home branch, then count all loans by patron
-        } else {
-            $branch_count_query .= " AND items.homebranch = ? ";
-            push @bind_params, $branch;
-        }
         my $branch_count_sth = $dbh->prepare($branch_count_query);
-        $branch_count_sth->execute(@bind_params);
+        $branch_count_sth->execute( $borrower->{borrowernumber} );
         my ($current_loan_count) = $branch_count_sth->fetchrow_array;
 
         my $max_loans_allowed = $branch_borrower_circ_rule->{maxissueqty};
