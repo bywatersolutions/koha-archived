@@ -25,6 +25,7 @@ use Carp;
 use C4::Context;
 use C4::Koha;
 use C4::Biblio;
+use C4::Branch qw/GetBranchDetail/;
 use C4::Dates qw/format_date format_date_in_iso/;
 use MARC::Record;
 use C4::ClassSource;
