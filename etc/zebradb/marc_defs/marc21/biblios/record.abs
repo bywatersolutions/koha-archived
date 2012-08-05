@@ -73,6 +73,8 @@ melm 030        CODEN,Identifier-standard
 #melm 033       Date
 melm 034        Map-scale
 #melm 035       Local-number,Identifier-standard
+# BWS change
+melm 035$a      Washu-Number:w,Standard-Identifier
 melm 037        Identifier-standard,Stock-number
 melm 040        Code-institution,Record-source
 melm 041$a      ln
@@ -163,6 +165,8 @@ melm 526$c      arl,arl:n
 melm 526$d      arp,arp:n
 #melm 533$d     pubdate,pubdate:s
 #melm 541$d     Date-of-acquisition,Date-of-acquisition:s
+# BWS change, adding melm 561 for Ownership & Provenance support
+melm 561        Ownership-Custodial-History:w,Ownership-Custodial-History:p,Provenance:w,Provenance:p
 melm 590        Note:w,Note:p
 
 melm 600$a      Name-and-title,Name,Personal-name,Subject-name-personal,Subject,Subject:p
@@ -248,6 +252,9 @@ melm 780        Title,Title:p,Title-former,Related-periodical
 melm 785$w      Record-control-number
 melm 785        Title,Title:p,Title-later,Related-periodical
 melm 787$w      Record-control-number
+# BWS change, adding melm 790 & 791 for Provenance
+melm 790        Provenance:w,Provenance:p
+melm 791        Provenance:w,Provenance:p
 
 melm 800$a      Name-and-title,Title-series:w,Title-series:p
 #melm 800$t     author,Author-title,Name-and-title,Title,Title-series
@@ -286,6 +293,9 @@ melm 942$h      cn-class
 melm 942$i      cn-item
 melm 942$k      cn-prefix
 melm 942$m      cn-suffix
+
+# BWS Change - mapping 949$j to Journal-Title.
+melm 949$j      Journal-Title:w,Journal-Title:p
 
 # Items Indexes
 melm 952$0      withdrawn:n,withdrawn:w

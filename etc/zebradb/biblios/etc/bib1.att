@@ -291,3 +291,9 @@ att 9013    arp
 att 9520    Item
 # Curriculum
 att 9658    curriculum
+
+#BWS changes
+att 9014    Ownership-Custodial-History
+att 9015    Provenance
+att 9016    Journal-Title
+att 9017    Washu-Number
