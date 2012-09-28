@@ -29,23 +29,14 @@
       timeout="60" />
 
     <service
-      port="127.0.0.1:6001/tcp"
+      port="6002/tcp"
       transport="RAW" 
       protocol="SIP/2.00"
       timeout="60" />
   </listeners>
 
   <accounts>
-      <login id="term1"  password="term1" delimiter="|" error-detect="enabled" institution="CPL" encoding="ascii" />
-      <login id="koha"   password="koha"  delimiter="|" error-detect="enabled" institution="kohalibrary" encoding="utf8" />
-      <login id="koha2"  password="koha" institution="kohalibrary2" terminator="CR" />
-      <login id="lpl-sc" password="1234" institution="LPL" />
-      <login id="lpl-sc-beacock" password="xyzzy"
-             delimiter="|" error-detect="enabled" institution="LPL"
-             send_patron_home_library_in_af="1" >
-          <screen_msg_regex find="Greetings from Koha." replace="Welcome to your library!" />
-          <screen_msg_regex find="Invalid patron barcode." replace="Barcode not found, are you sure this is your library card?" />
-      </login>
+      <login id="koha-freegal"  password="freegal1234" error-detect="enabled" institution="bluehill" />
   </accounts>
 
 <!--
@@ -56,30 +47,7 @@ in our case "ILS".
 -->
 
 <institutions>
-    <institution id="MAIN" implementation="ILS" parms="">
-          <policy checkin="true" renewal="true" checkout="true"
-	  	  status_update="false" offline="false"
-		  timeout="100"
-	  	  retries="5" />
-    </institution>
-    <institution id="CPL" implementation="ILS" parms="">
-          <policy checkin="true" renewal="true" checkout="true"
-	  	  status_update="false" offline="false"
-		  timeout="25"
-	  	  retries="5" />
-    </institution>
-    <institution id="kohalibrary" implementation="ILS" parms="">
-          <policy checkin="true" renewal="false" checkout="true"
-	  	  status_update="false" offline="false"
-		  timeout="100"
-	  	  retries="5" />
-    </institution>
-    <institution id="kohalibrary2" implementation="ILS" parms="">
-          <policy checkin="true" renewal="false" checkout="true"
-		  timeout="100"
-	  	  retries="3" />
-    </institution>
-    <institution id="LPL" implementation="ILS">
+    <institution id="bluehill" implementation="ILS">
           <policy checkin="true" renewal="false" checkout="true"
 		  timeout="100"
 	  	  retries="5" />
