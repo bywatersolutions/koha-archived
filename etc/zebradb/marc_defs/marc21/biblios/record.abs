@@ -48,7 +48,10 @@ all any
 xelm /record/leader llength:w:range(data,0,5),rtype:w:range(data,6,1),Bib-level:w:range(data,7,1)
 # example: xelm /record/leader l1:w:range(data,0,5),l2:w:range(data,10,2)
 
-melm 001        Control-number
+#BWS Change - adding for OCLC-number searching - 20120809.ago
+#melm 001        Control-number
+melm 001        Control-number,OCLC:w
+
 melm 005        Date/time-last-modified
 melm 007        Microform-generation:n:range(data,11,1),Material-type,ff7-00:w:range(data,0,1),ff7-01:w:range(data,1,1),ff7-02:w:range(data,2,1),ff7-01-02:w:range(data,0,2)
 
@@ -224,7 +227,9 @@ melm 700$n      Thematic-number
 melm 700$r      Music-key
 #melm 700$t     author,Author-title,Name-and-title,Title,Title-uniform
 melm 700$t      Author-title,Name-and-title,Title,Title-uniform
-melm 700        Author,Author:p,Author-name-personal,Name,Editor,Personal-name
+# BWS change. Adding Author-name-corporate to 700. 20120808.lrb
+#melm 700        Author,Author:p,Author-name-personal,Name,Editor,Personal-name
+melm 700        Author,Author:p,Author-name-corporate,Author-name-personal,Name,Editor,Personal-name
 #melm 710$t     author,Author-title,Name-and-title,Title,Title-uniform
 melm 710$t      Author-title,Name-and-title,Title,Title-uniform
 #melm 710$a     author,author:p,Name-and-title

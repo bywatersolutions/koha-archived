@@ -223,7 +223,9 @@ att 9009    cn-prefix
 att 9010    cn-suffix
 att 9011    Suppress
 att 9012    Identifier-other
-att 9021    awards
+#att 9021    awards
+#BWS Change - adding for OCLC-number searching - 20120809.ago
+att 9021    OCLC
 
 # Items Index
 att 8001    withdrawn
