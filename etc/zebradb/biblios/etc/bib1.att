@@ -361,3 +361,6 @@ att 9653    Index-term-uncontrolled
 att 9655    Index-term-genre
 att 9906    ln-audio
 att 9907    ln-subtitle
+
+# BWS change. Adding att 9021 for ticket 5383. 20121010.ago
+att 9021    Awards

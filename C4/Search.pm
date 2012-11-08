@@ -1114,6 +1114,9 @@ sub getIndexes{
                     'Title-uniform-seealso',
                     'totalissues',
                     'yr',
+# Following two lines added for ticket 5383. 20121010.ago
+                    'Awards',
+                    'rd',
 
                     # items indexes
                     'acqsource',

@@ -166,6 +166,8 @@ melm 526$c      arl,arl:n
 melm 526$d      arp,arp:n
 #melm 533$d     pubdate,pubdate:s
 #melm 541$d     Date-of-acquisition,Date-of-acquisition:s
+#BWS change. Adding melm 586$a      Awards:w  for ticket 5383. 20121010.ago
+melm 586$a      Awards:w
 melm 590        Note:w,Note:p
 
 melm 600$a      Name-and-title,Name,Personal-name,Subject-name-personal,Subject,Subject:p
