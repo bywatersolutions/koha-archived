@@ -45,6 +45,7 @@ use C4::Output;
 use C4::Members;
 use C4::Biblio;
 use C4::Items;
+use C4::Context;
 
 my $query = new CGI;
 
@@ -244,6 +245,7 @@ if ($borrower->{cardnumber}) {
         patronid => $patronid,
         patronlogin => $patronlogin,
         patronpw => $patronpw,
+        soundon  => C4::Context->preference("SoundOn"),
         noitemlinks => 1 ,
         borrowernumber => $borrower->{'borrowernumber'},
     );
