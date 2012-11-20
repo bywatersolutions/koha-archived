@@ -1,23 +1,19 @@
 #!/bin/sh
 # Script to create daily backups of the Koha database.
 # Based on a script by John Pennington
+KOHA_DATE=`date '+%y%m%d'`
+KOHA_DUMP=/home/koha/koha-$KOHA_DATE.dump.gz
+KOHA_BACKUP=/home/koha/koha-$KOHA_DATE.dump.gz
 
-DATABASE=`xmlstarlet sel -t -v 'yazgfs/config/database' $KOHA_CONF`
-HOSTNAME=`xmlstarlet sel -t -v 'yazgfs/config/hostname' $KOHA_CONF`
-PORT=`xmlstarlet sel -t -v 'yazgfs/config/port' $KOHA_CONF`
-USER=`xmlstarlet sel -t -v 'yazgfs/config/user' $KOHA_CONF`
-PASS=`xmlstarlet sel -t -v 'yazgfs/config/pass' $KOHA_CONF`
-BACKUPDIR=`xmlstarlet sel -t -v 'yazgfs/config/backupdir' $KOHA_CONF`
-KOHA_DATE=`date '+%Y%m%d'`
-KOHA_BACKUP=$BACKUPDIR/koha-$KOHA_DATE.sql.gz
+mysqldump --single-transaction -h169.151.6.240 -ukoha -ppwdSecure12 koha_pisd |gzip -9 > $KOHA_DUMP &&
+# Creates the dump file and compresses it;
+# -u is the Koha user, -p is the password for that user.
+# The -f switch on gzip forces it to overwrite the file if one exists.
 
-mysqldump --single-transaction --user=$USER --password="$PASS" --port=$PORT --host=$HOST $DATABASE| gzip -9 > $KOHA_BACKUP
-
-if [ -f $KOHA_BACKUP ] ; then
-echo "$KOHA_BACKUP was successfully created." | mail $USER -s $KOHA_BACKUP
-else
-echo "$KOHA_BACKUP was NOT successfully created." | mail $USER -s $KOHA_BACKUP
-fi
+#chown koha.users /home/koha/koha-$KOHA_DATE.dump.gz &&
+#chmod 600 /home/koha/koha-$KOHA_DATE.dump.gz &&
+# Makes the compressed dump file property of the kohaadmin user.
+# Make sure that you replace kohaadmin with a real user.
 
 # Notifies kohaadmin of (un)successful backup creation
 # EOF
