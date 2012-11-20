@@ -101,7 +101,7 @@ overdue as of [% todaysdate %][% IF ( isfiltered ) %] <span style="font-size:70%
 <thead><tr>
     <th>Due date</th>
     <th>Patron</th>
-    <th>Library</th>
+    <th>Homeroom</th>
     <th>Title</th>
     <th>Barcode</th>
     <th>Call number</th>
