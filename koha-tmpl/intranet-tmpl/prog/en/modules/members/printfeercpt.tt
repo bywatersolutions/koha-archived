@@ -29,12 +29,7 @@
 		[% IF ( branchname ) %]<h2>[% branchname %]</h2>[% END %]
 	</th>
  </tr>
- <tr>
-	<th colspan=3 >
-		Received with thanks from  [% firstname %] [% surname %] <br />
-        Card number : [% cardnumber %]<br />
-	</th>
- </tr>
+
   <tr>
 	<th>Date</th>
     <th>Description of charges</th>
