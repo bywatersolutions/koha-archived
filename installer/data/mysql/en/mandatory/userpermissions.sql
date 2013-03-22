@@ -54,6 +54,7 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    (13, 'manage_patron_lists', 'Add, edit and delete patron lists and their contents'),
    (13, 'marc_modification_templates', 'Manage marc modification templates'),
    (13, 'records_batchdel', 'Perform batch deletion of records (bibliographic or authority)'),
+   (13, 'edi_manage', 'Manage EDIFACT transmissions'),
    (15, 'check_expiration', 'Check the expiration of a serial'),
    (15, 'claim_serials', 'Claim missing serials'),
    (15, 'create_subscription', 'Create a new subscription'),

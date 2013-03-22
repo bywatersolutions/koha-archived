@@ -178,6 +178,11 @@
                         </div>
                     [% END %]
                         <div class="btn-group"><a href="[% script_name %]?op=export&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="exportbutton"><i class="icon-download"></i> Export this basket as CSV</a></div>
+                    [% IF ediaccount %]
+                        <div class="btn-group"><a href="[% script_name %]?op=ediorder&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="ediorderbutton"><i class="icon-envelope"></i> EDIfact order</a></div>
+                    [% END %]
+                    </ul>
+
                 </div>
 <!-- Modal for confirm deletion box-->
                 <div class="modal hide" id="deleteBasketModal" tabindex="-1" role="dialog" aria-labelledby="delbasketModalLabel" aria-hidden="true">
@@ -218,7 +223,12 @@
                 [% END %]
             [% END %]
             [% END %]
-
+  [% IF ( edifile ) %]
+   <div id="edifile" class="dialog alert">EDIfact order created and will be sent overnight. Filename: <strong>[% edifile %]</strong> - <a href="/cgi-bin/koha/acqui/basket.pl?op=edisend&basketno=[% basketno %]&booksellerid=[% booksellerid %]">Send this order now?</a></div>
+  [% END %]
+      [% IF ( edisend ) %]
+   <div id="edisend" class="dialog alert"><strong>[% edisend %]</strong></div>
+    [% END %]
     [% IF ( NO_BOOKSELLER ) %]
     <h2>Vendor not found</h2>
     [% ELSE %]
