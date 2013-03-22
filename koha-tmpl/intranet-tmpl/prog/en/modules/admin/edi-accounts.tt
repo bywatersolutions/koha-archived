@@ -1,0 +1,46 @@
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Administration - EDI Accounts</title>
+[% INCLUDE 'doc-head-close.inc' %]
+
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/admin/admin-home.pl">Administration</a> &rsaquo; <a href="/cgi-bin/koha/admin/edi-accounts.pl">EDI Accounts</a></div>
+
+<div id="doc3" class="yui-t2">
+    <div id="bd">
+        <div id="yui-main">
+            <div class="yui-b"
+                               <h1>Vendor EDI Accounts</h1>
+                           [% IF ( ediaccounts ) %]
+                <div id="ediaccounts" class="rows">
+                    [% IF ( opdelsubmit ) %]
+                    <div class="dialog alert">The account was successfully deleted</div>
+                    [% END %]
+                    [% IF ( opaddsubmit ) %]
+                    <div class="dialog alert">The account was successfully added</div>
+                    [% END %]
+                    [% IF ( opeditsubmit ) %]
+                    <div class="dialog alert">The account was successfully updated</div>
+                    [% END %]
+                        <div><ul class="toolbar"><li><span class="yui-button yui-link-button"><span class="first-child"><a href="/cgi-bin/koha/admin/edi-edit.pl?op=add">Add a new account</a></span></span></li></ul></div>
+                        <table border="0" width="100%" cellpadding="3" cellspacing="0">
+                        <th><strong>ID</strong></th><th><strong>Vendor</strong></th><th><strong>Description</strong></th><th><strong>Last activity</strong></th><th><strong>Actions</strong></th></tr>
+                        [% FOREACH account IN ediaccounts %]
+                            <tr><td>[% account.id %]</td><td><a href="/cgi-bin/koha/acqui/supplier.pl?supplierid=[% account.providerid %]">[% account.vendor %]</a></td><td>[% account.description %]</td><td>[% account.last_activity %]</td><td align="center"><a href="/cgi-bin/koha/admin/edi-edit.pl?op=edit&id=[% account.id %]&providerid=[% account.providerid %]">Edit</a> | <a href="/cgi-bin/koha/admin/edi-edit.pl?op=del&id=[% account.id %]">Delete</a></td></tr>
+                        [% END %]
+                        </table>
+                </div>
+                [% ELSE %]
+                <p>You currently do not have any Vendor EDI Accounts. To add a new account <a href="/cgi-bin/koha/admin/edi-edit.pl?op=add">click here</a>.</p>
+                [% END %]
+            </div>
+        </div>
+        <div class="yui-b">
+            [% INCLUDE 'admin-menu.inc' %]
+        </div>
+    </div>
+</div>
+[% INCLUDE 'intranet-bottom.inc' %]
