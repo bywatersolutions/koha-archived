@@ -1,0 +1,106 @@
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Administration - EDI Accounts</title>
+[% INCLUDE 'doc-head-close.inc' %]
+<script type="text/javascript" language="javascript">
+$(document).ready(function() {
+   $('#failcheck').hide();
+});
+function check_form_edi()
+{
+    if ($('#provider').val()!="" && $('#description').val()!="" && $('#host').val()!="")
+    {
+        $('#edi_form').submit();
+    }
+    else
+    {
+        $('#failcheck').show('fast');
+    }
+
+}
+function deleteInstance()
+{
+    window.location="/cgi-bin/koha/members/houseboundinstances.pl?op=delsubmit&borrowernumber=[% borrowernumber %]&instanceid=[% delinstanceid %]&hbnumber=[% hbnumber %]";
+}
+function cancelInstance()
+{
+    window.location="/cgi-bin/koha/members/housebound.pl?borrowernumber=[% borrowernumber %]";
+}
+</script>
+[% INCLUDE 'calendar.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/admin/admin-home.pl">Administration</a> &rsaquo; <a href="/cgi-bin/koha/admin/edi-accounts.pl">EDI Accounts</a></div>
+<div id="doc3" class="yui-t2">
+    <div id="bd">
+        <div id="yui-main">
+            <div class="yui-b">
+                <h1>Vendor EDI Accounts</h1>
+                <div id="failcheck" class="dialog alert">You must complete all required fields</div>
+                <form name="form" id="edi_form" method="post" action="/cgi-bin/koha/admin/edi-accounts.pl">
+                    <input type="hidden" name="op" value="[% opeditsubmit %][% opaddsubmit %][% opdelsubmit %]" />
+
+                    <input type="hidden" name="editid" value="[% editid %]" />
+                [% IF opdel %]
+                    <p>Are you sure you want to delete this account?</p>
+                    <p><a href="/cgi-bin/koha/admin/edi-accounts.pl?id=[% id %]&op=delsubmit">YES</a> | <a href="/cgi-bin/koha/admin/edi-accounts.pl">NO</a></p>
+                [% ELSE %]
+                <fieldset class="rows" id="edi_details">
+                    <legend>EDI Account details</legend>
+                    <ol>
+                        <li>
+                            <label for="provider" class="required">Vendor:*</label>
+                            <select id="provider" name="provider">
+                                <option value="">Select a vendor</option>
+                                [% FOREACH vendor IN vendorlist %]
+                                    [% IF vendor.selected %]
+                                        <option value="[% vendor.id %]" selected="selected">[% vendor.name %]</option>
+                                    [% ELSE %]
+                                        <option value="[% vendor.id %]">[% vendor.name %]</option>
+                                    [% END %]
+                                [% END %]
+                            </select>
+                        </li>
+                        <li>
+                            <label for="description" class="required">Description:* </label>
+                            <input type="text" id="description" name="description" size="40" value="[% description %]" />
+                        </li>
+                        <li>
+                            <label for="host" class="required">Server hostname:*</label>
+                            <input type="text" id="host" name="host" size="40" value="[% host %]" />
+                        </li>
+                        <li>
+                            <label for="user">Server username:</label>
+                            <input type="text" id="user" name="user" size="40" value="[% user %]" />
+                        </li>
+                        <li>
+                            <label for="pass">Server password:</label>
+                            <input type="text" id="pass" name="pass" size="40" value="[% pass %]" />
+                        </li>
+                        <li>
+                            <label for="in_dir">Server remote directory:</label>
+                            <input type="text" id="in_dir" name="in_dir" size="40" value="[% in_dir %]" />
+                        </li>
+                        <li>
+                            <label for="san">Vendor SAN:</label>
+                            <input type="text" id="san" name="san" size="40" value="[% san %]" />
+                        </li>
+                    </ol>
+                </fieldset>
+                <fieldset class="action">
+                    <input type="submit" value="Save" onclick="check_form_edi(); return false; " name="save">
+                    <a class="cancel" href="/cgi-bin/koha/admin/edi-accounts.pl">Cancel</a>
+                </fieldset>
+                [% END %]
+                </form>
+
+            </div>
+        </div>
+        <div class="yui-b">
+            [% INCLUDE 'admin-menu.inc' %]
+        </div>
+    </div>
+</div>
+[% INCLUDE 'intranet-bottom.inc' %]
