@@ -6700,7 +6700,7 @@ if ( CheckVersion($DBversion) ) {
     ");
 
     print "Upgrade to $DBversion done (Bug 7804: Added plugin system.)\n";
-    SetVersion($DBversion);
+    SetVersion ($DBversion);
 }
 
 $DBversion = "3.11.00.107";
@@ -11723,7 +11723,6 @@ if ( CheckVersion($DBversion) ) {
     print "Upgrade to $DBversion done (Koha 3.22.10)\n";
     SetVersion($DBversion);
 }
-
 
 # DEVELOPER PROCESS, search for anything to execute in the db_update directory
 # SEE bug 13068
