@@ -1,0 +1,63 @@
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Tools &rsaquo; EDIfact messages</title>
+[% INCLUDE 'doc-head-close.inc' %]
+<script type="text/javascript" language="javascript">
+function check_sent(status,key,basketno,providerid)
+{
+  if (status == 'Failed' && basketno !=0)
+        {
+              document.write(' - (<a href="/cgi-bin/koha/acqui/basket.pl?op=edisend&basketno='+basketno+'&booksellerid='+providerid+'">Re-send</a>)');
+       }
+}
+</script>
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/tools/tools-home.pl">Tools</a> &rsaquo; EDIfact messages</div>
+
+<div id="doc3" class="yui-t2">
+    <div id="bd">
+        <div id="yui-main">
+            <div class="yui-b"
+         <h1>EDIfact messages</h1>
+         [% IF messagelist %]
+                <div id="messagelist" class="rows">
+                    [% IF opdelsubmit %]
+                    <div class="dialog alert">The account was successfully deleted</div>
+                    [% END %]
+                    [% IF opaddsubmit %]
+                    <div class="dialog alert">The account was successfully added</div>
+                    [% END %]
+                    [% IF opeditsubmit %]
+                    <div class="dialog alert">The account was successfully updated</div>
+                    [% END %]
+                        <table border="0" width="100%" cellpadding="3" cellspacing="0">
+                        <th><strong>Date</strong></th><th><strong>Message type</strong></th><th><strong>Provider</strong></th><th><strong>Status</strong></th><th>Basket</th>
+                        [% FOREACH message IN messagelist %]
+                        <tr>
+                            <td>[% message.date_sent %]</td>
+                            <td>[% message.message_type %]</td>
+                            <td><a href="/cgi-bin/koha/acqui/supplier.pl?supplierid=[% message.providerid %]">[% message.providername %]</a></td>
+                            <td>[% message.status %]<script type="text/javascript" language="javascript">check_sent('[% message.status %]',[% message.id %],[% message.basketno %],[% message.providerid %]);</script></td>
+                            <td>
+                            [% IF message.basketno %]
+                            <a href="/cgi-bin/koha/acqui/basket.pl?basketno=[% message.basketno %]">View basket</a>
+                            [% END %]
+                            </td></tr>
+                        [% END %]
+                        </table>
+                </div>
+
+                [% ELSE %]
+                <p>There are currently no EDIfact messages to display.</p>
+                [% END %]
+            </div>
+        </div>
+        <div class="yui-b">
+            [% INCLUDE 'tools-menu.inc' %]
+        </div>
+    </div>
+</div>
+[% INCLUDE 'intranet-bottom.inc' %]
