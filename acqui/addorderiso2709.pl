@@ -298,6 +298,14 @@ if ($op eq ""){
                 push( @subfields,    $itype_subfield );
                 push( @field_values, $infos->{itype} );
                 warn "ITYPE: " . $infos->{itype};
+
+		my $infos = get_infos_syspref($marcrecord, ['ccode']);
+                my ( $ccode_field, $ccode_subfield ) =
+                  GetMarcFromKohaField('items.ccode');
+                push( @tags,         $ccode_field );
+                push( @subfields,    $ccode_subfield );
+                push( @field_values, $infos->{ccode} );
+                warn "ITYPE: " . $infos->{ccode};
             }
 
             my $item;

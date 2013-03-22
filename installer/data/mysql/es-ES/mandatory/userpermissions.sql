@@ -12,8 +12,6 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    ( 9, 'edit_catalogue', 'Edit catalog (Modify bibliographic/holdings data)'),
    ( 9, 'fast_cataloging', 'Fast cataloging'),
    ( 9, 'edit_items', 'Edit Items'),
-   ( 9, 'edit_items_restricted', 'Limit item modification to subfields defined in the SubfieldsToAllowForRestrictedEditing preference (please note that edit_item is still required)'),
-   ( 9, 'delete_all_items', 'Delete all items at once'),
    (10, 'writeoff', 'Write off fines and fees'),
    (10, 'remaining_permissions', 'Remaining permissions for managing fines and fees'),
    (11, 'vendors_manage', 'Manage vendors'),
@@ -46,16 +44,13 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    (13, 'batch_upload_patron_images', 'Upload patron images in a batch or one at a time'),
    (13, 'schedule_tasks', 'Schedule tasks to run'),
    (13, 'items_batchmod', 'Perform batch modification of items'),
-   (13, 'items_batchmod_restricted', 'Limit batch item modification to subfields defined in the SubfieldsToAllowForRestrictedBatchmod preference (please note that items_batchmod is still required)'),
    (13, 'items_batchdel', 'Perform batch deletion of items'),
    (13, 'manage_csv_profiles', 'Manage CSV export profiles'),
    (13, 'moderate_tags', 'Moderate patron tags'),
    (13, 'rotating_collections', 'Manage rotating collections'),
    (13, 'upload_local_cover_images', 'Upload local cover images'),
    (13, 'manage_patron_lists', 'Add, edit and delete patron lists and their contents'),
-   (13, 'records_batchmod', 'Perform batch modification of records (biblios or authorities)'),
    (13, 'marc_modification_templates', 'Manage marc modification templates'),
-   (13, 'records_batchdel', 'Perform batch deletion of records (bibliographic or authority)'),
    (15, 'check_expiration', 'Check the expiration of a serial'),
    (15, 'claim_serials', 'Claim missing serials'),
    (15, 'create_subscription', 'Create a new subscription'),
@@ -73,6 +68,5 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    (19, 'manage', 'Manage plugins ( install / uninstall )'),
    (19, 'tool', 'Use tool plugins'),
    (19, 'report', 'Use report plugins'),
-   (19, 'configure', 'Configure plugins'),
-   (20, 'delete_public_lists', 'Delete public lists')
+   (19, 'configure', 'Configure plugins')
 ;
