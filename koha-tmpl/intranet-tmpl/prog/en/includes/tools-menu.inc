@@ -26,7 +26,7 @@
     [% IF ( CAN_user_tools_import_patrons ) %]
 	<li><a href="/cgi-bin/koha/tools/import_borrowers.pl">Import patrons</a></li>
     [% END %]
-    [% IF ( CAN_user_tools_edit_notices ) %]
+    [% IF CAN_user_tools_edit_notices %]
     <li><a href="/cgi-bin/koha/tools/letter.pl">Notices &amp; slips</a></li>
     [% END %]
     [% IF ( CAN_user_tools_edit_notice_status_triggers ) %]
@@ -107,5 +107,8 @@
     [% END %]
     [% IF ( CAN_user_tools_edit_quotes ) %]
        <li><a href="/cgi-bin/koha/tools/quotes.pl">Quote editor</a></li>
+    [% END %]
+    [% IF ( CAN_user_tools_edi_manage ) %]
+  <li><a href="/cgi-bin/koha/tools/edi.pl">EDIfact messages</a></li>
     [% END %]
 </ul></div></div>

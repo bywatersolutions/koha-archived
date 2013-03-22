@@ -30,6 +30,8 @@ use C4::Acquisition;
 use C4::Budgets;
 use C4::Branch;
 use C4::Contract;
+use C4::EDI qw( CreateEDIOrder SendEDIOrder CheckVendorFTPAccountExists);
+use C4::Bookseller qw( GetBookSellerFromId);
 use C4::Debug;
 use C4::Biblio;
 use C4::Members qw/GetMember/;  #needed for permissions checking for changing basketgroup of a basket
@@ -100,6 +102,10 @@ unless (CanUserManageBasket($loggedinuser, $basket, $userflags)) {
 # FIXME : the query->param('booksellerid') below is probably useless. The bookseller is always known from the basket
 # if no booksellerid in parameter, get it from basket
 # warn "=>".$basket->{booksellerid};
+
+my $ediaccount = CheckVendorFTPAccountExists($booksellerid);
+$template->param(ediaccount=>$ediaccount);
+
 my $op = $query->param('op');
 if (!defined $op) {
     $op = q{};
@@ -107,6 +113,15 @@ if (!defined $op) {
 
 my $confirm_pref= C4::Context->preference("BasketConfirmations") || '1';
 $template->param( skip_confirm_reopen => 1) if $confirm_pref eq '2';
+
+if ( $op eq 'ediorder') {
+       my $edifile=CreateEDIOrder($basketno,$booksellerid);
+   $template->param(edifile => $edifile);
+}
+if ( $op eq 'edisend') {
+      my $edisend=SendEDIOrder($basketno,$booksellerid);
+     $template->param(edisend => $edisend);
+}
 
 if ( $op eq 'delete_confirm' ) {
     my $basketno = $query->param('basketno');

@@ -36,7 +36,6 @@ $module_context->mock(
         return 'Calendar';
     }
 );
-
 SKIP: {
 
 skip "DBD::Mock is too old", 33

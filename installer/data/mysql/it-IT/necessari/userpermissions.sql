@@ -12,8 +12,6 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    ( 9, 'edit_catalogue', 'Cataloga (crea/modifica dati bibliografici e di copia)'),
    ( 9, 'fast_cataloging', 'Catalogazione veloce'),
    ( 9, 'edit_items', 'Crea/modifica copie'),
-   ( 9, 'edit_items_restricted', 'Limit item modification to subfields defined in the SubfieldsToAllowForRestrictedEditing preference (please note that edit_item is still required)'),
-   ( 9, 'delete_all_items', 'Delete all items at once'),
    (10, 'writeoff', 'Cancellare multe e tariffe'),
    (10, 'remaining_permissions', 'Permessi rimanenti per gestione multe e costi'),
    (11, 'vendors_manage', 'Crea/modifica fornitori'),
@@ -46,16 +44,13 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    (13, 'batch_upload_patron_images', 'Aggiorna le foto utente in modalità batch o al momento'),
    (13, 'schedule_tasks', 'Schedula i task'),
    (13, 'items_batchmod', 'Abilita alla modifica batch delle copie'),
-   (13, 'items_batchmod_restricted', 'Limit batch item modification to subfields defined in the SubfieldsToAllowForRestrictedBatchmod preference (please note that items_batchmod is still required)'),
    (13, 'items_batchdel', 'Abilita alla cancellazione via batch delle copie'),
    (13, 'manage_csv_profiles', 'Gestisci i profili CSV di export'),
    (13, 'moderate_tags', 'Modera i tag inseriti dagli utenti'),
    (13, 'rotating_collections', 'Gestisci le collezioni circolanti (rotating collections)'),
    (13, 'upload_local_cover_images', 'Carica copertine in locale'),
    (13, 'manage_patron_lists', 'Aggiungi, modifica e cancella le liste utenti e i loro contenuti'),
-   (13, 'records_batchmod', 'Perform batch modification of records (biblios or authorities)'),
    (13, 'marc_modification_templates', 'Gestisci le modifiche sulle griglie di catalogazione MARC'),
-   (13, 'records_batchdel', 'Perform batch deletion of records (bibliographic or authority)'),
    (15, 'check_expiration', 'Controlla la scadenza di una risora in continuazione'),
    (15, 'claim_serials', 'Richiedi i fascicoli non arrivati'),
    (15, 'create_subscription', 'Crea un nuovo abbonamento'),
@@ -73,6 +68,5 @@ INSERT INTO permissions (module_bit, code, description) VALUES
    (19, 'manage', 'Gestisci plugins ( installa / disinstalla )'),
    (19, 'tool', 'Usa i plugins di tipo strumento'),
    (19, 'report', 'Usa i plugins di tipo report'),
-   (19, 'configure', 'Configura i plugins'),
-   (20, 'delete_public_lists', 'Delete public lists')
+   (19, 'configure', 'Configura i plugins')
 ;

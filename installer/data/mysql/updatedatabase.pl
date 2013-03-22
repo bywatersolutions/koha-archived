@@ -6697,7 +6697,7 @@ if ( CheckVersion($DBversion) ) {
     ");
 
     print "Upgrade to $DBversion done (Bug 7804: Added plugin system.)\n";
-    SetVersion($DBversion);
+    SetVersion ($DBversion);
 }
 
 $DBversion = "3.11.00.107";
