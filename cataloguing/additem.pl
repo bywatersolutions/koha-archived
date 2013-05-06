@@ -708,6 +708,10 @@ if ( C4::Context->preference('EasyAnalyticalRecords') ) {
     }
 }
 
+my $IndependentBranches = !C4::Context->IsSuperLibrarian()
+  && C4::Context->preference('IndependentBranches');
+my $IndependentBranchesRecordsAndItems = $IndependentBranches
+  && C4::Context->preference('IndependentBranchesRecordsAndItems');
 
 foreach my $field (@fields) {
     next if ( $field->tag() < 10 );
@@ -731,15 +735,13 @@ foreach my $field (@fields) {
 						|| $subfieldvalue;
         }
 
-        if (   $field->tag eq $branchtagfield
-            && $subfieldcode eq $branchtagsubfield
-            && C4::Context->preference("IndependentBranches") )
+        if (   $IndependentBranches
+            && $field->tag   eq $branchtagfield
+            && $subfieldcode eq $branchtagsubfield )
         {
             #verifying rights
-            my $userenv = C4::Context->userenv();
             unless (
-                C4::Context->IsSuperLibrarian()
-                || GetIndependentGroupModificationRights(
+                GetIndependentGroupModificationRights(
                     { for => $subfieldvalue }
                 )
               )
@@ -747,24 +749,24 @@ foreach my $field (@fields) {
                 $this_row{'nomod'} = 1;
             }
         }
+
         $this_row{itemnumber} = $subfieldvalue if ($field->tag() eq $itemtagfield && $subfieldcode eq $itemtagsubfield);
 
-	if ( C4::Context->preference('EasyAnalyticalRecords') ) {
-	    foreach my $hostitemnumber (@hostitemnumbers){
-		if ($this_row{itemnumber} eq $hostitemnumber){
-			$this_row{hostitemflag} = 1;
-			$this_row{hostbiblionumber}= GetBiblionumberFromItemnumber($hostitemnumber);
-			last;
-		}
-	    }
-
-#	    my $countanalytics=GetAnalyticsCount($this_row{itemnumber});
-#           if ($countanalytics > 0){
-#                $this_row{countanalytics} = $countanalytics;
-#           }
-	}
+        if ( C4::Context->preference('EasyAnalyticalRecords') ) {
+            foreach my $hostitemnumber (@hostitemnumbers) {
+                if ( $this_row{itemnumber} eq $hostitemnumber ) {
+                    $this_row{hostitemflag} = 1;
+                    $this_row{hostbiblionumber} =
+                      GetBiblionumberFromItemnumber($hostitemnumber);
+                    last;
+                }
+            }
+        }
 
     }
+
+    next if ( $this_row{'nomod'} && $IndependentBranchesRecordsAndItems );
+
     if (%this_row) {
         push(@big_array, \%this_row);
     }

@@ -757,7 +757,7 @@ sub checkauth {
                 $session->param('surname'),      $session->param('branch'),
                 $session->param('branchname'),   $session->param('flags'),
                 $session->param('emailaddress'), $session->param('branchprinter'),
-                $session->param('persona'),      $session->param('shibboleth')
+                $session->param('persona'),      $session->param('shibboleth'), $type
             );
             C4::Context::set_shelves_userenv( 'bar', $session->param('barshelves') );
             C4::Context::set_shelves_userenv( 'pub', $session->param('pubshelves') );

@@ -823,6 +823,10 @@ sub SearchSubscriptions {
         push @where_strs, "subscription.closed = ?";
         push @where_args, "$args->{closed}";
     }
+    if( C4::Context->preference('IndependentBranchesRecordsAndItems') && !C4::Context->IsSuperlibrarian() ) {
+        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+        push @where_strs, "subscription.branchcode IN ( $branches )";
+    }
     if(@where_strs){
         $query .= " WHERE " . join(" AND ", @where_strs);
     }
