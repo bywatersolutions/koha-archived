@@ -6842,6 +6842,7 @@ if (C4::Context->preference("Version") < TransformToNum($DBversion)) {
             ADD KEY `branchcode_idx` (`branchcode`),
             ADD KEY `issuingbranch_idx` (`issuingbranch`)
     });
+
     #items
     $dbh->do(q{
         ALTER TABLE `items` ADD KEY `itype_idx` (`itype`)

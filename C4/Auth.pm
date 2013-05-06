@@ -222,7 +222,8 @@ sub get_template_and_user {
         # We are going to use the $flags returned by checkauth
         # to create the template's parameters that will indicate
         # which menus the user can access.
-        if ( $flags && $flags->{superlibrarian} == 1 ) {
+        if ( $flags && $flags->{superlibrarian}==1 ) {
+            $template->param( CAN_user_superlibrarian   => 1 );
             $template->param( CAN_user_circulate        => 1 );
             $template->param( CAN_user_catalogue        => 1 );
             $template->param( CAN_user_parameters       => 1 );

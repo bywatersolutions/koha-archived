@@ -536,7 +536,7 @@ var holdForPatron = function () {
                                   <a id="reserve_[% SEARCH_RESULT.biblionumber %]" href="/cgi-bin/koha/reserve/request.pl?biblionumber=[% SEARCH_RESULT.biblionumber %]">Holds</a>
                                   [% IF ( holdfor ) %] <span class="holdforlink">| <a href="/cgi-bin/koha/reserve/request.pl?biblionumber=[% SEARCH_RESULT.biblionumber %]&amp;findborrower=[% holdfor_cardnumber %]">Place hold for [% holdfor_firstname %] [% holdfor_surname %] ([% holdfor_cardnumber %])</a></span>[% END %]
                               [% END %]
-                          [% IF ( CAN_user_editcatalogue_edit_catalogue ) %]
+                              [% IF ( CAN_user_editcatalogue_edit_catalogue ) && ( !SEARCH_RESULT.branchcode || CAN_user_superlibrarian || ( !Koha.Preference( 'IndependentBranchesMarcEditing' ) || ( Koha.Preference( 'IndependentBranchesMarcEditing' ) && Koha.HasIndependentGroupModificationRightsFor( SEARCH_RESULT.branchcode ) ) ) ) %]
                           | <a href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% SEARCH_RESULT.biblionumber %]">Edit record</a>
                           [% END %]
                           [% IF ( CAN_user_editcatalogue_edit_items ) %]

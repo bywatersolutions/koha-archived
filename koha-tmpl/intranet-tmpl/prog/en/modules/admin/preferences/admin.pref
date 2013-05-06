@@ -103,7 +103,14 @@ Administration:
               choices:
                   yes: Prevent
                   no: "Don't prevent"
-            - staff from seeing items owned by other libraries, and records without any items the library.
+            - staff from seeing items owned by other libraries, and records without any items the library ( requires IndependentBranches ).
+        -
+            - pref: IndependentBranchesMarcEditing
+              default: 0
+              choices:
+                  yes: Prevent
+                  no: "Don't prevent"
+            - the logged in library from editing bibliographic records of other libraries. The owning library is defined by the branchcode in biblio.branchcode which should be mapped to a MARC field ( e.g. 951$o ).
     CAS Authentication:
         -
             - pref: casAuthentication

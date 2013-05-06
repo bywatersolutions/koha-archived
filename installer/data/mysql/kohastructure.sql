@@ -127,6 +127,7 @@ CREATE TABLE `biblio` ( -- table that stores bibliographic information
   `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, -- date and time this record was last touched
   `datecreated` DATE NOT NULL, -- the date this record was added to Koha
   `abstract` mediumtext, -- summary from the MARC record (520$a in MARC21)
+  `branchcode` VARCHAR( 10 ) NULL DEFAULT NULL, -- branchcode for the opationl 'owner' of this record.
   PRIMARY KEY  (`biblionumber`),
   KEY `blbnoidx` (`biblionumber`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -772,6 +773,7 @@ CREATE TABLE `deletedbiblio` ( -- stores information about bibliographic records
   `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, -- date and time this record was last touched
   `datecreated` DATE NOT NULL, -- the date this record was added to Koha
   `abstract` mediumtext, -- summary from the MARC record (520$a in MARC21)
+  `branchcode` VARCHAR( 10 ) NULL DEFAULT NULL, -- branchcode for the opationl 'owner' of this record.
   PRIMARY KEY  (`biblionumber`),
   KEY `blbnoidx` (`biblionumber`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

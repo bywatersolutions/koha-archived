@@ -170,7 +170,7 @@ sub build_authorized_values_list {
     # builds list, depending on authorised value...
 
     #---- branch
-    if ( $tagslib->{$tag}->{$subfield}->{'authorised_value'} eq "branches" ) {
+    if ( $tagslib->{$tag}->{$subfield}->{'authorised_value'} =~ /branches|branches_optional/ ) {
         #Use GetBranches($onlymine)
         my $onlymine =
              C4::Context->preference('IndependentBranches')
@@ -183,7 +183,7 @@ sub build_authorized_values_list {
             push @authorised_values, $thisbranch;
             $authorised_lib{$thisbranch} = $branches->{$thisbranch}->{'branchname'};
         }
-
+        push( @authorised_values, q{} ) if ( $tagslib->{$tag}->{$subfield}->{'authorised_value'} eq 'branches_optional' );
         #----- itemtypes
     }
     elsif ( $tagslib->{$tag}->{$subfield}->{authorised_value} eq "itemtypes" ) {
@@ -797,6 +797,25 @@ if (($biblionumber) && !($breedingid)){
 }
 if ($breedingid) {
     ( $record, $encoding ) = MARCfindbreeding( $breedingid ) ;
+}
+
+if ( $record != -1
+    && C4::Context->preference('IndependentBranchesMarcEditing') )
+{
+    my ( $field, $subfield ) =
+      GetMarcFromKohaField( 'biblio.branchcode', $frameworkcode );
+    if (
+           defined( $record->field($field) )
+        && defined( $record->subfield( $field, $subfield ) )
+        && !GetIndependentGroupModificationRights(
+            { for => $record->subfield( $field, $subfield ) }
+        )
+      )
+    {
+        print $input->redirect(
+            "/cgi-bin/koha/catalogue/detail.pl?biblionumber=$biblionumber");
+        exit;
+    }
 }
 
 #populate hostfield if hostbiblionumber is available

@@ -1,3 +1,5 @@
+[% USE Koha %]
+
 	<script type="text/javascript">
 	//<![CDATA[
 	[% IF ( CAN_user_editcatalogue_edit_catalogue ) %]
@@ -163,7 +165,7 @@ CAN_user_serials_create_subscription ) %]
     <div class="btn-group">
     <button class="btn btn-small dropdown-toggle" data-toggle="dropdown"><i class="icon-pencil"></i> Edit <span class="caret"></span></button>
         <ul class="dropdown-menu">
-            [% IF CAN_user_editcatalogue_edit_catalogue or ( frameworkcode == 'FA' and CAN_user_editcatalogue_fast_cataloging ) %]
+            [% IF ( ( CAN_user_editcatalogue_edit_catalogue ) or ( frameworkcode == 'FA' and CAN_user_editcatalogue_fast_cataloging ) ) && ( !biblio.branchcode || CAN_user_superlibrarian || ( !Koha.Preference( 'IndependentBranchesMarcEditing' ) || ( Koha.Preference( 'IndependentBranchesMarcEditing' ) && Koha.HasIndependentGroupModificationRightsFor( biblio.branchcode ) ) ) ) %]
             <li><a id="editbiblio" href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% biblionumber %]&amp;frameworkcode=[% current_framework %]&amp;op=">Edit record</a></li>
             [% END %]
 
@@ -197,7 +199,7 @@ CAN_user_serials_create_subscription ) %]
                 <li><a href="#" id="z3950copy">Replace record via Z39.50/SRU</a></li>
             [% END %]
 
-            [% IF CAN_user_editcatalogue_edit_catalogue or ( frameworkcode == 'FA' and CAN_user_editcatalogue_fast_cataloging ) %]
+            [% IF u CAN_user_editcatalogue_edit_catalogue or ( frameworkcode == 'FA' and CAN_user_editcatalogue_fast_cataloging ) ) || ( !Koha.Preference( 'IndependentBranchesMarcEditing' ) || ( Koha.Preference( 'IndependentBranchesMarcEditing' ) && LoginBranchcode == biblio.branchcode ) %]
                 [% IF ( count ) %]
                     <li class="disabled"><a id="deletebiblio" data-toggle="tooltip" data-placement="left" title="[% count %] item(s) are attached to this record. You must delete all items before deleting this record." href="#">Delete record</a></li>
                 [% ELSE %]

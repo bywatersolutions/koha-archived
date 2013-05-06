@@ -23,7 +23,7 @@ use Encode qw( encode );
 use base qw( Template::Plugin );
 
 use C4::Context;
-
+use C4::Branch qw( GetIndependentGroupModificationRights );
 =pod
 
 This plugin contains various Koha replated Template Toolkit functions
@@ -43,6 +43,12 @@ is necessary.
 sub Preference {
     my ( $self, $pref ) = @_;
     return encode('UTF-8', C4::Context->preference( $pref ) );
+}
+
+sub HasIndependentGroupModificationRightsFor {
+    my ( $self, $branchcode ) = @_;
+    my $value = GetIndependentGroupModificationRights( { for => $branchcode } );
+    return $value;
 }
 
 1;
