@@ -133,6 +133,7 @@ if ( $op eq 'add_form' ) {
         push @authorised_values, $category;
     }
     push( @authorised_values, "branches" );
+    push( @authorised_values, "branches_optional" );
     push( @authorised_values, "itemtypes" );
     push( @authorised_values, "cn_source" );
 

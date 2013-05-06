@@ -1,3 +1,5 @@
+[% USE Koha %]
+
 	<script type="text/javascript">
 	//<![CDATA[
 	[% IF ( CAN_user_editcatalogue_edit_catalogue ) %]
@@ -137,7 +139,7 @@ CAN_user_serials_create_subscription ) %]
     <div class="btn-group">
     <button class="btn btn-small dropdown-toggle" data-toggle="dropdown"><i class="icon-pencil"></i> Edit <span class="caret"></span></button>
         <ul class="dropdown-menu">
-            [% IF ( CAN_user_editcatalogue_edit_catalogue ) %]
+            [% IF ( CAN_user_editcatalogue_edit_catalogue ) && ( !biblio.branchcode || CAN_user_superlibrarian || ( !Koha.Preference( 'IndependentBranchesMarcEditing' ) || ( Koha.Preference( 'IndependentBranchesMarcEditing' ) && Koha.HasIndependentGroupModificationRightsFor( biblio.branchcode ) ) ) ) %]
             <li><a id="editbiblio" href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% biblionumber %]&amp;frameworkcode=[% current_framework %]&amp;op=">Edit record</a></li>
             [% END %]
 
@@ -155,11 +157,20 @@ CAN_user_serials_create_subscription ) %]
             [% IF ( LocalCoverImages || OPACLocalCoverImages) %][% IF ( CAN_user_tools_upload_local_cover_images ) %]<li><a href="/cgi-bin/koha/tools/upload-cover-image.pl?biblionumber=[% biblionumber %]&amp;filetype=image">Upload image</a>[% END %][% END %]
 
             [% IF ( CAN_user_editcatalogue_edit_catalogue ) %]
-            <li><a id="duplicatebiblio" href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% biblionumber %]&amp;frameworkcode=[% current_framework %]&amp;op=duplicate">Edit as new (duplicate)</a></li>
-            <li><a href="#" id="z3950copy">Replace record via Z39.50</a></li>
+                <li><a id="duplicatebiblio" href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% biblionumber %]&amp;frameworkcode=[% current_framework %]&amp;op=duplicate">Edit as new (duplicate)</a></li>
+                <li><a href="#" id="z3950copy">Replace record via Z39.50</a></li>
 
-            [% IF ( count ) %]<li class="disabled">[% ELSE %]<li>[% END %]
-            <a id="deletebiblio" href="/cgi-bin/koha/cataloguing/addbiblio.pl?op=delete&amp;biblionumber=[% biblionumber %]">Delete record</a></li>
+
+                [% IF ( !biblio.branchcode || CAN_user_superlibrarian || ( !Koha.Preference( 'IndependentBranchesMarcEditing' ) || ( Koha.Preference( 'IndependentBranchesMarcEditing' ) && LoginBranchcode == biblio.branchcode ) ) ) %]
+                    [% IF ( count ) %]
+                        <li class="disabled">
+                    [% ELSE %]
+                        <li>
+                    [% END %]
+
+                        <a id="deletebiblio" href="/cgi-bin/koha/cataloguing/addbiblio.pl?op=delete&amp;biblionumber=[% biblionumber %]">Delete record</a>
+                    </li>
+                [% END %]
             [% END %]
 
             [% IF ( CAN_user_editcatalogue_edit_items ) %]

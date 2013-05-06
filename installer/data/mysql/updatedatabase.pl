@@ -6802,6 +6802,7 @@ if (C4::Context->preference("Version") < TransformToNum($DBversion)) {
             ADD KEY `branchcode_idx` (`branchcode`),
             ADD KEY `issuingbranch_idx` (`issuingbranch`)
     });
+
     #items
     $dbh->do(q{
         ALTER TABLE `items` ADD KEY `itype_idx` (`itype`)
@@ -6995,7 +6996,7 @@ if ( CheckVersion($DBversion) ) {
 
 $DBversion = "3.13.00.XXX";
 if ( CheckVersion($DBversion) ) {
-    $dbh->do("
+    $dbh->do(q{
         INSERT INTO systempreferences (
             variable,
             value,
@@ -7009,8 +7010,38 @@ if ( CheckVersion($DBversion) ) {
             'If on, the staff interface search will hide all records that do not contain an item owned by the logged in branch, and hide the items themselves.',
             'YesNo'
         )
-    ");
+    });
     print "Upgrade to $DBversion done (Bug 10278 - Add ability to hide items and records from search results for Independent Branches)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.13.00.XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q{
+        INSERT INTO systempreferences (
+            variable,
+            value,
+            options,
+            explanation,
+            type
+        ) VALUES (
+            'IndependentBranchesMarcEditing',
+            '0',
+            '',
+            "If on, this preference disallows the editing of a bibliographic record unless the logged in library's branchcode matchs the branchcode stored in biblio.branchcode.",
+            'YesNo'
+        )
+    });
+
+    $dbh->do(q{
+        ALTER TABLE biblio ADD branchcode VARCHAR( 10 ) NULL DEFAULT NULL
+    });
+
+    $dbh->do(q{
+        ALTER TABLE deletedbiblio ADD branchcode VARCHAR( 10 ) NULL DEFAULT NULL
+    });
+
+    print "Upgrade to $DBversion done (Bug 10263 - Add ability to limit which branch can edit a bibliographic record)\n";
     SetVersion ($DBversion);
 }
 
