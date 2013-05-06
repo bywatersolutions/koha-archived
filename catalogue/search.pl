@@ -135,6 +135,8 @@ Not yet completed...
 use strict;            # always use
 #use warnings; FIXME - Bug 2505
 
+use List::MoreUtils qw(any);
+
 ## STEP 1. Load things that are used in both search page and
 # results page and decide which template to load, operations 
 # to perform, etc.
@@ -152,6 +154,7 @@ use URI::Escape;
 use POSIX qw(ceil floor);
 use String::Random;
 use C4::Branch; # GetBranches
+use URI::Escape;
 
 my $DisplayMultiPlaceHold = C4::Context->preference("DisplayMultiPlaceHold");
 # create a new CGI object
@@ -181,9 +184,11 @@ else {
     flagsrequired   => { catalogue => 1 },
     }
 );
+
 if (C4::Context->preference("marcflavour") eq "UNIMARC" ) {
     $template->param('UNIMARC' => 1);
 }
+
 if (C4::Context->preference("IntranetNumbersPreferPhrase")) {
     $template->param('numbersphr' => 1);
 }
@@ -228,20 +233,10 @@ my $branches = GetBranches();
 # Populate branch_loop with all branches sorted by their name.  If
 # IndependentBranches is activated, set the default branch to the borrower
 # branch, except for superlibrarian who need to search all libraries.
-my $user = C4::Context->userenv;
-my @branch_loop = map {
-     {
-        value      => $_,
-        branchname => $branches->{$_}->{branchname},
-        selected   => $user->{branch} eq $_ && C4::Branch::onlymine(),
-     }
-} sort {
-    $branches->{$a}->{branchname} cmp $branches->{$b}->{branchname}
-} keys %$branches;
-
-my $categories = GetBranchCategories('searchdomain');
-
-$template->param(branchloop => \@branch_loop, searchdomainloop => $categories);
+$template->param(
+    branchloop       => GetBranchesLoop(),
+    searchdomainloop => GetBranchCategories( undef, 'searchdomain' ),
+);
 
 # load the Type stuff
 my $itemtypes = GetItemTypes;
@@ -407,12 +402,12 @@ if ($indexes[0] && (!$indexes[1] || $params->{'scan'})) {
 }
 
 # an operand can be a single term, a phrase, or a complete ccl query
-my @operands = map uri_unescape($_), $cgi->param('q');
+my @operands = map { uri_unescape( $_ ) } $cgi->param('q');
 
 # limits are use to limit to results to a pre-defined category such as branch or language
-my @limits = map uri_unescape($_), $cgi->param('limit');
+my @limits = map { uri_unescape($_) } $cgi->param('limit');
 
-if($params->{'multibranchlimit'}) {
+if( $params->{'multibranchlimit'} ) {
     my $multibranch = '('.join( " or ", map { "branch: $_ " } @{ GetBranchesInCategory( $params->{'multibranchlimit'} ) } ).')';
     push @limits, $multibranch if ($multibranch ne  '()');
 }

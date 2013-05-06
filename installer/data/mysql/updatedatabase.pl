@@ -7136,6 +7136,39 @@ if ( CheckVersion($DBversion) ) {
     $dbh->do("INSERT INTO systempreferences (variable,value,options,explanation,type) VALUES('WhenLostForgiveFine','0',NULL,'If ON, Forgives the fines on an item when it is lost.','YesNo')");
     $dbh->do("INSERT INTO systempreferences (variable,value,options,explanation,type) VALUES('WhenLostChargeReplacementFee','1',NULL,'If ON, Charge the replacement price when a patron loses an item.','YesNo')");
     print "Upgrade to $DBversion done (Bug 7639: system preferences to forgive fines on lost items)\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.13.00.XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q{
+        ALTER TABLE branchcategories
+        CHANGE categorytype categorytype
+          ENUM( 'searchdomain', 'independent_group' )
+            NULL DEFAULT NULL
+    });
+    print "Upgrade to $DBversion done (Remove branch property groups, add independent groups)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.13.00.XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do("
+        INSERT INTO systempreferences (
+            variable,
+            value,
+            options,
+            explanation,
+            type
+        ) VALUES (
+            'IndependentBranchesRecordsAndItems',
+            '0',
+            '',
+            'If on, the staff interface search will hide all records that do not contain an item owned by the logged in branch, and hide the items themselves.',
+            'YesNo'
+        )
+    ");
+    print "Upgrade to $DBversion done (Bug 10278 - Add ability to hide items and records from search results for Independent Branches)\n";
     SetVersion ($DBversion);
 }
 

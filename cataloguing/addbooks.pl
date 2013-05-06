@@ -98,11 +98,12 @@ if ($query) {
     foreach my $line (@newresults) {
         if ( not exists $line->{'size'} ) { $line->{'size'} = "" }
     }
+    my $q = $input->param('q');
     $template->param(
         total          => $total_hits,
         query          => $query,
         resultsloop    => \@newresults,
-        pagination_bar => pagination_bar( "/cgi-bin/koha/cataloguing/addbooks.pl?q=$query&", getnbpages( $total_hits, $results_per_page ), $page, 'page' ),
+        pagination_bar => pagination_bar( "/cgi-bin/koha/cataloguing/addbooks.pl?q=$q&", getnbpages( $total_hits, $results_per_page ), $page, 'page' ),
     );
 }
 
