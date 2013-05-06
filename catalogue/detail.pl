@@ -62,6 +62,8 @@ my ( $template, $borrowernumber, $cookie, $flags ) = get_template_and_user(
 my $biblionumber = $query->param('biblionumber');
 my $record       = GetMarcBiblio($biblionumber);
 
+$template->param( biblio => GetBiblio( $biblionumber ) );
+
 if ( not defined $record ) {
     # biblionumber invalid -> report and exit
     $template->param( unknownbiblionumber => 1,
