@@ -36,6 +36,7 @@ use URI::Escape;
 use Business::ISBN;
 use MARC::Record;
 use MARC::Field;
+use List::MoreUtils qw(none);
 use utf8;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $DEBUG);
 
@@ -1838,14 +1839,47 @@ sub searchResults {
         my $maxitems = $maxitems_pref ? $maxitems_pref - 1 : 1;
         my @hiddenitems; # hidden itemnumbers based on OpacHiddenItems syspref
 
+        my $IndependentBranchesRecordsAndItems;
+        if ( $search_context eq 'opac' ) {
+            # For the OPAC, if IndependentBranchesRecordsAndItems is enabled,
+            # and BRANCHCODE has been set in the httpd conf,
+            # we need to filter the items
+            $IndependentBranchesRecordsAndItems =
+              C4::Context->preference('IndependentBranchesRecordsAndItems')
+              && $ENV{BRANCHCODE};
+        }
+        else {
+            # For the intranet, if IndependentBranchesRecordsAndItems is enabled,
+            # and the user is not a superlibrarian,
+            # we need to filter the items
+            $IndependentBranchesRecordsAndItems =
+              C4::Context->preference('IndependentBranchesRecordsAndItems')
+              && !C4::Context->IsSuperLibrarian();
+        }
+        my @allowed_branches = $IndependentBranchesRecordsAndItems ? GetIndependentGroupModificationRights() : undef;
+
         # loop through every item
+        my $index = -1;
         foreach my $field (@fields) {
+            $index++;
             my $item;
 
             # populate the items hash
             foreach my $code ( keys %subfieldstosearch ) {
                 $item->{$code} = $field->subfield( $subfieldstosearch{$code} );
             }
+
+            # if IndependentBranchesRecordsAndItems is enabled, and this record
+            # isn't allowed to be viewed, remove it from the items list and go
+            # right to the next item.
+            if ( $IndependentBranchesRecordsAndItems ) {
+                if ( none { $_ eq $item->{homebranch} } @allowed_branches ) {
+                    splice(@fields, $index, 1);
+                    $items_count--;
+                    next;
+                }
+            }
+
             $item->{description} = $itemtypes{ $item->{itype} }{description};
 
 	        # OPAC hidden items

@@ -36,43 +36,43 @@ BEGIN {
     $VERSION = 3.07.00.049;
 	require Exporter;
 	@ISA    = qw(Exporter);
-	@EXPORT = qw(
-		&slashifyDate
-		&subfield_is_koha_internal_p
-		&GetPrinters &GetPrinter
-		&GetItemTypes &getitemtypeinfo
-		&GetCcodes
-		&GetSupportName &GetSupportList
-		&get_itemtypeinfos_of
-		&getframeworks &getframeworkinfo
-		&getauthtypes &getauthtype
-		&getallthemes
-		&getFacets
-		&displayServers
-		&getnbpages
-		&get_infos_of
-		&get_notforloan_label_of
-		&getitemtypeimagedir
-		&getitemtypeimagesrc
-		&getitemtypeimagelocation
-		&GetAuthorisedValues
-		&GetAuthorisedValueCategories
-                &IsAuthorisedValueCategory
-		&GetKohaAuthorisedValues
-		&GetKohaAuthorisedValuesFromField
-    &GetKohaAuthorisedValueLib
-    &GetAuthorisedValueByCode
-    &GetKohaImageurlFromAuthorisedValues
-		&GetAuthValCode
-        &AddAuthorisedValue
-		&GetNormalizedUPC
-		&GetNormalizedISBN
-		&GetNormalizedEAN
-		&GetNormalizedOCLCNumber
-        &xml_escape
+    @EXPORT = qw(
+      &slashifyDate
+      &subfield_is_koha_internal_p
+      &GetPrinters &GetPrinter
+      &GetItemTypes &getitemtypeinfo
+      &GetCcodes
+      &GetSupportName &GetSupportList
+      &get_itemtypeinfos_of
+      &getframeworks &getframeworkinfo
+      &getauthtypes &getauthtype
+      &getallthemes
+      &getFacets
+      &displayServers
+      &getnbpages
+      &get_infos_of
+      &get_notforloan_label_of
+      &getitemtypeimagedir
+      &getitemtypeimagesrc
+      &getitemtypeimagelocation
+      &GetAuthorisedValues
+      &GetAuthorisedValueCategories
+      &IsAuthorisedValueCategory
+      &GetKohaAuthorisedValues
+      &GetKohaAuthorisedValuesFromField
+      &GetKohaAuthorisedValueLib
+      &GetAuthorisedValueByCode
+      &GetKohaImageurlFromAuthorisedValues
+      &GetAuthValCode
+      &AddAuthorisedValue
+      &GetNormalizedUPC
+      &GetNormalizedISBN
+      &GetNormalizedEAN
+      &GetNormalizedOCLCNumber
+      &xml_escape
 
-		$DEBUG
-	);
+      $DEBUG
+    );
 	$DEBUG = 0;
 @EXPORT_OK = qw( GetDailyQuote );
 }

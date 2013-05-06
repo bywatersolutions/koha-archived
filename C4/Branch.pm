@@ -42,6 +42,7 @@ BEGIN {
 		&GetCategoryTypes
 		&GetBranchCategories
 		&GetBranchesInCategory
+        &GetCategoriesForBranch
 		&ModBranchCategoryInfo
         &GetIndependentGroupModificationRights
 		&DelBranch
@@ -428,6 +429,39 @@ sub GetBranchesInCategory {
 	return( \@branches );
 }
 
+=head2 GetCategoriesForBranch
+
+    my @categories = GetCategoriesForBranch({
+        branchcode   => $branchcode,
+        categorytype => 'independent_group'
+    });
+
+    Called in a list context, returns an array of branch category codes
+    that branch is part of.
+
+    Called in a scalar context, returns an array ref.
+
+=cut
+
+sub GetCategoriesForBranch {
+    my ( $params ) = @_;
+    my $branchcode = $params->{branchcode};
+    my $categorytype = $params->{categorytype} || '%';
+
+    carp("Missing branchcode parameter!") unless ( $branchcode );
+
+    my $sql = q{
+        SELECT categorycode FROM branchrelations
+        JOIN branchcategories USING ( categorycode )
+        WHERE branchcode   = ?
+          AND categorytype = ?
+    };
+
+    my $categories = C4::Context->dbh->selectcol_arrayref( $sql, {}, ( $branchcode, $categorytype ) );
+
+    return wantarray() ? $categories : @$categories;
+}
+
 =head2 GetIndependentGroupModificationRights
 
     GetIndependentGroupModificationRights(
@@ -457,7 +491,7 @@ sub GetBranchesInCategory {
     is useful for "branchcode IN $branchcodes" clauses
     in SQL queries.
 
-    $this_branch and $other_branch are equal for efficiency.
+    Returns 1 if $this_branch and $other_branch are equal for efficiency.
 
     So you can write:
     my @branches = GetIndependentGroupModificationRights();
@@ -469,30 +503,44 @@ sub GetBranchesInCategory {
 sub GetIndependentGroupModificationRights {
     my ($params) = @_;
 
-    my $this_branch  = $params->{branch};
-    my $other_branch = $params->{for};
-    my $stringify    = $params->{stringify};
+    my $this_branch  = $params->{branch}    ||= q{};
+    my $other_branch = $params->{for}       ||= q{};
+    my $stringify    = $params->{stringify} ||= q{};
 
+    $this_branch ||= $ENV{BRANCHCODE};
     $this_branch ||= C4::Context->userenv->{branch};
 
-    carp("No branch found!") unless ($this_branch);
+    unless ($this_branch) {
+        carp("No branch found!");
+        return;
+    }
 
     return 1 if ( $this_branch eq $other_branch );
 
-    my $sql = q{
-        SELECT DISTINCT(branchcode)
-        FROM branchrelations
-        JOIN branchcategories USING ( categorycode )
-        WHERE categorycode IN (
-            SELECT categorycode
-            FROM branchrelations
-            WHERE branchcode = ?
-        )
-        AND branchcategories.categorytype = 'independent_group'
-    };
+    my $allow_all = 0;
+    $allow_all = 1 if C4::Context->IsSuperLibrarian();
+    $allow_all = 1 if C4::Context->userenv->{type} eq 'opac' && !$ENV{BRANCHCODE};
 
+    my $sql;
     my @params;
-    push( @params, $this_branch );
+    if ( $allow_all ) {
+        $sql = q{
+            SELECT branchcode FROM branches WHERE 1
+        }
+    } else {
+        $sql = q{
+            SELECT DISTINCT(branchcode)
+            FROM branchrelations
+            JOIN branchcategories USING ( categorycode )
+            WHERE categorycode IN (
+                SELECT categorycode
+                FROM branchrelations
+                WHERE branchcode = ?
+            )
+            AND branchcategories.categorytype = 'independent_group'
+        };
+        push( @params, $this_branch );
+    }
 
     if ($other_branch) {
         $sql .= q{ AND branchcode = ? };

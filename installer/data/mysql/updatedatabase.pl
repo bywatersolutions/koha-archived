@@ -6993,6 +6993,27 @@ if ( CheckVersion($DBversion) ) {
     SetVersion ($DBversion);
 }
 
+$DBversion = "3.13.00.XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do("
+        INSERT INTO systempreferences (
+            variable,
+            value,
+            options,
+            explanation,
+            type
+        ) VALUES (
+            'IndependentBranchesRecordsAndItems',
+            '0',
+            '',
+            'If on, the staff interface search will hide all records that do not contain an item owned by the logged in branch, and hide the items themselves.',
+            'YesNo'
+        )
+    ");
+    print "Upgrade to $DBversion done (Bug 10278 - Add ability to hide items and records from search results for Independent Branches)\n";
+    SetVersion ($DBversion);
+}
+
 =head1 FUNCTIONS
 
 =head2 TableExists($table)

@@ -135,6 +135,8 @@ Not yet completed...
 use strict;            # always use
 #use warnings; FIXME - Bug 2505
 
+use List::MoreUtils qw(any);
+
 ## STEP 1. Load things that are used in both search page and
 # results page and decide which template to load, operations 
 # to perform, etc.
@@ -180,9 +182,11 @@ else {
     flagsrequired   => { catalogue => 1 },
     }
 );
+
 if (C4::Context->preference("marcflavour") eq "UNIMARC" ) {
     $template->param('UNIMARC' => 1);
 }
+
 if (C4::Context->preference("IntranetNumbersPreferPhrase")) {
     $template->param('numbersphr' => 1);
 }
@@ -227,20 +231,10 @@ my $branches = GetBranches();
 # Populate branch_loop with all branches sorted by their name.  If
 # independantbranches is activated, set the default branch to the borrower
 # branch, except for superlibrarian who need to search all libraries.
-my $user = C4::Context->userenv;
-my @branch_loop = map {
-     {
-        value      => $_,
-        branchname => $branches->{$_}->{branchname},
-        selected   => $user->{branch} eq $_ && C4::Branch::onlymine(),
-     }
-} sort {
-    $branches->{$a}->{branchname} cmp $branches->{$b}->{branchname}
-} keys %$branches;
-
-my $categories = GetBranchCategories('searchdomain');
-
-$template->param(branchloop => \@branch_loop, searchdomainloop => $categories);
+$template->param(
+    branchloop       => GetBranchesLoop(),
+    searchdomainloop => GetBranchCategories( undef, 'searchdomain' ),
+);
 
 # load the Type stuff
 my $itemtypes = GetItemTypes;
@@ -411,7 +405,35 @@ my @operands = map uri_unescape($_), $cgi->param('q');
 # limits are use to limit to results to a pre-defined category such as branch or language
 my @limits = map uri_unescape($_), $cgi->param('limit');
 
-if($params->{'multibranchlimit'}) {
+if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
+    # Get list of branches this branch can access
+    my @branches = GetIndependentGroupModificationRights();
+
+    # Strip out any branch search limits that are not in the list of allowable branches
+    my $has_valid_branch_limits; # If at least one allowable branch limit is passed,
+                                 # use the valid ones, otherwise make it an "all branches"
+                                 # search with the allowed branches
+
+    my @new_limits;
+    foreach my $limit ( @limits ) {
+        if ( $limit =~ /^branch:/ ) {
+            my ( undef, $branch ) = split(':', $limit);
+            push( @new_limits, $limit ) if any { $_ eq $branch } @branches;
+            $has_valid_branch_limits = 1;
+        } else {
+            push( @new_limits, $limit );
+        }
+    }
+    @limits = @new_limits;
+
+    # If the limits contain any branch limits, if not, do a search on all allowable branches
+    unless ($has_valid_branch_limits) {
+        my $new_branch_limit =
+          '(' . join( " or ", map { "branch: $_ " } @branches ) . ')';
+        push( @limits, $new_branch_limit );
+    }
+}
+elsif( $params->{'multibranchlimit'} ) {
     my $multibranch = '('.join( " or ", map { "branch: $_ " } @{ GetBranchesInCategory( $params->{'multibranchlimit'} ) } ).')';
     push @limits, $multibranch if ($multibranch ne  '()');
 }
