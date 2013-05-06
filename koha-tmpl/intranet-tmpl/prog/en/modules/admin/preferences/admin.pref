@@ -97,6 +97,13 @@ Administration:
                   yes: Prevent
                   no: "Don't prevent"
             - staff (but not superlibrarians) from modifying objects (holds, items, patrons, etc.) belonging to other libraries.
+        -
+            - pref: IndependentBranchesRecordsAndItems
+              default: 0
+              choices:
+                  yes: Prevent
+                  no: "Don't prevent"
+            - staff from seeing items owned by other libraries, and records without any items the library.
     CAS Authentication:
         -
             - pref: casAuthentication

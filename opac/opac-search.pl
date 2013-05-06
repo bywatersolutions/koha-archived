@@ -433,6 +433,12 @@ if($params->{'multibranchlimit'}) {
     push @limits, $multibranch if ($multibranch ne  '()');
 }
 
+if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
+    my @branches = GetIndependentGroupModificationRights();
+    my $allowed = '(' . join( " or ", map { "branch: $_ " } @branches ) . ')';
+    push( @limits, $allowed ) if ( $allowed ne '()' );
+}
+
 my $available;
 foreach my $limit(@limits) {
     if ($limit =~/available/) {

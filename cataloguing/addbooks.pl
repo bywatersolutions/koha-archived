@@ -95,11 +95,12 @@ if ($query) {
     # SimpleSearch() give the results per page we want, so 0 offet here
     my $total = @{$marcresults};
     my @newresults = searchResults( 'intranet', $query, $total, $results_per_page, 0, 0, $marcresults );
+    my $q = $input->param('q');
     $template->param(
         total          => $total_hits,
         query          => $query,
         resultsloop    => \@newresults,
-        pagination_bar => pagination_bar( "/cgi-bin/koha/cataloguing/addbooks.pl?q=$query&", getnbpages( $total_hits, $results_per_page ), $page, 'page' ),
+        pagination_bar => pagination_bar( "/cgi-bin/koha/cataloguing/addbooks.pl?q=$q&", getnbpages( $total_hits, $results_per_page ), $page, 'page' ),
     );
 }
 

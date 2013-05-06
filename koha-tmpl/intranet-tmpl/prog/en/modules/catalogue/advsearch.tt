@@ -1,3 +1,4 @@
+[% USE Koha %]
 [% INCLUDE 'doc-head-open.inc' %]
 <title>Koha &rsaquo; Catalog &rsaquo; Advanced search</title>
 [% INCLUDE 'doc-head-close.inc' %]
@@ -230,34 +231,40 @@
 [% END %]
 
 <!-- AVAILABILITY LIMITS -->
-    <fieldset id="availability"><legend>Location and availability</legend>
-<fieldset id="currently-avail">
-        <p><label for="available-items">Only items currently available</label> <input type="checkbox" id="available-items" name="limit" value="available" /></p>
-</fieldset>
-
-<fieldset id="select-libs">
-        <p><label for="branchloop">Individual libraries:</label><select name="limit" id="branchloop" onchange='if(this.value != ""){document.getElementById("categoryloop").disabled=true;} else {document.getElementById("categoryloop").disabled=false;}'>
-        <option value="">All libraries</option>
-        [% FOREACH branchloo IN branchloop %]
-        [% IF ( branchloo.selected ) %]
-        <option value="branch:[% branchloo.value %]" selected="selected">[% branchloo.branchname %]</option>
-        [% ELSE %]
-        <option value="branch:[% branchloo.value %]">[% branchloo.branchname %]</option>
-        [% END %]
-        [% END %]
-        </select></p>
-    <!-- <input type="hidden" name="limit" value="branch: MAIN" /> -->
-        [% IF ( searchdomainloop ) %]
-    <p>OR</p> <!-- should addjs to grey out group pulldown if a library is selected. -->
-        <p><label for="categoryloop">Groups of libraries: </label><select name="multibranchlimit" id="categoryloop">
-        <option value=""> -- none -- </option>
-        [% FOREACH searchdomainloo IN searchdomainloop %]
-        <option value="[% searchdomainloo.categorycode %]">[% searchdomainloo.categoryname %]</option>
-        [% END %]
-        </select></p>
-    [% END %]
-</fieldset>
+<fieldset id="availability"><legend>Location and availability</legend>
+    <fieldset id="currently-avail">
+            <p><label for="available-items">Only items currently available</label> <input type="checkbox" id="available-items" name="limit" value="available" /></p>
     </fieldset>
+
+    <fieldset id="select-libs">
+            <p>
+                <label for="branchloop">Individual libraries:</label>
+                <select name="limit" id="branchloop" onchange='if(this.value != ""){document.getElementById("categoryloop").disabled=true;} else {document.getElementById("categoryloop").disabled=false;}'>
+                    <option value="">All libraries</option>
+                    [% FOREACH branchloo IN branchloop %]
+                        [% IF ( branchloo.selected ) %]
+                            <option value="branch:[% branchloo.value %]" selected="selected">[% branchloo.branchname %]</option>
+                        [% ELSE %]
+                            <option value="branch:[% branchloo.value %]">[% branchloo.branchname %]</option>
+                        [% END %]
+                    [% END %]
+                </select>
+            </p>
+
+            [% IF searchdomainloop && !Koha.Preference('IndependentBranchesRecordsAndItems') %]
+                <p>OR</p> <!-- should addjs to grey out group pulldown if a library is selected. -->
+                <p>
+                    <label for="categoryloop">Groups of libraries: </label>
+                    <select name="multibranchlimit" id="categoryloop">
+                        <option value=""> -- none -- </option>
+                        [% FOREACH searchdomainloo IN searchdomainloop %]
+                            <option value="[% searchdomainloo.categorycode %]">[% searchdomainloo.categoryname %]</option>
+                        [% END %]
+                    </select>
+                </p>
+            [% END %]
+    </fieldset>
+</fieldset>
 <!-- /AVAILABILITY LIMITS -->
 
 <!-- RANK LIMITS -->

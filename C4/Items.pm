@@ -1283,6 +1283,11 @@ If this is set, it is set to C<One Order>.
 
 sub GetItemsInfo {
     my ( $biblionumber ) = @_;
+
+    my $IndependentBranchesRecordsAndItems =
+      C4::Context->preference('IndependentBranchesRecordsAndItems')
+      && !C4::Context->IsSuperLibrarian();
+
     my $dbh   = C4::Context->dbh;
     # note biblioitems.* must be avoided to prevent large marc and marcxml fields from killing performance.
     my $query = "
@@ -1328,7 +1333,10 @@ sub GetItemsInfo {
      LEFT JOIN serial USING (serialid)
      LEFT JOIN itemtypes   ON   itemtypes.itemtype         = "
      . (C4::Context->preference('item-level_itypes') ? 'items.itype' : 'biblioitems.itemtype');
-    $query .= " WHERE items.biblionumber = ? ORDER BY home.branchname, items.enumchron, LPAD( items.copynumber, 8, '0' ), items.dateaccessioned DESC" ;
+    $query .= " WHERE items.biblionumber = ? ";
+    $query .= " AND items.homebranch IN ( " . GetIndependentGroupModificationRights({ stringify => 1}) . " ) " if ( $IndependentBranchesRecordsAndItems );
+    $query .= " ORDER BY home.branchname, items.enumchron, LPAD( items.copynumber, 8, '0' ), items.dateaccessioned DESC" ;
+
     my $sth = $dbh->prepare($query);
     $sth->execute($biblionumber);
     my $i = 0;
