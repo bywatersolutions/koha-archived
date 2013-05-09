@@ -21,7 +21,7 @@ use Modern::Perl;
 use C4::Context;
 use Data::Dumper;
 
-use Test::More tests => 36;
+use Test::More tests => 69;
 
 use C4::Branch;
 
@@ -178,14 +178,14 @@ my $cat1 = {
     categorycode     => 'CAT1',
     categoryname     => 'catname1',
     codedescription  => 'catdesc1',
-    categorytype     => 'cattype1',
+    categorytype     => 'searchdomain',
     show_in_pulldown => 1
 };
 my $cat2 = {
     add              => 1,
     categorycode     => 'CAT2',
     categoryname     => 'catname2',
-    categorytype     => 'catype2',
+    categorytype     => 'searchdomain',
     codedescription  => 'catdesc2',
     show_in_pulldown => 1
 };
@@ -194,7 +194,7 @@ my %new_category = (
     categorycode     => 'LIBCATCODE',
     categoryname     => 'library category name',
     codedescription  => 'library category code description',
-    categorytype     => 'searchdomain',
+    categorytype     => 'independent_group',
     show_in_pulldown => 1,
 );
 
@@ -343,7 +343,7 @@ is( CheckCategoryUnique('CAT_NO_EXISTS'), 1, 'CAT_NO_EXISTS doesnt exist' );
 
 #Test GetCategoryTypes
 my @category_types = GetCategoryTypes();
-is_deeply(\@category_types, [ 'searchdomain', 'properties' ], 'received expected library category types');
+is_deeply(\@category_types, [ 'searchdomain', 'independent_groups' ], 'received expected library category types');
 
 $categories = GetBranchCategories(undef, undef, 'LIBCATCODE');
 is_deeply($categories, [ {%$cat1}, {%$cat2},{ %new_category, selected => 1 } ], 'retrieve expected, eselected library category (bug 10515)');
@@ -354,6 +354,72 @@ is_deeply($categories, [ {%$cat1}, {%$cat2},{ %new_category, selected => 1 } ], 
 #Test GetBranchesLoop
 my $loop = GetBranchesLoop;
 is( scalar(@$loop), GetBranchesCount(), 'There is the right number of branches' );
+
+# Test GetIndependentGroupModificationRights
+my @branches_bra = GetIndependentGroupModificationRights({ branch => 'BRA' });
+is_deeply( \@branches_bra, [ 'BRA' ], 'Library with no group only has rights for its own branch' );
+
+my $string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
+ok( $string eq q{'BRA'}, "String returns correctly" );
+
+ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRA' }), 'Boolean test for BRA rights to BRA returns true' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRB' }), 'Boolean test for BRA rights to BRB returns false' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRC' }), 'Boolean test for BRA rights to BRC returns false' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRB' }), 'Boolean test for BRB rights to BRB returns true' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRA' }), 'Boolean test for BRB rights to BRA returns false' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRC' }), 'Boolean test for BRB rights to BRC returns false' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRC' }), 'Boolean test for BRC rights to BRC returns true' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRA'}), 'Boolean test for BRC rights to BRA returns false' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRB'}), 'Boolean test for BRC rights to BRB returns false' );
+
+ModBranch({
+    branchcode     => 'BRA',
+    branchname     => 'BranchA',
+    LIBCATCODE     => 1,
+});
+ModBranch({
+    branchcode     => 'BRB',
+    branchname     => 'BranchB',
+    LIBCATCODE     => 1,
+});
+
+@branches_bra = GetIndependentGroupModificationRights({ branch => 'BRA' });
+is_deeply( \@branches_bra, [ 'BRA', 'BRB' ], 'Libraries in LIBCATCODE returned correctly' );
+
+$string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
+ok( $string eq q{'BRA','BRB'}, "String returns correctly" );
+
+ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRA' }), 'Boolean test for BRA rights to BRA returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRB'}), 'Boolean test for BRA rights to BRB returns true' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRC'}), 'Boolean test for BRA rights to BRC returns false' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRB' }), 'Boolean test for BRB rights to BRB returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRA'}), 'Boolean test for BRB rights to BRA returns true' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRC'}), 'Boolean test for BRB rights to BRC returns false' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRC' }), 'Boolean test for BRC rights to BRC returns true' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRA'}), 'Boolean test for BRC rights to BRA returns false' );
+ok( !GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRB'}), 'Boolean test for BRC rights to BRB returns false' );
+
+ModBranch({
+    branchcode     => 'BRC',
+    branchname     => 'BranchC',
+    LIBCATCODE     => 1,
+});
+
+@branches_bra = GetIndependentGroupModificationRights({ branch => 'BRA' });
+is_deeply( \@branches_bra, [ 'BRA', 'BRB', 'BRC' ], 'Library with no group only has rights for its own branch' );
+
+ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRA' }), 'Boolean test for BRA rights to BRA returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRB'}), 'Boolean test for BRA rights to BRB returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRC'}), 'Boolean test for BRA rights to BRC returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRB' }), 'Boolean test for BRB rights to BRB returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRA'}), 'Boolean test for BRB rights to BRA returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRC'}), 'Boolean test for BRB rights to BRC returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRC' }), 'Boolean test for BRC rights to BRC returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRA'}), 'Boolean test for BRC rights to BRA returns true' );
+ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRA'}), 'Boolean test for BRC rights to BRB returns true' );
+
+$string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
+ok( $string eq q{'BRA','BRB','BRC'}, "String returns correctly" );
 
 # End transaction
 $dbh->rollback;

@@ -260,7 +260,7 @@ sub editbranchform {
         $oldprinter = $data->{'branchprinter'} || '';
         _branch_to_template($data, $innertemplate);
     }
-    $innertemplate->param( categoryloop => $catinfo );
+    $innertemplate->param( branch_categories  => $catinfo );
 
     foreach my $thisprinter ( keys %$printers ) {
         push @printerloop, {
@@ -279,25 +279,8 @@ sub editbranchform {
 }
 
 sub editcatform {
-
-    # prepares the edit form...
-    my ($categorycode,$innertemplate) = @_;
-    # warn "cat : $categorycode";
-	my @cats;
-    my $data;
-	if ($categorycode) {
-        my $data = GetBranchCategory($categorycode);
-        $innertemplate->param(
-            categorycode    => $data->{'categorycode'},
-            categoryname    => $data->{'categoryname'},
-            codedescription => $data->{'codedescription'},
-            show_in_pulldown => $data->{'show_in_pulldown'},
-		);
-    }
-	for my $ctype (GetCategoryTypes()) {
-		push @cats , { type => $ctype , selected => ($data->{'categorytype'} and $data->{'categorytype'} eq $ctype) };
-	}
-    $innertemplate->param(categorytype => \@cats);
+    my ( $categorycode, $innertemplate ) = @_;
+    $innertemplate->param( category => GetBranchCategory($categorycode) );
 }
 
 sub branchinfotable {
@@ -368,25 +351,20 @@ sub branchinfotable {
 
         push @loop_data, \%row;
     }
-    my @branchcategories = ();
-	for my $ctype ( GetCategoryTypes() ) {
-        my $catinfo = GetBranchCategories($ctype);
-        my @categories;
-		foreach my $cat (@$catinfo) {
-            push @categories, {
-                categoryname    => $cat->{'categoryname'},
-                categorycode    => $cat->{'categorycode'},
-                codedescription => $cat->{'codedescription'},
-                categorytype    => $cat->{'categorytype'},
-            };
-    	}
-        push @branchcategories, { categorytype => $ctype , $ctype => 1 , catloop => ( @categories ? \@categories : undef) };
-	}
-    $innertemplate->param(
-        branches         => \@loop_data,
-        branchcategories => \@branchcategories
-    );
 
+    my $catinfo = GetBranchCategories();
+    my $categories;
+    foreach my $cat (@$catinfo) {
+        $categories->{ $cat->{categorytype} }->{ $cat->{'categorycode'} } = {
+            categoryname    => $cat->{'categoryname'},
+            codedescription => $cat->{'codedescription'},
+        };
+    }
+
+    $innertemplate->param(
+        branches          => \@loop_data,
+        branch_categories => $categories
+    );
 }
 
 sub _branch_to_template {

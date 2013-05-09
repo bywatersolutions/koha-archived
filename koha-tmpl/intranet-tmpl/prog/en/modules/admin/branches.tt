@@ -112,20 +112,50 @@ tinyMCE.init({
         </li>
 	</ol>
 	</fieldset>
-	[% IF ( categoryloop ) %]<fieldset class="rows"><legend>Group(s):</legend>
-        <ol>
-		[% FOREACH categoryloo IN categoryloop %]
-            <li><label for="[% categoryloo.categorycode %]">[% categoryloo.categoryname %]: </label>
-                [% IF categoryloo.selected %]
-                    <input type="checkbox" id="[% categoryloo.categorycode %]" name="[% categoryloo.categorycode %]" checked="checked" />
-                [% ELSE %]
-                    <input type="checkbox" id="[% categoryloo.categorycode %]" name="[% categoryloo.categorycode %]" />
-                [% END %]
-                <span class="hint">[% categoryloo.codedescription %]</span>
-            </li>
-        [% END %]
-		</ol>
-</fieldset>[% END %]
+
+     [% IF ( branch_categories ) %]
+        <fieldset class="rows">
+            <legend>Group(s):</legend>
+            <ol>
+                <fieldset>
+                    <legend>Search domain</legend>
+                    [% FOREACH bc IN branch_categories %]
+                        [% IF bc.categorytype == "searchdomain" %]
+                            <li>
+                                <label for="[% bc.categorycode %]">[% bc.categoryname %]: </label>
+                                [% IF ( bc.selected ) %]
+                                    <input type="checkbox" id="[% bc.categorycode %]" name="[% bc.categorycode %]" checked="checked" />
+                                [% ELSE %]
+                                    <input type="checkbox" id="[% bc.categorycode %]" name="[% bc.categorycode %]" />
+                                [% END %]
+                                <span class="hint">[% bc.codedescription %]</span>
+                            </li>
+                        [% END %]
+                    [% END %]
+                </fieldset>
+            </ol>
+            <ol>
+                <fieldset>
+                    <legend>Independent library groups</legend>
+                    [% FOREACH bc IN branch_categories %]
+                        [% IF bc.categorytype == "independent_group" %]
+                            <li>
+                                <label for="[% bc.categorycode %]">[% bc.categoryname %]: </label>
+                                [% IF ( bc.selected ) %]
+                                    <input type="checkbox" id="[% bc.categorycode %]" name="[% bc.categorycode %]" checked="checked" />
+                                [% ELSE %]
+                                    <input type="checkbox" id="[% bc.categorycode %]" name="[% bc.categorycode %]" />
+                                [% END %]
+                                <span class="hint">[% bc.codedescription %]</span>
+                            </li>
+                        [% END %]
+                    [% END %]
+                <li><label>Note:</label><span class="hint">If independent library groups are enabled ( via the IndependentBranches system preference ), a library may access and alter records and patrons from libraries in any group that also library belongs to. A library may belong to multiple library groups.</span></li>
+                </fieldset>
+            </ol>
+        </fieldset>
+    [% END %]
+
 	<fieldset class="rows">
 	<ol>
         <li><label for="branchaddress1">Address line 1: </label><input type="text" name="branchaddress1" id="branchaddress1" size="60" value="[% branchaddress1 |html %]" /></li>
@@ -266,89 +296,121 @@ tinyMCE.init({
 	<div class="dialog message">There are no libraries defined. <a href="/cgi-bin/koha/admin/branches.pl?op=add">Start defining libraries</a>.</div>
 	[% END %]
 
-   [% IF ( branchcategories ) %]
-   [% FOREACH branchcategorie IN branchcategories %]
-    <h3>Group(s):  [% IF ( branchcategorie.properties ) %]Properties[% ELSE %][% IF ( branchcategorie.searchdomain ) %]Search domain[% END %][% END %]</h3>
-    [% IF ( branchcategorie.catloop ) %]
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Code</th>
-            <th>Description</th>
-            <th>&nbsp;</th>
-            <th>&nbsp;</th>
-          </tr>
-        </thead>
-        <tbody>
-          [% FOREACH catloo IN branchcategorie.catloop %]
-            <tr>
-              <td>[% catloo.categoryname %]</td>
-              <td>[% catloo.categorycode %]</td>
-              <td>[% catloo.codedescription %]</td>
-              <td>
-                <a href="[% catloo.action %]?op=editcategory&amp;categorycode=[% catloo.categorycode |url %]">Edit</a>
-              </td>
-              <td>
-                <a href="[% catloo.action %]?op=delete_category&amp;categorycode=[% catloo.categorycode |url %]">Delete</a>
-              </td>
-            </tr>
-          [% END %]
-        </tbody>
-      </table>
+    <h3>Search domain groups</h3>
+    [% IF branch_categories.searchdomain %]
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Description</th>
+                    <th>&nbsp;</th>
+                    <th>&nbsp;</th>
+                  </tr>
+            </thead>
+            <tbody>
+                [% FOREACH bc IN branch_categories.searchdomain %]
+                    <tr>
+                      <td>[% bc.value.categoryname %]</td>
+                      <td>[% bc.key %]</td>
+                      <td>[% bc.value.codedescription %]</td>
+                      <td>
+                        <a href="?op=editcategory&amp;categorycode=[% bc.key |url %]">Edit</a>
+                      </td>
+                      <td>
+                        <a href="?op=delete_category&amp;categorycode=[% bc.key |url %]">Delete</a>
+                      </td>
+                    </tr>
+                [% END %]
+            </tbody>
+        </table>
     [% ELSE %]
-      No [% IF ( branchcategorie.properties ) %]properties[% ELSIF ( branchcategorie.searchdomain ) %]search domain[% END %] defined. <a href="/cgi-bin/koha/admin/branches.pl?op=editcategory">Add a new group</a>.
+        No search domain groups defined.
     [% END %]
-  [% END %]
-  [% ELSE %]
-    <p>No groups defined.</p>
-  [% END %] <!-- NAME="branchcategories" -->
+    <a href="/cgi-bin/koha/admin/branches.pl?op=editcategory">Add a new group</a>.
+
+    <h3>Independent library groups:</h3>
+    [% IF branch_categories.independent_group %]
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Description</th>
+                    <th>&nbsp;</th>
+                    <th>&nbsp;</th>
+                  </tr>
+            </thead>
+            <tbody>
+                [% FOREACH bc IN branch_categories.independent_group %]
+                    <tr>
+                      <td>[% bc.value.categoryname %]</td>
+                      <td>[% bc.key %]</td>
+                      <td>[% bc.value.codedescription %]</td>
+                      <td>
+                        <a href="?op=editcategory&amp;categorycode=[% bc.key |url %]">Edit</a>
+                      </td>
+                      <td>
+                        <a href="?op=delete_category&amp;categorycode=[% bc.key |url %]">Delete</a>
+                      </td>
+                    </tr>
+                [% END %]
+            </tbody>
+        </table>
+    [% ELSE %]
+        No independent library groups defined.
+    [% END %]
+    <a href="/cgi-bin/koha/admin/branches.pl?op=editcategory">Add a new group</a>.
 [% END %]
 
 [% IF ( editcategory ) %]
-    <h3>[% IF ( categorycode ) %]Edit group [% categorycode %][% ELSE %]Add group[% END %]</h3>
+    <h3>[% IF ( category ) %]Edit group [% category.categorycode %][% ELSE %]Add group[% END %]</h3>
     <form action="[% action %]" name="Aform" method="post">
     <input type="hidden" name="op" value="addcategory_validate" />
-	[% IF ( categorycode ) %]
-	<input type="hidden" name="add" value="0">
-	[% ELSE %]
-	<input type="hidden" name="add" value="1">
-	[% END %]
+    [% IF ( category.categorycode ) %]
+        <input type="hidden" name="add" value="0">
+    [% ELSE %]
+        <input type="hidden" name="add" value="1">
+    [% END %]
     <fieldset class="rows">
 
         <ol><li>
-                [% IF ( categorycode ) %]
+                [% IF ( category.categorycode ) %]
 				<span class="label">Category code: </span>
-                    <input type="hidden" name="categorycode" id="categorycode" value="[% categorycode |html %]" />
-                    [% categorycode %]
+                    <input type="hidden" name="categorycode" id="categorycode" value="[% category.categorycode | html %]" />
+                    [% category.categorycode %]
                 [% ELSE %]
-                <label for="categorycode">Category code:</label>
-                    <input type="text" name="categorycode" id="categorycode" size="10" maxlength="10" value="[% categorycode |html %]" />
+                    <label for="categorycode">Category code:</label>
+                    <input type="text" name="categorycode" id="categorycode" size="10" maxlength="10" value="[% categorycode | html %]" />
                 [% END %]
             </li>
         <li>
             <label for="categoryname">Name: </label>
-            <input type="text" name="categoryname" id="categoryname" size="32" maxlength="32" value="[% categoryname |html %]" />
+            <input type="text" name="categoryname" id="categoryname" size="32" maxlength="32" value="[% category.categoryname | html %]" />
         </li>
         <li>
             <label for="codedescription">Description: </label>
-            <input type="text" name="codedescription" id="codedescription" size="70" value="[% codedescription |html %]" />
+            <input type="text" name="codedescription" id="codedescription" size="70" value="[% category.codedescription | html %]" />
         </li>
 		<li>
         <label for="categorytype">Category type: </label>
             <select id="categorytype" name="categorytype">
-            [% FOREACH categorytyp IN categorytype %]
-                [% IF ( categorytyp.selected ) %]
-                    <option value="[% categorytyp.type %]" selected="selected">
+                [% IF ( category.categorytype == 'searchdomain' ) %]
+                    <option value="searchdomain" selected="selected">Search domain</option>
                 [% ELSE %]
-                    <option value="[% categorytyp.type %]">
-                [% END %] [% categorytyp.type %]</option>
-            [% END %]
+                    <option value="searchdomain">Search domain</option>
+                [% END %]
+
+                [% IF ( category.categorytype == 'independent_group' ) %]
+                    <option value="independent_group" selected="selected">Independent group</option>
+                [% ELSE %]
+                    <option value="independent_group">Independent group</option>
+                [% END %]
             </select>
 		</li>
         <li>
             <label for="show_in_pulldown">Show in search pulldown: </label>
-            [% IF ( show_in_pulldown ) %]
+            [% IF ( category.show_in_pulldown ) %]
                 <input type="checkbox" name="show_in_pulldown" id="show_in_pulldown" checked="checked"/>
             [% ELSE %]
                 <input type="checkbox" name="show_in_pulldown" id="show_in_pulldown" />
@@ -356,7 +418,13 @@ tinyMCE.init({
         </li>
 		</ol>
     </fieldset>
-	<fieldset class="action"><input type="submit" value="Update" /></fieldset>
+  <fieldset class="action">
+        [% IF category %]
+            <input type="submit" value="Update group" />
+        [% ELSE %]
+            <input type="submit" value="Add group" />
+        [% END %]
+    </fieldset>
     </form>
 [% END %]
 

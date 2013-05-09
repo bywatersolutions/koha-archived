@@ -33,6 +33,7 @@ use Koha::DateUtils qw( dt_from_string );
 use List::MoreUtils qw(any);
 use C4::Dates qw(format_date_in_iso);
 use base qw(Exporter);
+use C4::Branch qw(GetIndependentGroupModificationRights);
 
 our $VERSION = 3.07.00.049;
 our @EXPORT  = qw(
@@ -133,18 +134,15 @@ sub SearchSuggestion {
     }
 
     # filter on user branch
-    if ( C4::Context->preference('IndependentBranches') ) {
-        my $userenv = C4::Context->userenv;
-        if ($userenv) {
-            if ( !C4::Context->IsSuperLibrarian() && !$suggestion->{branchcode} )
-            {
-                push @sql_params, $$userenv{branch};
-                push @query,      q{
-                    AND (suggestions.branchcode=? OR suggestions.branchcode='')
-                };
-            }
-        }
-    } else {
+    if (   C4::Context->preference('IndependentBranches')
+        && !C4::Context->IsSuperLibrarian()
+        && !$suggestion->{branchcode} )
+    {
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+        push( @query, qq{ AND (suggestions.branchcode IN ( $branches ) OR suggestions.branchcode='') } );
+    }
+    else {
         if ( defined $suggestion->{branchcode} && $suggestion->{branchcode} ) {
             unless ( $suggestion->{branchcode} eq '__ANY__' ) {
                 push @sql_params, $suggestion->{branchcode};
@@ -342,13 +340,19 @@ sub GetSuggestionByStatus {
 
     # filter on branch
     if ( C4::Context->preference("IndependentBranches") || $branchcode ) {
-        my $userenv = C4::Context->userenv;
-        if ($userenv) {
-            unless ( C4::Context->IsSuperLibrarian() ) {
-                push @sql_params, $userenv->{branch};
-                $query .= q{ AND (U1.branchcode = ? OR U1.branchcode ='') };
-            }
+        if (   C4::Context->userenv
+            && C4::Context->preference("IndependentBranches")
+            && !C4::Context->IsSuperLibrarian() )
+        {
+
+            my $branches =
+              GetIndependentGroupModificationRights( { stringify => 1 } );
+
+            $query .= qq{
+                AND (U1.branchcode IN ( $branches ) OR U1.branchcode ='')
+            };
         }
+
         if ($branchcode) {
             push @sql_params, $branchcode;
             $query .= q{ AND (U1.branchcode = ? OR U1.branchcode ='') };
@@ -394,12 +398,19 @@ sub CountSuggestion {
     if ( C4::Context->preference("IndependentBranches")
         && !C4::Context->IsSuperLibrarian() )
     {
-        my $query = q{
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+
+        my $query = qq{
             SELECT count(*)
             FROM suggestions
                 LEFT JOIN borrowers ON borrowers.borrowernumber=suggestions.suggestedby
             WHERE STATUS=?
-                AND (borrowers.branchcode='' OR borrowers.branchcode=?)
+                AND (
+                    borrowers.branchcode IN ( $branches )
+                    OR
+                    borrowers.branchcode=?
+                )
         };
         $sth = $dbh->prepare($query);
         $sth->execute( $status, $userenv->{branch} );

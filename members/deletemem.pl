@@ -91,11 +91,17 @@ if ($bor->{category_type} eq "S") {
     }
 }
 
-if (C4::Context->preference("IndependentBranches")) {
-    my $userenv = C4::Context->userenv;
+if ( C4::Context->preference("IndependentBranches") ) {
     if ( !C4::Context->IsSuperLibrarian() && $bor->{'branchcode'}){
-        unless ($userenv->{branch} eq $bor->{'branchcode'}){
-            print $input->redirect("/cgi-bin/koha/members/moremember.pl?borrowernumber=$member&error=CANT_DELETE_OTHERLIBRARY");
+        unless (
+            GetIndependentGroupModificationRights(
+                { for => $bor->{'branchcode'} }
+            )
+          )
+        {
+            print $input->redirect(
+                "/cgi-bin/koha/members/moremember.pl?borrowernumber=$member&error=CANT_DELETE_OTHERLIBRARY"
+            );
             exit;
         }
     }

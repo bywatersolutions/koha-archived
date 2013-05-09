@@ -36,6 +36,7 @@ use C4::Auth;
 use C4::Dates qw/format_date format_date_in_iso/;
 use C4::Debug;
 use Date::Calc qw/Today Add_Delta_YMD/;
+use C4::Branch qw/GetIndependentGroupModificationRights/;
 
 my $input = new CGI;
 my $startdate=$input->param('from');
@@ -153,8 +154,8 @@ if ( $run_report ) {
 
 
     if (C4::Context->preference('IndependentBranches')){
-        $strsth .= " AND items.holdingbranch=? ";
-        push @query_params, C4::Context->userenv->{'branch'};
+        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+        $strsth .= " AND items.holdingbranch IN ( $branches ) ";
     }
     $strsth .= " GROUP BY reserves.biblionumber ORDER BY biblio.title ";
 

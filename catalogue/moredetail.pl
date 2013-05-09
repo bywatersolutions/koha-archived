@@ -175,13 +175,18 @@ foreach my $item (@items){
         $item->{status_advisory} = 1;
     }
 
-    if (C4::Context->preference("IndependentBranches")) {
-        #verifying rights
-        my $userenv = C4::Context->userenv();
-        unless (C4::Context->IsSuperLibrarian() or ($userenv->{'branch'} eq $item->{'homebranch'})) {
-                $item->{'nomod'}=1;
+    if ( C4::Context->preference("IndependentBranches") ) {
+        unless (
+            C4::Context->IsSuperLibrarian()
+            || GetIndependentGroupModificationRights(
+                { for => $item->{'homebranch'} }
+            )
+          )
+        {
+            $item->{'nomod'} = 1;
         }
     }
+
     $item->{'homebranchname'} = GetBranchName($item->{'homebranch'});
     $item->{'holdingbranchname'} = GetBranchName($item->{'holdingbranch'});
     if ($item->{'datedue'}) {

@@ -32,6 +32,7 @@ use C4::Bookseller qw(GetBookSellerFromId);
 use C4::Templates qw(gettemplate);
 use Koha::DateUtils qw( dt_from_string output_pref );
 use Koha::Acquisition::Order;
+use C4::Branch qw(GetIndependentGroupModificationRights);
 
 use Time::localtime;
 use HTML::Entities;
@@ -1950,9 +1951,9 @@ sub GetParcel {
     my @query_params = ( $supplierid, $code, $datereceived );
     if ( C4::Context->preference("IndependentBranches") ) {
         unless ( C4::Context->IsSuperLibrarian() ) {
-            $strsth .= " and (borrowers.branchcode = ?
-                        or borrowers.branchcode  = '')";
-            push @query_params, C4::Context->userenv->{branch};
+            my $branches =
+              GetIndependentGroupModificationRights( { stringify => 1 } );
+            $strsth .= " AND ( borrowers.branchcode IN ( $branches ) OR borrowers.branchcode  = '')";
         }
     }
     $strsth .= " ORDER BY aqbasket.basketno";
@@ -2167,8 +2168,8 @@ sub GetLateOrders {
     }
     if (C4::Context->preference("IndependentBranches")
             && !C4::Context->IsSuperLibrarian() ) {
-        $from .= ' AND borrowers.branchcode LIKE ? ';
-        push @query_params, C4::Context->userenv->{branch};
+        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+        $from .= qq{ AND borrowers.branchcode IN ( $branches ) };
     }
     $from .= " AND orderstatus <> 'cancelled' ";
     my $query = "$select $from $having\nORDER BY latesince, basketno, borrowers.branchcode, supplier";
@@ -2386,13 +2387,14 @@ sub GetHistory {
         $query .= ") ";
     }
 
-
-    if ( C4::Context->preference("IndependentBranches") ) {
-        unless ( C4::Context->IsSuperLibrarian() ) {
-            $query .= " AND (borrowers.branchcode = ? OR borrowers.branchcode ='' ) ";
-            push @query_params, C4::Context->userenv->{branch};
-        }
+    if ( C4::Context->preference("IndependentBranches")
+        && !C4::Context->IsSuperLibrarian() )
+    {
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+        $query .= qq{ AND ( borrowers.branchcode = ? OR borrowers.branchcode IN ( $branches ) ) };
     }
+
     $query .= " ORDER BY id";
 
     return $dbh->selectall_arrayref( $query, { Slice => {} }, @query_params );

@@ -384,7 +384,7 @@ CREATE TABLE `branchcategories` ( -- information related to library/branch group
   `categorycode` varchar(10) NOT NULL default '', -- unique identifier for the library/branch group
   `categoryname` varchar(32), -- name of the library/branch group
   `codedescription` mediumtext, -- longer description of the library/branch group
-  `categorytype` varchar(16), -- says whether this is a search group or a properties group
+  `categorytype` ENUM(  'searchdomain',  'independent_group' ) NULL DEFAULT NULL, -- says whether this is a search group or an independent group
   `show_in_pulldown` tinyint(1) NOT NULL DEFAULT '0', -- says this group should be in the opac libararies pulldown if it is enabled
   PRIMARY KEY  (`categorycode`),
   KEY `show_in_pulldown` (`show_in_pulldown`)

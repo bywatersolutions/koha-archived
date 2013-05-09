@@ -23,6 +23,7 @@ use C4::Auth;
 use C4::Output;
 use C4::Context;
 use C4::Koha;
+use C4::Branch qw/GetIndependentGroupModificationRights/;
 
 my $query = new CGI;
 my ($template, $loggedinuser, $cookie, $flags) = get_template_and_user(
@@ -40,8 +41,10 @@ my $fa = getframeworkinfo('FA');
 $template->param( fast_cataloging => 1 ) if (defined $fa);
 
 # Checking if the transfer page needs to be displayed
-$template->param( display_transfer => 1 ) if ( ($flags->{'superlibrarian'} == 1) || (C4::Context->preference("IndependentBranches") == 0) );
-$template->{'VARS'}->{'AllowOfflineCirculation'} = C4::Context->preference('AllowOfflineCirculation');
+$template->param( display_transfer => 1 )
+  if ( $flags->{'superlibrarian'} == 1
+    || scalar GetIndependentGroupModificationRights() );
 
+$template->{'VARS'}->{'AllowOfflineCirculation'} = C4::Context->preference('AllowOfflineCirculation');
 
 output_html_with_http_headers $query, $cookie, $template->output;

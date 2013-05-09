@@ -6980,7 +6980,7 @@ $DBversion = "3.13.00.002";
 if ( CheckVersion($DBversion) ) {
    $dbh->do("UPDATE systempreferences SET variable = 'IndependentBranches' WHERE variable = 'IndependantBranches'");
    print "Upgrade to $DBversion done (Bug 10080 - Change system pref IndependantBranches to IndependentBranches)\n";
-   SetVersion ($DBversion);
+    SetVersion ($DBversion);
 }
 
 $DBversion = '3.13.00.003';
@@ -9865,6 +9865,21 @@ while ( my $file = readdir $dirh ) {
     }
 }
 
+#$DBversion = "3.15.00.001";
+#if ( CheckVersion($DBversion) ) {
+#    $dbh->do(q{
+#            DELETE FROM branchcategories WHERE categorytype = 'properties'
+#    });
+#
+#    $dbh->do(q{
+#        ALTER TABLE branchcategories
+#        CHANGE categorytype categorytype
+#          ENUM( 'searchdomain', 'independent_group' )
+#            NULL DEFAULT NULL
+#    });
+#    print "Upgrade to $DBversion done (Remove branch property groups, add independent groups)\n";
+#    SetVersion ($DBversion);
+#}
 
 =head1 FUNCTIONS
 

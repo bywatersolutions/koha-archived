@@ -209,6 +209,8 @@ sub getletter {
     my ( $module, $code, $branchcode, $message_transport_type ) = @_;
     $message_transport_type //= '%';
 
+    $branchcode ||= q{};
+
     if ( C4::Context->preference('IndependentBranches')
             and $branchcode
             and C4::Context->userenv ) {

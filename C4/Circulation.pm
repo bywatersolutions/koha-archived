@@ -917,14 +917,25 @@ sub CanBookBeIssued {
         $alerts{ITEM_LOST} = $code if ( C4::Context->preference("IssueLostItem") eq 'alert' );
     }
     if ( C4::Context->preference("IndependentBranches") ) {
-        my $userenv = C4::Context->userenv;
         unless ( C4::Context->IsSuperLibrarian() ) {
-            if ( $item->{C4::Context->preference("HomeOrHoldingBranch")} ne $userenv->{branch} ){
+            unless (
+                GetIndependentGroupModificationRights(
+                    {
+                        for => $item->{ C4::Context->preference(
+                                "HomeOrHoldingBranch") }
+                    }
+                )
+              )
+            {
                 $issuingimpossible{ITEMNOTSAMEBRANCH} = 1;
-                $issuingimpossible{'itemhomebranch'} = $item->{C4::Context->preference("HomeOrHoldingBranch")};
+                $issuingimpossible{'itemhomebranch'} =
+                  $item->{ C4::Context->preference("HomeOrHoldingBranch") };
             }
-            $needsconfirmation{BORRNOTSAMEBRANCH} = GetBranchName( $borrower->{'branchcode'} )
-              if ( $borrower->{'branchcode'} ne $userenv->{branch} );
+
+            $needsconfirmation{BORRNOTSAMEBRANCH} =
+              GetBranchName( $borrower->{'branchcode'} )
+              if (
+                $borrower->{'branchcode'} ne C4::Context->userenv->{branch} );
         }
     }
     #
