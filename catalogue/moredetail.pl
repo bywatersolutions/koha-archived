@@ -172,13 +172,20 @@ foreach my $item (@items){
         $item->{status_advisory} = 1;
     }
 
-    if (C4::Context->preference("IndependentBranches")) {
-        #verifying rights
+    if ( C4::Context->preference("IndependentBranches") ) {
+
         my $userenv = C4::Context->userenv();
-        unless (($userenv->{'flags'} == 1) or ($userenv->{'branch'} eq $item->{'homebranch'})) {
-                $item->{'nomod'}=1;
+        unless (
+            $userenv->{'flags'} % 2 != 1
+            || GetIndependentGroupModificationRights(
+                { for => $item->{'homebranch'} }
+            )
+          )
+        {
+            $item->{'nomod'} = 1;
         }
     }
+
     $item->{'homebranchname'} = GetBranchName($item->{'homebranch'});
     $item->{'holdingbranchname'} = GetBranchName($item->{'holdingbranch'});
     if ($item->{'datedue'}) {

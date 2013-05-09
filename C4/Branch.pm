@@ -19,6 +19,7 @@ package C4::Branch;
 use strict;
 #use warnings; FIXME - Bug 2505
 require Exporter;
+use Carp;
 use C4::Context;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
@@ -42,6 +43,7 @@ BEGIN {
 		&GetBranchCategories
 		&GetBranchesInCategory
 		&ModBranchCategoryInfo
+        &GetIndependentGroupModificationRights
 		&DelBranch
 		&DelBranchCategory
 	        &CheckCategoryUnique
@@ -114,8 +116,8 @@ sub GetBranches {
     my $query="SELECT * FROM branches";
     my @bind_parameters;
     if ($onlymine && C4::Context->userenv && C4::Context->userenv->{branch}){
-      $query .= ' WHERE branchcode = ? ';
-      push @bind_parameters, C4::Context->userenv->{branch};
+      my $branches = GetIndependentGroupModificationRights({ stringify => 1 });
+      $query .= qq{ WHERE branchcode IN ( $branches ) };
     }
         $query.=" ORDER BY branchname";
     $sth = $dbh->prepare($query);
@@ -371,7 +373,7 @@ the categories were already here, and minimally used.
 
 	#TODO  manage category types.  rename possibly to 'agency domains' ? as borrowergroups are called categories.
 sub GetCategoryTypes {
-	return ( 'searchdomain','properties');
+ return ( 'searchdomain','independent_groups');
 }
 
 =head2 GetBranch
@@ -424,6 +426,86 @@ sub GetBranchesInCategory {
 		push @branches, $branch;
 	}
 	return( \@branches );
+}
+
+=head2 GetIndependentGroupModificationRights
+
+    GetIndependentGroupModificationRights(
+                                           {
+                                               branch => $this_branch,
+                                               for => $other_branch,
+                                               stringify => 1,
+                                           }
+                                          );
+
+    Returns a list of branches this branch shares a common
+    independent group with.
+
+    If 'branch' is not provided, it will be looked up via
+    C4::Context->userenv->{branch}.
+
+    If 'for' is provided, the lookup is limited to that branch.
+
+    If called in a list context, returns a list of
+    branchcodes ( including $this_branch ).
+
+    If called in a scalar context, it returns
+    a count of matching branchcodes. Returns 1 if
+
+    If stringify param is passed, the return value will
+    be a string of the comma delimited branchcodes. This
+    is useful for "branchcode IN $branchcodes" clauses
+    in SQL queries.
+
+    $this_branch and $other_branch are equal for efficiency.
+
+    So you can write:
+    my @branches = GetIndependentGroupModificationRights();
+    or something like:
+    if ( GetIndependentGroupModificationRights( { for => $other_branch } ) ) { do_stuff(); }
+
+=cut
+
+sub GetIndependentGroupModificationRights {
+    my ($params) = @_;
+
+    my $this_branch  = $params->{branch};
+    my $other_branch = $params->{for};
+    my $stringify    = $params->{stringify};
+
+    $this_branch ||= C4::Context->userenv->{branch};
+
+    carp("No branch found!") unless ($this_branch);
+
+    return 1 if ( $this_branch eq $other_branch );
+
+    my $sql = q{
+        SELECT DISTINCT(branchcode)
+        FROM branchrelations
+        JOIN branchcategories USING ( categorycode )
+        WHERE categorycode IN (
+            SELECT categorycode
+            FROM branchrelations
+            WHERE branchcode = ?
+        )
+        AND branchcategories.categorytype = 'independent_group'
+    };
+
+    my @params;
+    push( @params, $this_branch );
+
+    if ($other_branch) {
+        $sql .= q{ AND branchcode = ? };
+        push( @params, $other_branch );
+    }
+
+    my $dbh = C4::Context->dbh;
+    my @branchcodes = @{ $dbh->selectcol_arrayref( $sql, {}, @params ) };
+
+    return join( ',', map { qq{'$_'} } ( @branchcodes, $this_branch ) )
+      if ($stringify);
+
+    return wantarray() ? ( @branchcodes, $this_branch ) : scalar(@branchcodes);
 }
 
 =head2 GetBranchInfo

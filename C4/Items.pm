@@ -33,6 +33,7 @@ use List::MoreUtils qw/any/;
 use YAML qw/Load/;
 use Data::Dumper; # used as part of logging item record changes, not just for
                   # debugging; so please don't remove this
+use C4::Branch qw/GetIndependentGroupModificationRights/;
 
 use vars qw($VERSION @ISA @EXPORT);
 
@@ -1252,18 +1253,22 @@ sub GetItemsInfo {
         my $datedue = '';
         $isth->execute( $data->{'itemnumber'} );
         if ( my $idata = $isth->fetchrow_hashref ) {
-            $data->{borrowernumber} = $idata->{borrowernumber};
-            $data->{cardnumber}     = $idata->{cardnumber};
-            $data->{surname}     = $idata->{surname};
-            $data->{firstname}     = $idata->{firstname};
+            $data->{borrowernumber}  = $idata->{borrowernumber};
+            $data->{cardnumber}      = $idata->{cardnumber};
+            $data->{surname}         = $idata->{surname};
+            $data->{firstname}       = $idata->{firstname};
             $data->{lastreneweddate} = $idata->{lastreneweddate};
-            $datedue                = $idata->{'date_due'};
-        if (C4::Context->preference("IndependentBranches")){
-        my $userenv = C4::Context->userenv;
-        unless ( C4::Context->IsSuperLibrarian() ) {
-            $data->{'NOTSAMEBRANCH'} = 1 if ($idata->{'bcode'} ne $userenv->{branch});
-        }
-        }
+            $datedue                 = $idata->{'date_due'};
+
+            if ( C4::Context->preference("IndependentBranches") ) {
+                unless (
+                    C4::Context->IsSuperLibrarian()
+                    || GetIndependentGroupModificationRights( { for => $idata->{'bcode'} } )
+                  )
+                {
+                    $data->{'NOTSAMEBRANCH'} = 1;
+                }
+            }
         }
 		if ( $data->{'serial'}) {	
 			$ssth->execute($data->{'itemnumber'}) ;
@@ -2216,12 +2221,18 @@ sub DelItemCheck {
     my $item = GetItem($itemnumber);
     my $onloan=$sth->fetchrow;
 
-    if ($onloan){
-        $error = "book_on_loan" 
+    if ($onloan) {
+        $error = "book_on_loan";
     }
-    elsif ( !( C4::Context->userenv->{flags} & 1 )
+    elsif (
+            !( C4::Context->userenv->{flags} & 1 )
         and C4::Context->preference("IndependentBranches")
-        and ( C4::Context->userenv->{branch} ne $item->{'homebranch'} ) )
+        and GetIndependentGroupModificationRights(
+            {
+                for => $item->{ C4::Context->preference("HomeOrHoldingBranch") }
+            }
+        )
+      )
     {
         $error = "not_same_branch";
     }
@@ -2697,7 +2708,8 @@ sub PrepareItemrecordDisplay {
                     if ( $tagslib->{$tag}->{$subfield}->{'authorised_value'} eq "branches" ) {
                         if (   ( C4::Context->preference("IndependentBranches") )
                             && !C4::Context->IsSuperLibrarian() ) {
-                            my $sth = $dbh->prepare( "SELECT branchcode,branchname FROM branches WHERE branchcode = ? ORDER BY branchname" );
+                            my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+                            my $sth = $dbh->prepare( "SELECT branchcode,branchname FROM branches WHERE branchcode IN ( $branches ) ORDER BY branchname" );
                             $sth->execute( C4::Context->userenv->{branch} );
                             push @authorised_values, ""
                               unless ( $tagslib->{$tag}->{$subfield}->{mandatory} );

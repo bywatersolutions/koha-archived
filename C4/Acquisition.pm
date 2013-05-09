@@ -876,9 +876,8 @@ sub GetPendingOrders {
     my $userenv = C4::Context->userenv;
     if ( C4::Context->preference("IndependentBranches") ) {
         if ( ($userenv) && ( $userenv->{flags} != 1 ) ) {
-            $strsth .= " AND (borrowers.branchcode = ?
-                        or borrowers.branchcode  = '')";
-            push @query_params, $userenv->{branch};
+            my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+            $strsth .= qq{ AND (borrowers.branchcode IN ( $branches ) OR borrowers.branchcode  = '') };
         }
     }
     if ($supplierid) {
@@ -1710,7 +1709,8 @@ sub GetParcel {
     if ( C4::Context->preference("IndependentBranches") ) {
         my $userenv = C4::Context->userenv;
         if ( ($userenv) && ( $userenv->{flags} != 1 ) ) {
-            $strsth .= " and (borrowers.branchcode = ?
+            my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+            $strsth .= " and (borrowers.branchcode IN ( $branches )
                         or borrowers.branchcode  = '')";
             push @query_params, $userenv->{branch};
         }
@@ -1929,8 +1929,8 @@ sub GetLateOrders {
     if (C4::Context->preference("IndependentBranches")
             && C4::Context->userenv
             && C4::Context->userenv->{flags} != 1 ) {
-        $from .= ' AND borrowers.branchcode LIKE ? ';
-        push @query_params, C4::Context->userenv->{branch};
+        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+        $from .= qq{ AND borrowers.branchcode IN ( $branches ) };
     }
     my $query = "$select $from $having\nORDER BY latesince, basketno, borrowers.branchcode, supplier";
     $debug and print STDERR "GetLateOrders query: $query\nGetLateOrders args: " . join(" ",@query_params);
@@ -2099,8 +2099,8 @@ sub GetHistory {
     if ( C4::Context->preference("IndependentBranches") ) {
         my $userenv = C4::Context->userenv;
         if ( $userenv && ($userenv->{flags} || 0) != 1 ) {
-            $query .= " AND (borrowers.branchcode = ? OR borrowers.branchcode ='' ) ";
-            push @query_params, $userenv->{branch};
+            my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+            $query .= qq{ AND ( borrowers.branchcode = ? OR borrowers.branchcode IN ( $branches ) ) };
         }
     }
     $query .= " ORDER BY id";

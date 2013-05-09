@@ -215,13 +215,20 @@ sub GetSerialInformation {
     my ($serialid) = @_;
     my $dbh        = C4::Context->dbh;
     my $query      = qq|
-        SELECT serial.*, serial.notes as sernotes, serial.status as serstatus,subscription.*,subscription.subscriptionid as subsid |;
+        SELECT serial.*,
+               serial.notes as sernotes,
+               serial.status as serstatus,
+               subscription.*,
+               subscription.subscriptionid as subsid
+    |;
     if (   C4::Context->preference('IndependentBranches')
         && C4::Context->userenv
-        && C4::Context->userenv->{'flags'} != 1
+        && C4::Context->userenv->{'flags'} % 2 != 1
         && C4::Context->userenv->{'branch'} ) {
-        $query .= "
-      , ((subscription.branchcode <>\"" . C4::Context->userenv->{'branch'} . "\") and subscription.branchcode <>\"\" and subscription.branchcode IS NOT NULL) as cannotedit ";
+        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+        $query .= qq|
+            , ( ( subscription.branchcode NOT IN ( $branches ) ) AND subscription.branchcode <> '' AND subscription.branchcode IS NOT NULL ) AS cannotedit
+        |;
     }
     $query .= qq|             
         FROM   serial LEFT JOIN subscription ON subscription.subscriptionid=serial.subscriptionid
@@ -315,33 +322,36 @@ subscription, subscriptionhistory, aqbooksellers.name, biblio.title
 sub GetSubscription {
     my ($subscriptionid) = @_;
     my $dbh              = C4::Context->dbh;
-    my $query            = qq(
+
+    my $query = qq|
         SELECT  subscription.*,
                 subscriptionhistory.*,
                 aqbooksellers.name AS aqbooksellername,
                 biblio.title AS bibliotitle,
-                subscription.biblionumber as bibnum);
+                subscription.biblionumber as bibnum
+    |;
+
     if (   C4::Context->preference('IndependentBranches')
         && C4::Context->userenv
-        && C4::Context->userenv->{'flags'} != 1
-        && C4::Context->userenv->{'branch'} ) {
-        $query .= "
-      , ((subscription.branchcode <>\"" . C4::Context->userenv->{'branch'} . "\") and subscription.branchcode <>\"\" and subscription.branchcode IS NOT NULL) as cannotedit ";
+        && C4::Context->userenv->{'flags'} % 2 != 1
+        && C4::Context->userenv->{'branch'} )
+    {
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+
+        $query .= qq|
+            , ( ( subscription.branchcode NOT IN ( $branches ) ) AND subscription.branchcode <> '' AND subscription.branchcode IS NOT NULL ) AS cannotedit
+        |;
     }
-    $query .= qq(             
+
+    $query .= qq|
        FROM subscription
        LEFT JOIN subscriptionhistory ON subscription.subscriptionid=subscriptionhistory.subscriptionid
        LEFT JOIN aqbooksellers ON subscription.aqbooksellerid=aqbooksellers.id
        LEFT JOIN biblio ON biblio.biblionumber=subscription.biblionumber
        WHERE subscription.subscriptionid = ?
-    );
+    |;
 
-    #     if (C4::Context->preference('IndependentBranches') &&
-    #         C4::Context->userenv &&
-    #         C4::Context->userenv->{'flags'} != 1){
-    # #       $debug and warn "flags: ".C4::Context->userenv->{'flags'};
-    #       $query.=" AND subscription.branchcode IN ('".C4::Context->userenv->{'branch'}."',\"\")";
-    #     }
     $debug and warn "query : $query\nsubsid :$subscriptionid";
     my $sth = $dbh->prepare($query);
     $sth->execute($subscriptionid);
@@ -358,8 +368,10 @@ sub GetSubscription {
 sub GetFullSubscription {
     my ($subscriptionid) = @_;
     my $dbh              = C4::Context->dbh;
-    my $query            = qq|
-  SELECT    serial.serialid,
+
+    my $query = qq|
+        SELECT
+            serial.serialid,
             serial.serialseq,
             serial.planneddate, 
             serial.publisheddate, 
@@ -371,13 +383,20 @@ sub GetFullSubscription {
             subscription.branchcode AS branchcode,
             branches.branchname AS branchname,
             subscription.subscriptionid AS subscriptionid |;
+
     if (   C4::Context->preference('IndependentBranches')
         && C4::Context->userenv
-        && C4::Context->userenv->{'flags'} != 1
-        && C4::Context->userenv->{'branch'} ) {
-        $query .= "
-      , ((subscription.branchcode <>\"" . C4::Context->userenv->{'branch'} . "\") and subscription.branchcode <>\"\" and subscription.branchcode IS NOT NULL) as cannotedit ";
+        && C4::Context->userenv->{'flags'} % 2 != 1
+        && C4::Context->userenv->{'branch'} )
+    {
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+
+        $query .= qq|
+            , ( ( subscription.branchcode NOT IN ( $branches ) ) AND subscription.branchcode <> '' AND subscription.branchcode IS NOT NULL ) AS cannotedit
+        |;
     }
+
     $query .= qq|
         FROM serial
         LEFT JOIN subscription ON
@@ -494,13 +513,16 @@ sub GetSubscriptionsFromBiblionumber {
         $subs->{ "periodicity" . $subs->{periodicity} }     = 1;
         $subs->{ "numberpattern" . $subs->{numberpattern} } = 1;
         $subs->{ "status" . $subs->{'status'} }             = 1;
-        $subs->{'cannotedit'} =
-          (      C4::Context->preference('IndependentBranches')
+        $subs->{'cannotedit'} = (
+                 C4::Context->preference('IndependentBranches')
               && C4::Context->userenv
               && !C4::Context->IsSuperLibrarian()
               && C4::Context->userenv->{branch}
               && $subs->{branchcode}
-              && ( C4::Context->userenv->{branch} ne $subs->{branchcode} ) );
+              && GetIndependentGroupModificationRights(
+                { for => $subs->{branchcode} }
+              )
+        );
 
         if ( $subs->{enddate} eq '0000-00-00' ) {
             $subs->{enddate} = '';
@@ -524,8 +546,10 @@ sub GetSubscriptionsFromBiblionumber {
 sub GetFullSubscriptionsFromBiblionumber {
     my ($biblionumber) = @_;
     my $dbh            = C4::Context->dbh;
-    my $query          = qq|
-  SELECT    serial.serialid,
+
+    my $query = qq|
+        SELECT
+            serial.serialid,
             serial.serialseq,
             serial.planneddate, 
             serial.publisheddate, 
@@ -534,13 +558,20 @@ sub GetFullSubscriptionsFromBiblionumber {
             year(IF(serial.publisheddate="00-00-0000",serial.planneddate,serial.publisheddate)) as year,
             biblio.title as bibliotitle,
             subscription.branchcode AS branchcode,
-            subscription.subscriptionid AS subscriptionid|;
+            subscription.subscriptionid AS subscriptionid
+    |;
+
     if (   C4::Context->preference('IndependentBranches')
         && C4::Context->userenv
         && C4::Context->userenv->{'flags'} != 1
-        && C4::Context->userenv->{'branch'} ) {
-        $query .= "
-      , ((subscription.branchcode <>\"" . C4::Context->userenv->{'branch'} . "\") and subscription.branchcode <>\"\" and subscription.branchcode IS NOT NULL) as cannotedit ";
+        && C4::Context->userenv->{'branch'} )
+    {
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+
+        $query .= qq|
+            , ( ( subscription.branchcode NOT IN ( $branches ) ) AND subscription.branchcode <> '' AND subscription.branchcode IS NOT NULL ) AS cannotedit
+        |;
     }
 
     $query .= qq|      
@@ -634,13 +665,16 @@ sub GetSubscriptions {
     my @results;
 
     while ( my $line = $sth->fetchrow_hashref ) {
-        $line->{'cannotedit'} =
-          (      C4::Context->preference('IndependentBranches')
+        $line->{'cannotedit'} = (
+                 C4::Context->preference('IndependentBranches')
               && C4::Context->userenv
-              && !C4:Context->IsSuperLibrarian()
+              && !C4::Context->IsSuperLibrarian()
               && C4::Context->userenv->{branch}
               && $line->{branchcode}
-              && ( C4::Context->userenv->{branch} ne $line->{branchcode} ) );
+              && GetIndependentGroupModificationRights(
+                { for => $line->{branchcode} }
+              )
+        );
         push @results, $line;
     }
     return @results;

@@ -890,12 +890,22 @@ sub CanBookBeIssued {
     if ( C4::Context->preference("IndependentBranches") ) {
         my $userenv = C4::Context->userenv;
         unless ( C4::Context->IsSuperLibrarian() ) {
-            if ( $item->{C4::Context->preference("HomeOrHoldingBranch")} ne $userenv->{branch} ){
-                $issuingimpossible{ITEMNOTSAMEBRANCH} = 1;
-                $issuingimpossible{'itemhomebranch'} = $item->{C4::Context->preference("HomeOrHoldingBranch")};
-            }
+            unless (
+                GetIndependentGroupModificationRights(
+                    {
+                        for => $item->{ C4::Context->preference(
+                                "HomeOrHoldingBranch") }
+                    }
+                )
+              )
+            {
 
-            $needsconfirmation{BORRNOTSAMEBRANCH} = GetBranchName( $borrower->{'branchcode'} )
+                $issuingimpossible{ITEMNOTSAMEBRANCH} = 1;
+                $needsconfirmation{BORRNOTSAMEBRANCH} =
+                  GetBranchName( $borrower->{'branchcode'} );
+            }
+            $needsconfirmation{BORRNOTSAMEBRANCH} =
+              GetBranchName( $borrower->{'branchcode'} )
               if ( $borrower->{'branchcode'} ne $userenv->{branch} );
         }
     }

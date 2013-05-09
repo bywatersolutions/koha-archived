@@ -684,10 +684,19 @@ foreach my $field (@fields) {
 						|| $subfieldvalue;
         }
 
-        if (($field->tag eq $branchtagfield) && ($subfieldcode eq $branchtagsubfield) && C4::Context->preference("IndependentBranches")) {
+        if (   $field->tag eq $branchtagfield
+            && $subfieldcode eq $branchtagsubfield
+            && C4::Context->preference("IndependentBranches") )
+        {
             #verifying rights
             my $userenv = C4::Context->userenv();
-            unless (($userenv->{'flags'} == 1) or (($userenv->{'branch'} eq $subfieldvalue))){
+            unless (
+                $userenv->{'flags'} % 2 == 1
+                || GetIndependentGroupModificationRights(
+                    { for => $subfieldvalue }
+                )
+              )
+            {
                 $this_row{'nomod'} = 1;
             }
         }

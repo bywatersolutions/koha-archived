@@ -40,7 +40,7 @@ use DateTime;
 use DateTime::Format::DateParse;
 use Koha::DateUtils;
 use Text::Unaccent qw( unac_string );
-
+use C4::Branch qw( GetIndependentGroupModificationRights );
 our ($VERSION,@ISA,@EXPORT,@EXPORT_OK,$debug);
 
 BEGIN {
@@ -199,6 +199,7 @@ sub _express_member_find {
 
 sub Search {
     my ( $filter, $orderby, $limit, $columns_out, $search_on_fields, $searchtype ) = @_;
+    warn "C4::Members::Search";
 
     my $search_string;
     my $found_borrower;
@@ -257,24 +258,22 @@ sub Search {
     # Mentioning for the reference
 
     if ( C4::Context->preference("IndependentBranches") ) { # && !$showallbranches){
-        if ( my $userenv = C4::Context->userenv ) {
-            my $branch =  $userenv->{'branch'};
-            if ( !C4::Context->IsSuperLibrarian() && $branch ){
-                if (my $fr = ref $filter) {
-                    if ( $fr eq "HASH" ) {
-                        $filter->{branchcode} = $branch;
-                    }
-                    else {
-                        foreach (@$filter) {
-                            $_ = { '' => $_ } unless ref $_;
-                            $_->{branchcode} = $branch;
-                        }
-                    }
+        unless ( C4::Context->IsSuperLibrarian() ){
+            my @branches = GetIndependentGroupModificationRights();
+            if ( my $fr = ref $filter ) {
+                if ( $fr eq "HASH" ) {
+                    $filter->{branchcode} = \@branches;
                 }
                 else {
-                    $filter = { '' => $filter, branchcode => $branch };
+                    foreach (@$filter) {
+                        $_ = { '' => $_ } unless ref $_;
+                        $_->{branchcode} = \@branches;
+                    }
                 }
-            }      
+            }
+            else {
+                $filter = { '' => $filter, branchcode => \@branches };
+            }
         }
     }
 
@@ -2031,13 +2030,14 @@ sub GetBorrowersToExpunge {
     my $filterdate     = $params->{'not_borrowered_since'};
     my $filterexpiry   = $params->{'expired_before'};
     my $filtercategory = $params->{'category_code'};
-    my $filterbranch   = $params->{'branchcode'} ||
-                        ((C4::Context->preference('IndependentBranches')
-                             && C4::Context->userenv 
-                             && !C4::Context->IsSuperLibrarian()
-                             && C4::Context->userenv->{branch})
-                         ? C4::Context->userenv->{branch}
-                         : "");  
+    my $filterbranch   = $params->{'branchcode'};
+    my @filterbranches =
+      (      C4::Context->preference('IndependentBranches')
+          && C4::Context->userenv
+          && !C4::Context->IsSuperLibrarian()
+          && C4::Context->userenv->{branch} )
+      ? GetIndependentGroupModificationRights()
+      : ($filterbranch);
 
     my $dbh   = C4::Context->dbh;
     my $query = "
@@ -2052,9 +2052,10 @@ sub GetBorrowersToExpunge {
         AND borrowernumber NOT IN (SELECT guarantorid FROM borrowers WHERE guarantorid IS NOT NULL AND guarantorid <> 0)
    ";
     my @query_params;
-    if ( $filterbranch && $filterbranch ne "" ) {
-        $query.= " AND borrowers.branchcode = ? ";
-        push( @query_params, $filterbranch );
+    if ( @filterbranches ) {
+        my $placeholders = join( ',', ('?') x @filterbranches );
+        $query.= " AND borrowers.branchcode IN ( $placeholders )";
+        push( @query_params, @filterbranches );
     }
     if ( $filterexpiry ) {
         $query .= " AND dateexpiry < ? ";
@@ -2097,13 +2098,16 @@ I<$result> is a ref to an array which all elements are a hasref.
 =cut
 
 sub GetBorrowersWhoHaveNeverBorrowed {
-    my $filterbranch = shift || 
-                        ((C4::Context->preference('IndependentBranches')
-                             && C4::Context->userenv 
-                             && !C4::Context->IsSuperLibrarian()
-                             && C4::Context->userenv->{branch})
-                         ? C4::Context->userenv->{branch}
-                         : "");  
+    my $filterbranch = shift;
+
+    my @filterbranches =
+      (      C4::Context->preference('IndependentBranches')
+          && C4::Context->userenv
+          && !C4::Context->IsSuperLibrarian()
+          && C4::Context->userenv->{branch} )
+      ? GetIndependentGroupModificationRights()
+      : ($filterbranch);
+
     my $dbh   = C4::Context->dbh;
     my $query = "
         SELECT borrowers.borrowernumber,max(timestamp) as latestissue
@@ -2111,10 +2115,12 @@ sub GetBorrowersWhoHaveNeverBorrowed {
           LEFT JOIN issues ON borrowers.borrowernumber = issues.borrowernumber
         WHERE issues.borrowernumber IS NULL
    ";
+
     my @query_params;
-    if ($filterbranch && $filterbranch ne ""){ 
-        $query.=" AND borrowers.branchcode= ?";
-        push @query_params,$filterbranch;
+    if (@filterbranches) {
+        my $placeholders = join( ',', ('?') x @filterbranches );
+        $query .= " AND borrowers.branchcode IN ( $placeholders ) ";
+        push( @query_params, @filterbranches );
     }
     warn $query if $debug;
   
@@ -2147,25 +2153,32 @@ This hashref is containt the number of time this borrowers has borrowed before I
 sub GetBorrowersWithIssuesHistoryOlderThan {
     my $dbh  = C4::Context->dbh;
     my $date = shift ||POSIX::strftime("%Y-%m-%d",localtime());
-    my $filterbranch = shift || 
-                        ((C4::Context->preference('IndependentBranches')
-                             && C4::Context->userenv 
-                             && !C4::Context->IsSuperLibrarian()
-                             && C4::Context->userenv->{branch})
-                         ? C4::Context->userenv->{branch}
-                         : "");  
+    my $filterbranch = shift;
+
+    my @filterbranches =
+      (      C4::Context->preference('IndependentBranches')
+          && C4::Context->userenv
+          && !C4::Context->IsSuperLibrarian()
+          && C4::Context->userenv->{branch} )
+      ? GetIndependentGroupModificationRights()
+      : ($filterbranch);
+
     my $query = "
        SELECT count(borrowernumber) as n,borrowernumber
        FROM old_issues
        WHERE returndate < ?
          AND borrowernumber IS NOT NULL 
     "; 
+
     my @query_params;
-    push @query_params, $date;
-    if ($filterbranch){
-        $query.="   AND branchcode = ?";
-        push @query_params, $filterbranch;
-    }    
+    push( @query_params, $date );
+
+    if (@filterbranches) {
+        my $placeholders = join( ',', ('?') x @filterbranches );
+        $query .= " AND branchcode IN ( $placeholders ) ";
+        push( @query_params, @filterbranches );
+    }
+
     $query.=" GROUP BY borrowernumber ";
     warn $query if $debug;
     my $sth = $dbh->prepare($query);

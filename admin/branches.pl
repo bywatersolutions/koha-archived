@@ -277,25 +277,10 @@ sub editbranchform {
 }
 
 sub editcatform {
-
-    # prepares the edit form...
     my ($categorycode,$innertemplate) = @_;
-    # warn "cat : $categorycode";
-	my @cats;
-    my $data;
 	if ($categorycode) {
         my $data = GetBranchCategory($categorycode);
-        $innertemplate->param(
-            categorycode    => $data->{'categorycode'},
-            categoryname    => $data->{'categoryname'},
-            codedescription => $data->{'codedescription'},
-            show_in_pulldown => $data->{'show_in_pulldown'},
-		);
     }
-	for my $ctype (GetCategoryTypes()) {
-		push @cats , { type => $ctype , selected => ($data->{'categorytype'} and $data->{'categorytype'} eq $ctype) };
-	}
-    $innertemplate->param(categorytype => \@cats);
 }
 
 sub branchinfotable {
@@ -366,6 +351,7 @@ sub branchinfotable {
 
         push @loop_data, \%row;
     }
+
     my @branchcategories = ();
 	for my $ctype ( GetCategoryTypes() ) {
         my $catinfo = GetBranchCategories($ctype);
@@ -380,11 +366,11 @@ sub branchinfotable {
     	}
         push @branchcategories, { categorytype => $ctype , $ctype => 1 , catloop => ( @categories ? \@categories : undef) };
 	}
-    $innertemplate->param(
-        branches         => \@loop_data,
-        branchcategories => \@branchcategories
-    );
 
+    $innertemplate->param(
+        branches          => \@loop_data,
+        branch_categories => @branchcategories,
+    );
 }
 
 sub _branch_to_template {
