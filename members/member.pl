@@ -58,7 +58,7 @@ $input->delete(
     'new_patron_list',    'borrowernumber',
 );
 
-my $patron = $input->Vars;
+my $patron = { $input->Vars };
 foreach (keys %$patron){
 	delete $$patron{$_} unless($$patron{$_});
 }

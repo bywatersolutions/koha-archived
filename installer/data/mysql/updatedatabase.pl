@@ -6938,7 +6938,7 @@ $DBversion = "3.13.00.002";
 if ( CheckVersion($DBversion) ) {
    $dbh->do("UPDATE systempreferences SET variable = 'IndependentBranches' WHERE variable = 'IndependantBranches'");
    print "Upgrade to $DBversion done (Bug 10080 - Change system pref IndependantBranches to IndependentBranches)\n";
-   SetVersion ($DBversion);
+    SetVersion ($DBversion);
 }
 
 $DBversion = '3.13.00.003';
@@ -7904,6 +7904,22 @@ if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
     $dbh->do("INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('patronbarcodelength','','Number of characters in system-wide barcode schema (patron cardnumbers).','','Integer')");
     print "Upgrade to $DBversion done (Add barcode prefix feature. Add fields itembarcodeprefix and patronbarcodeprefix to table branches, add sysprefs itembarcodelength and patronbarcodelength)\n";
     SetVersion($DBversion);
+}
+
+$DBversion = "3.15.00.XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q{
+            DELETE FROM branchcategories WHERE categorytype = 'properties'
+    });
+
+    $dbh->do(q{
+        ALTER TABLE branchcategories
+        CHANGE categorytype categorytype
+          ENUM( 'searchdomain', 'independent_group' )
+            NULL DEFAULT NULL
+    });
+    print "Upgrade to $DBversion done (Remove branch property groups, add independent groups)\n";
+    SetVersion ($DBversion);
 }
 
 =head1 FUNCTIONS
