@@ -35,6 +35,7 @@ use DateTime::Format::MySQL;
 use Data::Dumper; # used as part of logging item record changes, not just for
                   # debugging; so please don't remove this
 use Koha::DateUtils qw/dt_from_string/;
+use C4::Branch qw/GetIndependentGroupModificationRights/;
 
 use Koha::Database;
 
@@ -1333,10 +1334,13 @@ sub GetItemsInfo {
     my $serial;
 
     my $userenv = C4::Context->userenv;
-    my $want_not_same_branch = C4::Context->preference("IndependentBranches") && !C4::Context->IsSuperLibrarian();
     while ( my $data = $sth->fetchrow_hashref ) {
-        if ( $data->{borrowernumber} && $want_not_same_branch) {
-            $data->{'NOTSAMEBRANCH'} = $data->{'bcode'} ne $userenv->{branch};
+        if ( C4::Context->preference("IndependentBranches") && $userenv ) {
+            unless ( C4::Context->IsSuperLibrarian()
+                || GetIndependentGroupModificationRights( { for => $data->{'bcode'} } ) )
+            {
+                $data->{'NOTSAMEBRANCH'} = $data->{'bcode'} ne $userenv->{branch};
+            }
         }
 
         $serial ||= $data->{'serial'};
@@ -2279,12 +2283,18 @@ sub DelItemCheck {
 
     my $item = GetItem($itemnumber);
 
-    if ($onloan){
-        $error = "book_on_loan" 
+    if ($onloan) {
+        $error = "book_on_loan";
     }
-    elsif ( !C4::Context->IsSuperLibrarian()
-        and C4::Context->preference("IndependentBranches")
-        and ( C4::Context->userenv->{branch} ne $item->{'homebranch'} ) )
+    elsif (
+           !C4::Context->IsSuperLibrarian()
+        && C4::Context->preference("IndependentBranches")
+        && !GetIndependentGroupModificationRights(
+            {
+                for => $item->{ C4::Context->preference("HomeOrHoldingBranch") }
+            }
+        )
+      )
     {
         $error = "not_same_branch";
     }
@@ -2959,8 +2969,9 @@ sub PrepareItemrecordDisplay {
                     if ( $tagslib->{$tag}->{$subfield}->{'authorised_value'} eq "branches" ) {
                         if (   ( C4::Context->preference("IndependentBranches") )
                             && !C4::Context->IsSuperLibrarian() ) {
-                            my $sth = $dbh->prepare( "SELECT branchcode,branchname FROM branches WHERE branchcode = ? ORDER BY branchname" );
-                            $sth->execute( C4::Context->userenv->{branch} );
+                            my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+                            my $sth = $dbh->prepare( "SELECT branchcode,branchname FROM branches WHERE branchcode IN ( $branches ) ORDER BY branchname" );
+                            $sth->execute();
                             push @authorised_values, ""
                               unless ( $tagslib->{$tag}->{$subfield}->{mandatory} );
                             while ( my ( $branchcode, $branchname ) = $sth->fetchrow_array ) {

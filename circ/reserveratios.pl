@@ -124,9 +124,9 @@ my $strsth =
  $sqldatewhere
 ";
 
-if (C4::Context->preference('IndependentBranches')){
-    $strsth .= " AND items.holdingbranch=? ";
-    push @query_params, C4::Context->userenv->{'branch'};
+if ( C4::Context->preference('IndependentBranches') ) {
+    my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+    $strsth .= " AND items.holdingbranch IN ( $branches ) ";
 }
 
 $strsth .= " GROUP BY reserves.biblionumber ORDER BY reservecount DESC";

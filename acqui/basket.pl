@@ -37,6 +37,7 @@ use C4::Members qw/GetMember/;  #needed for permissions checking for changing ba
 use C4::Items;
 use C4::Suggestions;
 use Date::Calc qw/Add_Delta_Days/;
+use C4::Branch qw/GetIndependentGroupModificationRights/;
 
 =head1 NAME
 
@@ -156,10 +157,17 @@ if ( $op eq 'delete_confirm' ) {
     if ( C4::Context->preference("IndependentBranches") ) {
         my $userenv = C4::Context->userenv;
         unless ( C4::Context->IsSuperLibrarian() ) {
-            my $validtest = ( $basket->{creationdate} eq '' )
+            my $validtest =
+                 ( $basket->{creationdate} eq '' )
               || ( $userenv->{branch} eq $basket->{branch} )
               || ( $userenv->{branch} eq '' )
-              || ( $basket->{branch}  eq '' );
+              || ( $basket->{branch}  eq '' )
+              || (
+                GetIndependentGroupModificationRights(
+                    { for => $basket->{branch} }
+                )
+              );
+
             unless ($validtest) {
                 print $query->redirect("../mainpage.pl");
                 exit 1;
@@ -258,10 +266,16 @@ if ( $op eq 'delete_confirm' ) {
     if ( C4::Context->preference("IndependentBranches") ) {
         my $userenv = C4::Context->userenv;
         unless ( C4::Context->IsSuperLibrarian() ) {
-            my $validtest = ( $basket->{creationdate} eq '' )
+            my $validtest =
+                 ( $basket->{creationdate} eq '' )
               || ( $userenv->{branch} eq $basket->{branch} )
               || ( $userenv->{branch} eq '' )
-              || ( $basket->{branch}  eq '' );
+              || ( $basket->{branch}  eq '' )
+              || (
+                GetIndependentGroupModificationRights(
+                    { for => $basket->{branch} }
+                )
+              );
             unless ($validtest) {
                 print $query->redirect("../mainpage.pl");
                 exit 1;

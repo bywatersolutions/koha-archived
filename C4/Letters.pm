@@ -209,6 +209,7 @@ sub getletter {
     my ( $module, $code, $branchcode, $message_transport_type ) = @_;
     $message_transport_type ||= 'email';
 
+    $branchcode ||= q{};
 
     if ( C4::Context->preference('IndependentBranches')
             and $branchcode
