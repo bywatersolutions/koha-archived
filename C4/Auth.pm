@@ -329,7 +329,7 @@ sub get_template_and_user {
             CalendarFirstDayOfWeek      => (C4::Context->preference("CalendarFirstDayOfWeek") eq "Sunday")?0:1,
             CircAutocompl               => C4::Context->preference("CircAutocompl"),
             FRBRizeEditions             => C4::Context->preference("FRBRizeEditions"),
-            IndependantBranches         => C4::Context->preference("IndependantBranches"),
+            IndependentBranches         => C4::Context->preference("IndependentBranches"),
             IntranetNav                 => C4::Context->preference("IntranetNav"),
             IntranetmainUserblock       => C4::Context->preference("IntranetmainUserblock"),
             LibraryName                 => C4::Context->preference("LibraryName"),
@@ -870,7 +870,7 @@ sub checkauth {
                         $branchname = GetBranchName($branchcode);
                     }
                     my $branches = GetBranches();
-                    if (C4::Context->boolean_preference('IndependantBranches') && C4::Context->boolean_preference('Autolocation')){
+                    if (C4::Context->boolean_preference('IndependentBranches') && C4::Context->boolean_preference('Autolocation')){
                         # we have to check they are coming from the right ip range
                         my $domain = $branches->{$branchcode}->{'branchip'};
                         if ($ip !~ /^$domain/){
@@ -1020,7 +1020,7 @@ sub checkauth {
         IntranetNav        => C4::Context->preference("IntranetNav"),
         IntranetFavicon    => C4::Context->preference("IntranetFavicon"),
         intranetuserjs     => C4::Context->preference("intranetuserjs"),
-        IndependantBranches=> C4::Context->preference("IndependantBranches"),
+        IndependentBranches=> C4::Context->preference("IndependentBranches"),
         AutoLocation       => C4::Context->preference("AutoLocation"),
         wrongip            => $info{'wrongip'},
         PatronSelfRegistration => C4::Context->preference("PatronSelfRegistration"),
