@@ -106,6 +106,7 @@ use C4::Debug;
 use POSIX ();
 use DateTime::TimeZone;
 use Module::Load::Conditional qw(can_load);
+use Carp;
 
 =head1 NAME
 
@@ -1228,6 +1229,20 @@ sub tz {
 }
 
 
+=head2 IsSuperLibrarian
+
+    C4::Context->IsSuperlibrarian();
+
+=cut
+
+sub IsSuperLibrarian {
+    if ( C4::Context->userenv ) {
+        return C4::Context->userenv->{flags} % 2 == 1;
+    }
+    else {
+        carp("C4::Context->userenv not defined!");
+    }
+}
 
 1;
 __END__

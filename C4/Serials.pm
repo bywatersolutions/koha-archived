@@ -497,7 +497,7 @@ sub GetSubscriptionsFromBiblionumber {
         $subs->{'cannotedit'} =
           (      C4::Context->preference('IndependentBranches')
               && C4::Context->userenv
-              && C4::Context->userenv->{flags} % 2 != 1
+              && !C4::Context->IsSuperLibrarian()
               && C4::Context->userenv->{branch}
               && $subs->{branchcode}
               && ( C4::Context->userenv->{branch} ne $subs->{branchcode} ) );
@@ -637,7 +637,7 @@ sub GetSubscriptions {
         $line->{'cannotedit'} =
           (      C4::Context->preference('IndependentBranches')
               && C4::Context->userenv
-              && C4::Context->userenv->{flags} % 2 != 1
+              && !C4:Context->IsSuperLibrarian()
               && C4::Context->userenv->{branch}
               && $line->{branchcode}
               && ( C4::Context->userenv->{branch} ne $line->{branchcode} ) );

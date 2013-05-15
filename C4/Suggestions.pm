@@ -135,7 +135,7 @@ sub SearchSuggestion {
     if ( C4::Context->preference('IndependentBranches') ) {
         my $userenv = C4::Context->userenv;
         if ($userenv) {
-            if ( ( $userenv->{flags} % 2 ) != 1 && !$suggestion->{branchcode} )
+            if ( !C4::Context->IsSuperLibrarian() && !$suggestion->{branchcode} )
             {
                 push @sql_params, $$userenv{branch};
                 push @query,      q{
@@ -342,7 +342,7 @@ sub GetSuggestionByStatus {
     if ( C4::Context->preference("IndependentBranches") || $branchcode ) {
         my $userenv = C4::Context->userenv;
         if ($userenv) {
-            unless ( $userenv->{flags} % 2 == 1 ) {
+            unless ( C4::Context->IsSuperLibrarian() ) {
                 push @sql_params, $userenv->{branch};
                 $query .= q{ AND (U1.branchcode = ? OR U1.branchcode ='') };
             }
@@ -390,7 +390,7 @@ sub CountSuggestion {
     my $sth;
     my $userenv = C4::Context->userenv;
     if ( C4::Context->preference("IndependentBranches")
-        && $userenv->{flags} % 2 != 1 )
+        && !C4::Context->IsSuperLibrarian() )
     {
         my $query = q{
             SELECT count(*)

@@ -162,11 +162,12 @@ $template->param(
     routing => C4::Context->preference("RoutingSerials"),
     totalissues => $totalissues,
     hemisphere => $hemisphere,
-    cannotedit =>(C4::Context->preference('IndependentBranches') &&
-                C4::Context->userenv &&
-                C4::Context->userenv->{flags} % 2 !=1  &&
-                C4::Context->userenv->{branch} && $subs->{branchcode} &&
-                (C4::Context->userenv->{branch} ne $subs->{branchcode})),
+    cannotedit => ( C4::Context->preference('IndependentBranches')
+          && C4::Context->userenv
+          && !C4::Context->IsSuperLibrarian()
+          && C4::Context->userenv->{branch}
+          && $subs->{branchcode}
+          && ( C4::Context->userenv->{branch} ne $subs->{branchcode} ) ),
     'periodicity' . $subs->{periodicity} => 1,
     'arrival' . $subs->{dow} => 1,
     'numberpattern' . $subs->{numberpattern} => 1,
