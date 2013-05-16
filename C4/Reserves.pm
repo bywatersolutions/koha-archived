@@ -446,81 +446,111 @@ This function return 1 if an item can be issued by this borrower.
 
 =cut
 
-sub CanItemBeReserved{
-    my ($borrowernumber, $itemnumber) = @_;
-    
+sub CanItemBeReserved {
+    my ( $borrowernumber, $itemnumber ) = @_;
+
     my $dbh             = C4::Context->dbh;
     my $allowedreserves = 0;
-            
+
     my $controlbranch = C4::Context->preference('ReservesControlBranch');
-    my $itype         = C4::Context->preference('item-level_itypes') ? "itype" : "itemtype";
+    my $itype =
+      C4::Context->preference('item-level_itypes') ? "itype" : "itemtype";
 
     # we retrieve borrowers and items informations #
-    my $item     = GetItem($itemnumber);
-    my $borrower = C4::Members::GetMember('borrowernumber'=>$borrowernumber);     
-    
-    # we retrieve user rights on this itemtype and branchcode
-    my $sth = $dbh->prepare("SELECT categorycode, itemtype, branchcode, reservesallowed 
-                             FROM issuingrules 
-                             WHERE (categorycode in (?,'*') ) 
-                             AND (itemtype IN (?,'*')) 
-                             AND (branchcode IN (?,'*')) 
-                             ORDER BY 
-                               categorycode DESC, 
-                               itemtype     DESC, 
-                               branchcode   DESC;"
-                           );
-                           
-    my $querycount ="SELECT 
-                            count(*) as count
-                            FROM reserves
-                                LEFT JOIN items USING (itemnumber)
-                                LEFT JOIN biblioitems ON (reserves.biblionumber=biblioitems.biblionumber)
-                                LEFT JOIN borrowers USING (borrowernumber)
-                            WHERE borrowernumber = ?
-                                ";
-    
-    
+    my $item = GetItem($itemnumber);
+    my $borrower =
+      C4::Members::GetMember( 'borrowernumber' => $borrowernumber );
+
+    # Before we check too see if the borrower has exceed the
+    # maximum number of holds allowed for this itemtype,
+    # we need to check to see if *any* holds are allowed
+    # for this patron/itemtype as determined by the holds policy
+    my $holds_policy = GetBranchItemRule(
+          $controlbranch eq "ItemHomeLibrary"
+        ? $item->{homebranch}
+        : $borrower->{branchcode},
+
+        $item->{itype}
+    );
+
+    if ( $holds_policy->{holdallowed} == 0 ) {
+
+        # If holdallowed is 0, we can quit right here
+        return 0;
+    }
+    elsif ( $holds_policy->{holdallowed} == 1 ) {
+
+        # If it's 1, then only patrons from the item's home library may put this book on hold.
+        return 0 unless ( $borrower->{'branchcode'} eq $item->{'homebranch'} );
+    }
+
+    # If we've gotten this far, the holds policy does not prevent the patron
+    # from placing this hold. We now need to see if the patron has exceeded
+    # the maximum number of holds allowed for this itemtype based on the patrons
+    my $sth = $dbh->prepare(q{
+        SELECT categorycode, itemtype, branchcode, reservesallowed
+        FROM issuingrules
+        WHERE (categorycode in (?,'*') )
+          AND (itemtype IN (?,'*'))
+          AND (branchcode IN (?,'*'))
+        ORDER BY
+          categorycode DESC,
+          itemtype     DESC,
+          branchcode   DESC;
+    });
+
+    my $querycount = q{
+        SELECT count(*) as count
+        FROM reserves
+        LEFT JOIN items       USING (itemnumber)
+        LEFT JOIN biblioitems USING (biblionumber)
+        LEFT JOIN borrowers   USING (borrowernumber)
+        WHERE borrowernumber = ?
+    };
+
     my $itemtype     = $item->{$itype};
     my $categorycode = $borrower->{categorycode};
     my $branchcode   = "";
     my $branchfield  = "reserves.branchcode";
-    
-    if( $controlbranch eq "ItemHomeLibrary" ){
+
+    if ( $controlbranch eq "ItemHomeLibrary" ) {
         $branchfield = "items.homebranch";
-        $branchcode = $item->{homebranch};
-    }elsif( $controlbranch eq "PatronLibrary" ){
-        $branchfield = "borrowers.branchcode";
-        $branchcode = $borrower->{branchcode};
+        $branchcode  = $item->{homebranch};
     }
-    
-    # we retrieve rights 
-    $sth->execute($categorycode, $itemtype, $branchcode);
-    if(my $rights = $sth->fetchrow_hashref()){
+    elsif ( $controlbranch eq "PatronLibrary" ) {
+        $branchfield = "borrowers.branchcode";
+        $branchcode  = $borrower->{branchcode};
+    }
+
+    # we retrieve rights
+    $sth->execute( $categorycode, $itemtype, $branchcode );
+    if ( my $rights = $sth->fetchrow_hashref() ) {
         $itemtype        = $rights->{itemtype};
-        $allowedreserves = $rights->{reservesallowed}; 
-    }else{
+        $allowedreserves = $rights->{reservesallowed};
+    }
+    else {
         $itemtype = '*';
     }
-    
+
     # we retrieve count
-    
+
     $querycount .= "AND $branchfield = ?";
-    
-    $querycount .= " AND $itype = ?" if ($itemtype ne "*");
+
+    $querycount .= " AND $itype = ?" if ( $itemtype ne "*" );
     my $sthcount = $dbh->prepare($querycount);
-    
-    if($itemtype eq "*"){
-        $sthcount->execute($borrowernumber, $branchcode);
-    }else{
-        $sthcount->execute($borrowernumber, $branchcode, $itemtype);
+
+    if ( $itemtype eq "*" ) {
+        $sthcount->execute( $borrowernumber, $branchcode );
     }
-    
+    else {
+        $sthcount->execute( $borrowernumber, $branchcode, $itemtype );
+    }
+
     my $reservecount = "0";
-    if(my $rowcount = $sthcount->fetchrow_hashref()){
+    if ( my $rowcount = $sthcount->fetchrow_hashref() ) {
         $reservecount = $rowcount->{count};
     }
-    
+
     # we check if it's ok or not
     if( $reservecount >= $allowedreserves ){
         return 0;
