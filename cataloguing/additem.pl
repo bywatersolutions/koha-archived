@@ -412,7 +412,7 @@ if ($op eq "additem") {
 
         # if barcode exists, don't create, but report The problem.
         unless ($exist_itemnumber) {
-            unless ($addedolditem->{'barcode'}) {
+            unless ($addedolditem->{'barcode'} || C4::Context->preference('autoBarcode') eq 'OFF') {
                use C4::Barcodes;
                my $barcodeobj = C4::Barcodes->new();
                my $db_max = $barcodeobj->db_max();
