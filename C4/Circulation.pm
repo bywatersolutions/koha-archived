@@ -906,7 +906,7 @@ sub CanBookBeIssued {
             }
             $needsconfirmation{BORRNOTSAMEBRANCH} =
               GetBranchName( $borrower->{'branchcode'} )
-              if ( $borrower->{'branchcode'} ne $userenv->{branch} );
+              if ( $borrower->{'branchcode'} ne C4::Context->userenv->{branch} );
         }
     }
 

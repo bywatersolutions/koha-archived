@@ -510,24 +510,26 @@ sub GetIndependentGroupModificationRights {
     $this_branch ||= $ENV{BRANCHCODE};
     $this_branch ||= C4::Context->userenv->{branch};
 
-    unless ($this_branch) {
+    my $is_opac = C4::Context->userenv->{type} eq 'opac';
+
+    unless ( $this_branch || $is_opac ) {
         carp("No branch found!");
         return;
     }
-
-    return 1 if ( $this_branch eq $other_branch );
+    return 1
+      if ( $this_branch && $other_branch && $this_branch eq $other_branch );
 
     my $allow_all = 0;
     $allow_all = 1 if C4::Context->IsSuperLibrarian();
-    $allow_all = 1 if C4::Context->userenv->{type} eq 'opac' && !$ENV{BRANCHCODE};
-
+    $allow_all = 1 if $is_opac && !$ENV{BRANCHCODE};
     my $sql;
     my @params;
-    if ( $allow_all ) {
+    if ($allow_all) {
         $sql = q{
             SELECT branchcode FROM branches WHERE 1
         }
-    } else {
+    }
+    else {
         $sql = q{
             SELECT DISTINCT(branchcode)
             FROM branchrelations

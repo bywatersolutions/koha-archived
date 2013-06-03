@@ -2235,7 +2235,7 @@ sub DelItemCheck {
     elsif (
             !( C4::Context->userenv->{flags} & 1 )
         and C4::Context->preference("IndependentBranches")
-        and GetIndependentGroupModificationRights(
+        and !GetIndependentGroupModificationRights(
             {
                 for => $item->{ C4::Context->preference("HomeOrHoldingBranch") }
             }

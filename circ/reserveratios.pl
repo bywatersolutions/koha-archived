@@ -30,6 +30,7 @@ use C4::Auth;
 use C4::Dates qw/format_date format_date_in_iso/;
 use C4::Debug;
 use C4::Biblio qw/GetMarcBiblio GetRecordValue GetFrameworkCode/;
+use C4::Branch;
 
 my $input = new CGI;
 my $startdate = $input->param('from');
