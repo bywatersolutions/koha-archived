@@ -49,6 +49,7 @@
     [% IF Koha.Preference('OnSiteCheckouts') %]
         <li><a href="/cgi-bin/koha/circ/on-site_checkouts.pl">Pending on-site checkouts</a></li>
     [% END %]
+    <li>   <a href="/cgi-bin/koha/circ/delinquent_patrons.pl">Overdues phone list</a></li>
 </ul>
 	
 	</div>
