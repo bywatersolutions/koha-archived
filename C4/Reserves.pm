@@ -465,7 +465,7 @@ sub CanItemBeReserved {
     # maximum number of holds allowed for this itemtype,
     # we need to check to see if *any* holds are allowed
     # for this patron/itemtype as determined by the holds policy
-    my $holds_policy = GetBranchItemRule(
+    my $holds_policy = C4::Circulation::GetBranchItemRule(
           $controlbranch eq "ItemHomeLibrary"
         ? $item->{homebranch}
         : $borrower->{branchcode},
