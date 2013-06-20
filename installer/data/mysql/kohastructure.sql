@@ -402,6 +402,43 @@ CREATE TABLE `default_circ_rules` (
     PRIMARY KEY (`singleton`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+
+--
+-- Table structure for table `calendar_events`
+--
+DROP TABLE IF EXISTS `calendar_events`;
+CREATE TABLE `calendar_events` (
+    `branchcode` varchar(10) NOT NULL DEFAULT '',
+    `event_date` date NOT NULL,
+    `title` varchar(50) NOT NULL DEFAULT '',
+    `description` text NOT NULL,
+    `open_hour` smallint(6) NOT NULL,
+    `open_minute` smallint(6) NOT NULL,
+    `close_hour` smallint(6) NOT NULL,
+    `close_minute` smallint(6) NOT NULL,
+    PRIMARY KEY (`branchcode`,`event_date`),
+    CONSTRAINT `calendar_events_ibfk_1` FOREIGN KEY (`branchcode`) REFERENCES `branches` (`branchcode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Table structure for table `calendar_repeats`
+--
+DROP TABLE IF EXISTS `calendar_repeats`;
+CREATE TABLE `calendar_repeats` (
+    `branchcode` varchar(10) NOT NULL DEFAULT '',
+    `weekday` smallint(6) DEFAULT NULL,
+    `month` smallint(6) DEFAULT NULL,
+    `day` smallint(6) DEFAULT NULL,
+    `title` varchar(50) NOT NULL DEFAULT '',
+    `description` text NOT NULL,
+    `open_hour` smallint(6) NOT NULL,
+    `open_minute` smallint(6) NOT NULL,
+    `close_hour` smallint(6) NOT NULL,
+    `close_minute` smallint(6) NOT NULL,
+    UNIQUE KEY `branchcode` (`branchcode`,`weekday`),
+    UNIQUE KEY `branchcode_2` (`branchcode`,`month`,`day`),
+    CONSTRAINT `calendar_repeats_ibfk_1` FOREIGN KEY (`branchcode`) REFERENCES `branches` (`branchcode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 --
 -- Table structure for table `cities`
 --

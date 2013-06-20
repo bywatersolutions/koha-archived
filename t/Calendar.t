@@ -55,6 +55,8 @@ sub fixtures {
         ],
     ], 'add fixtures';
     use_ok('Koha::Calendar');
+    use Carp;
+    $SIG{ __DIE__ } = sub { Carp::confess( @_ ) };
 }
 
 my $db = Test::MockModule->new('Koha::Database');
@@ -73,27 +75,61 @@ $module_context->mock(
     }
 );
 
-fixtures_ok [
-    # weekly holidays
-    RepeatableHoliday => [
-        [ qw( branchcode day month weekday title description) ],
-        [ 'MPL', undef, undef, 0, '', '' ], # sundays
-        [ 'MPL', undef, undef, 6, '', '' ],# saturdays
-        [ 'MPL', 1, 1, undef, '', ''], # new year's day
-        [ 'MPL', 25, 12, undef, '', ''], # chrismas
-    ],
-    # exception holidays
-    SpecialHoliday => [
-        [qw( branchcode day month year title description isexception )],
-        [ 'MPL', 11, 11, 2012, '', '', 1 ],    # sunday exception
-        [ 'MPL', 1,  6,  2011, '', '', 0 ],
-        [ 'MPL', 4,  7,  2012, '', '', 0 ],
-        [ 'CPL', 6,  8,  2012, '', '', 0 ],
-      ],
-], "add fixtures";
+SKIP: {
 
-my $cache = Koha::Cache->get_instance();
-$cache->clear_from_cache( 'single_holidays') ;
+skip "DBD::Mock is too old", 33
+  unless $DBD::Mock::VERSION >= 1.45;
+
+# Apologies for strange indentation, DBD::Mock is picky
+my $holidays_session = DBD::Mock::Session->new('holidays_session' => (
+    { # weekly holidays
+        statement => q{
+        SELECT
+            weekday, open_hour, open_minute, close_hour, close_minute,
+            (open_hour = 0 AND open_minute = 0 AND close_hour = 0 AND close_minute = 0) AS closed
+        FROM calendar_repeats
+        WHERE branchcode = ? AND weekday IS NOT NULL
+    },
+        results   => [
+                        ['weekday', 'open_hour', 'open_minute', 'close_hour', 'close_minute', 'closed'],
+                        [0, 0, 0, 0, 0, 1],    # sundays
+                        [1,10, 0,19, 0, 0],    # mondays
+                        [2,10, 0,19, 0, 0],    # tuesdays
+                        [6, 0, 0, 0, 0, 1]     # saturdays
+                     ]
+    },
+    { # day and month repeatable holidays
+        statement => q{
+        SELECT
+            month, day, open_hour, open_minute, close_hour, close_minute,
+            (open_hour = 0 AND open_minute = 0 AND close_hour = 0 AND close_minute = 0) AS closed
+        FROM calendar_repeats
+        WHERE branchcode = ? AND weekday IS NULL
+    },
+        results   => [
+                        [ 'month', 'day', 'open_hour', 'open_minute', 'close_hour', 'close_minute', 'closed' ],
+                        [ 1, 1, 0, 0, 0, 0, 1],   # new year's day
+                        [ 6,26,10, 0,15, 0, 0],    # wednesdays
+                        [12,25, 0, 0, 0, 0, 1]     # christmas
+                     ]
+    },
+    { # exception holidays
+        statement => q{
+        SELECT
+            event_date, open_hour, open_minute, close_hour, close_minute,
+            (open_hour = 0 AND open_minute = 0 AND close_hour = 0 AND close_minute = 0) AS closed
+        FROM calendar_events
+        WHERE branchcode = ?
+    },
+        results   => [
+                        [ 'event_date', 'open_hour', 'open_minute', 'close_hour', 'close_minute', 'closed' ],
+                        [ '2012-11-11', 0, 0,24, 0, 0 ], # sunday exception
+                        [ '2011-06-01', 0, 0, 0, 0, 1 ],  # single holiday
+                        [ '2012-07-04', 0, 0, 0, 0, 1 ],
+                        [ '2014-06-26',12, 0,14, 0, 0 ]
+                     ]
+    },
+));
 
 # 'MPL' branch is arbitrary, is not used at all but is needed for initialization
 my $cal = Koha::Calendar->new( branchcode => 'MPL' );
@@ -211,6 +247,22 @@ my $holiday_for_another_branch = DateTime->new(
         minute    => 53,
     );
 
+    my $same_day_dt = DateTime->new(    # Monday
+        year      => 2012,
+        month     => 7,
+        day       => 23,
+        hour      => 13,
+        minute    => 53,
+    );
+
+    my $after_close_dt = DateTime->new(    # Monday
+        year      => 2012,
+        month     => 7,
+        day       => 23,
+        hour      => 22,
+        minute    => 53,
+    );
+
     my $later_dt = DateTime->new(    # Monday
         year      => 2012,
         month     => 9,
@@ -250,13 +302,43 @@ my $holiday_for_another_branch = DateTime->new(
     is( $cal->addDate($day_after_christmas, -1, 'days')->ymd(), '2012-12-24',
         'Negative call to addDate (Datedue)' );
 
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => -10 ), 'hours' ),'eq',
+        '2012-07-20T15:53:00',
+        'Subtract 10 hours (Datedue)' );
+
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => 10 ), 'hours' ),'eq',
+        '2012-07-24T12:53:00',
+        'Add 10 hours (Datedue)' );
+
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => -1 ), 'hours' ),'eq',
+        '2012-07-23T10:53:00',
+        'Subtract 1 hours (Datedue)' );
+
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => 1 ), 'hours' ),'eq',
+        '2012-07-23T12:53:00',
+        'Add 1 hours (Datedue)' );
+
     ## Note that the days_between API says closed days are not considered.
     ## This tests are here as an API test.
     cmp_ok( $cal->days_between( $test_dt, $later_dt )->in_units('days'),
-                '==', 40, 'days_between calculates correctly (Days)' );
+                '==', 40, 'days_between calculates correctly (Datedue)' );
 
     cmp_ok( $cal->days_between( $later_dt, $test_dt )->in_units('days'),
-                '==', 40, 'Test parameter order not relevant (Days)' );
+                '==', 40, 'Test parameter order not relevant (Datedue)' );
+
+    cmp_ok( $cal->hours_between( $test_dt, $same_day_dt )->in_units('hours'),
+                '==', 2, 'hours_between calculates correctly (short period)' );
+
+    cmp_ok( $cal->hours_between( $test_dt, $after_close_dt )->in_units('hours'),
+                '==', 7, 'hours_between calculates correctly (after close)' );
+
+    cmp_ok( $cal->hours_between( $test_dt, $later_dt )->in_units('hours'),
+                '==', 725, 'hours_between calculates correctly (Datedue)' );
+
+    cmp_ok( $cal->hours_between( $later_dt, $test_dt )->in_units('hours'),
+                '==', 725, 'hours_between parameter order not relevant (Datedue)' );
+
+
 }
 
 {   ## 'Calendar' tests'
@@ -287,11 +369,33 @@ my $holiday_for_another_branch = DateTime->new(
     is( $cal->addDate($day_after_christmas, -1, 'days')->ymd(), '2012-12-24',
             'Negative call to addDate (Calendar)' );
 
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => -10 ), 'hours' ),'eq',
+        '2012-07-23T10:00:00',
+        'Subtract 10 hours (Calendar)' );
+
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => 10 ), 'hours' ),'eq',
+        '2012-07-23T19:00:00',
+        'Add 10 hours (Calendar)' );
+
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => -1 ), 'hours' ),'eq',
+        '2012-07-23T10:53:00',
+        'Subtract 1 hours (Calendar)' );
+
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => 1 ), 'hours' ),'eq',
+        '2012-07-23T12:53:00',
+        'Add 1 hours (Calendar)' );
+
     cmp_ok( $cal->days_between( $test_dt, $later_dt )->in_units('days'),
                 '==', 40, 'days_between calculates correctly (Calendar)' );
 
     cmp_ok( $cal->days_between( $later_dt, $test_dt )->in_units('days'),
                 '==', 40, 'Test parameter order not relevant (Calendar)' );
+
+    cmp_ok( $cal->hours_between( $test_dt, $later_dt )->in_units('hours'),
+                '==', 725, 'hours_between calculates correctly (Calendar)' );
+
+    cmp_ok( $cal->hours_between( $later_dt, $test_dt )->in_units('hours'),
+                '==', 725, 'hours_between parameter order not relevant (Calendar)' );
 }
 
 
@@ -322,6 +426,10 @@ my $holiday_for_another_branch = DateTime->new(
     is( $cal->addDate($day_after_christmas, -1, 'days')->ymd(), '2012-12-25',
         'Negative call to addDate (Days)' );
 
+    cmp_ok($cal->addDate( $test_dt, DateTime::Duration->new( hours => 10 ), 'hours' ),'eq',
+        '2012-07-23T21:53:00',
+        'Add 10 hours (Days)' );
+
     ## Note that the days_between API says closed days are not considered.
     ## This tests are here as an API test.
     cmp_ok( $cal->days_between( $test_dt, $later_dt )->in_units('days'),
@@ -330,12 +438,20 @@ my $holiday_for_another_branch = DateTime->new(
     cmp_ok( $cal->days_between( $later_dt, $test_dt )->in_units('days'),
                 '==', 40, 'Test parameter order not relevant (Days)' );
 
+    cmp_ok( $cal->hours_between( $test_dt, $later_dt )->in_units('hours'),
+                '==', 725, 'hours_between calculates correctly (Days)' );
+
+    cmp_ok( $cal->hours_between( $later_dt, $test_dt )->in_units('hours'),
+                '==', 725, 'hours_between parameter order not relevant (Days)' );
+
 }
 
 {
     $cal = Koha::Calendar->new( branchcode => 'CPL' );
     is ( $cal->is_holiday($single_holiday), 0, 'Single holiday for MPL, not CPL' );
     is ( $cal->is_holiday($holiday_for_another_branch), 1, 'Holiday defined for CPL should be defined as an holiday' );
+}
+
 }
 
 1;
