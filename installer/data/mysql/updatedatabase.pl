@@ -9787,7 +9787,6 @@ if(CheckVersion($DBversion)) {
     SetVersion($DBversion);
 }
 
-
 $DBversion = "3.18.05.002";
 if(CheckVersion($DBversion)) {
     $dbh->do(q{UPDATE authorised_values SET category='ORDER_CANCELLATION_REASON' WHERE category='ORDER_CANCELLATI'});
@@ -9806,6 +9805,7 @@ if ( CheckVersion($DBversion) ) {
     print "Upgrade to $DBversion done (3.18.6 release)\n";
     SetVersion($DBversion);
 }
+
 
 # DEVELOPER PROCESS, search for anything to execute in the db_update directory
 # SEE bug 13068
