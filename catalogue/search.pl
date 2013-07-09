@@ -155,7 +155,6 @@ use POSIX qw(ceil floor);
 use String::Random;
 use C4::Branch; # GetBranches
 use C4::Search::History;
-
 use URI::Escape;
 
 my $DisplayMultiPlaceHold = C4::Context->preference("DisplayMultiPlaceHold");
@@ -414,7 +413,36 @@ my @nolimits = map uri_unescape($_), $cgi->param('nolimit');
 my %is_nolimit = map { $_ => 1 } @nolimits;
 @limits = grep { not $is_nolimit{$_} } @limits;
 
-if($params->{'multibranchlimit'}) {
+if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
+    # Get list of branches this branch can access
+    my @branches = GetIndependentGroupModificationRights();
+
+    # Strip out any branch search limits that are not in the list of allowable branches
+    my $has_valid_branch_limits; # If at least one allowable branch limit is passed,
+                                 # use the valid ones, otherwise make it an "all branches"
+                                 # search with the allowed branches
+
+    my @new_limits;
+    foreach my $limit ( @limits ) {
+        if ( $limit =~ /^branch:/ ) {
+            my ( undef, $branch ) = split(':', $limit);
+            push( @new_limits, $limit ) if any { $_ eq $branch } @branches;
+            $has_valid_branch_limits = 1;
+        } elsif ( $limit =~ /^\(branch:/ ) {
+        } else {
+            push( @new_limits, $limit );
+        }
+    }
+    @limits = @new_limits;
+
+    # If the limits contain any branch limits, if not, do a search on all allowable branches
+    unless ($has_valid_branch_limits) {
+        my $new_branch_limit =
+          '(' . join( " or ", map { "branch:$_ " } @branches ) . ')';
+        push( @limits, $new_branch_limit );
+    }
+}
+elsif( $params->{'multibranchlimit'} ) {
     my $multibranch = '('.join( " or ", map { "branch: $_ " } @{ GetBranchesInCategory( $params->{'multibranchlimit'} ) } ).')';
     push @limits, $multibranch if ($multibranch ne  '()');
 }
