@@ -153,6 +153,7 @@ use C4::VirtualShelves;
 use URI::Escape;
 use POSIX qw(ceil floor);
 use C4::Branch; # GetBranches
+use URI::Escape;
 
 my $DisplayMultiPlaceHold = C4::Context->preference("DisplayMultiPlaceHold");
 # create a new CGI object
@@ -420,6 +421,7 @@ if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
             my ( undef, $branch ) = split(':', $limit);
             push( @new_limits, $limit ) if any { $_ eq $branch } @branches;
             $has_valid_branch_limits = 1;
+        } elsif ( $limit =~ /^\(branch:/ ) {
         } else {
             push( @new_limits, $limit );
         }
@@ -429,7 +431,7 @@ if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
     # If the limits contain any branch limits, if not, do a search on all allowable branches
     unless ($has_valid_branch_limits) {
         my $new_branch_limit =
-          '(' . join( " or ", map { "branch: $_ " } @branches ) . ')';
+          '(' . join( " or ", map { "branch:$_ " } @branches ) . ')';
         push( @limits, $new_branch_limit );
     }
 }
