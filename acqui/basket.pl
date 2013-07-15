@@ -35,6 +35,7 @@ use C4::Members qw/GetMember/;  #needed for permissions checking for changing ba
 use C4::Items;
 use C4::Suggestions;
 use Date::Calc qw/Add_Delta_Days/;
+use C4::Branch qw/GetIndependentGroupModificationRights/;
 
 =head1 NAME
 
