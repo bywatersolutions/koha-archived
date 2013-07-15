@@ -1578,6 +1578,29 @@ sub buildQuery {
         $limit .= "($availability_limit)";
     }
 
+    if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
+        my $search_context = C4::Context->userenv->{type};
+        my $IndependentBranchesRecordsAndItems;
+        if ( $search_context eq 'opac' ) {
+            # For the OPAC, if IndependentBranchesRecordsAndItems is enabled,
+            # and BRANCHCODE has been set in the httpd conf,
+            # we need to filter the items
+            $IndependentBranchesRecordsAndItems = $ENV{BRANCHCODE};
+        }
+        else {
+            # For the intranet, if IndependentBranchesRecordsAndItems is enabled,
+            # and the user is not a superlibrarian,
+            # we need to filter the items
+            $IndependentBranchesRecordsAndItems = !C4::Context->IsSuperLibrarian();
+        }
+        my @allowed_branches = $IndependentBranchesRecordsAndItems ? GetIndependentGroupModificationRights() : ();
+
+        if ( @allowed_branches ) {
+            $limit .= " and " if ( $query || $limit );
+            $limit .= "(" . join( " or ", map { "branch:$_" } @allowed_branches ) . ")";
+        }
+    }
+
     # Normalize the query and limit strings
     # This is flawed , means we can't search anything with : in it
     # if user wants to do ccl or cql, start the query with that
