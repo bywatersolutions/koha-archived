@@ -2302,7 +2302,7 @@ sub _FixAccountForLostAndReturned {
         WHERE (accountlines_id = ?)");
     $usth->execute($data->{'accountlines_id'});      # We might be adjusting an account for some OTHER borrowernumber now.  Not the one we passed in.
     #check if any credit is left if so writeoff other accounts
-    my $nextaccntno = getnextacctno($data->{'borrowernumber'});
+    my $nextaccntno = C4::Accounts::getnextacctno($data->{'borrowernumber'});
     $amountleft *= -1 if ($amountleft < 0);
     if ($amountleft > 0) {
         my $msth = $dbh->prepare("SELECT * FROM accountlines WHERE (borrowernumber = ?)
@@ -2838,7 +2838,7 @@ sub AddRenewal {
     # Charge a new rental fee, if applicable?
     my ( $charge, $type ) = GetIssuingCharges( $itemnumber, $borrowernumber );
     if ( $charge > 0 ) {
-        my $accountno = getnextacctno( $borrowernumber );
+        my $accountno = C4::Accounts::getnextacctno( $borrowernumber );
         my $item = GetBiblioFromItemNumber($itemnumber);
         my $manager_id = 0;
         $manager_id = C4::Context->userenv->{'number'} if C4::Context->userenv; 
@@ -3083,7 +3083,7 @@ sub _get_discount_from_rule {
 sub AddIssuingCharge {
     my ( $itemnumber, $borrowernumber, $charge ) = @_;
     my $dbh = C4::Context->dbh;
-    my $nextaccntno = getnextacctno( $borrowernumber );
+    my $nextaccntno = C4::Accounts::getnextacctno( $borrowernumber );
     my $manager_id = 0;
     $manager_id = C4::Context->userenv->{'number'} if C4::Context->userenv;
     my $query ="
