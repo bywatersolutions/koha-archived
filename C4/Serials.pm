@@ -26,6 +26,7 @@ use POSIX qw(strftime);
 use C4::Biblio;
 use C4::Log;    # logaction
 use C4::Debug;
+use C4::Branch qw(GetIndependentGroupModificationRights);
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
