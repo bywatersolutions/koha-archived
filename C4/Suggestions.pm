@@ -133,18 +133,12 @@ sub SearchSuggestion {
     }
 
     # filter on user branch
-    if ( C4::Context->preference('IndependentBranches') ) {
-        my $userenv = C4::Context->userenv;
-        if ($userenv) {
-            if ( !C4::Context->IsSuperLibrarian() && !$suggestion->{branchcode} )
-            {
-                my $branches =
-                  GetIndependentGroupModificationRights( { stringify => 1 } );
-                push ( @query, qq{
-                    AND (suggestions.branchcode IN ( $branches ) OR suggestions.branchcode='')
-                } );
-            }
-        }
+    if ( C4::Context->preference('IndependentBranches') && !C4::Context->IsSuperLibrarian() && !$suggestion->{branchcode} ) {
+        my $branches =
+          GetIndependentGroupModificationRights( { stringify => 1 } );
+        push ( @query, qq{
+            AND (suggestions.branchcode IN ( $branches ) OR suggestions.branchcode='')
+        } );
     } else {
         if ( defined $suggestion->{branchcode} && $suggestion->{branchcode} ) {
             unless ( $suggestion->{branchcode} eq '__ANY__' ) {
