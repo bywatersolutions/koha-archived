@@ -45,7 +45,7 @@ my ($template, $loggedinuser, $cookie)
 
 my $theme = $input->param('theme') || "default";
 
-my $patron = $input->Vars;
+my $patron = { $input->Vars };
 foreach (keys %$patron){
     delete $patron->{$_} unless($patron->{$_});
 }
