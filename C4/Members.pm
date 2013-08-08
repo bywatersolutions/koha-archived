@@ -26,6 +26,7 @@ use C4::Context;
 use C4::Dates qw(format_date_in_iso format_date);
 use Digest::MD5 qw(md5_base64);
 use String::Random qw( random_string );
+use Clone qw(clone);
 use Date::Calc qw/Today Add_Delta_YM check_date Date_to_Days/;
 use C4::Log; # logaction
 use C4::Overdues;
@@ -199,7 +200,6 @@ sub _express_member_find {
 
 sub Search {
     my ( $filter, $orderby, $limit, $columns_out, $search_on_fields, $searchtype ) = @_;
-    warn "C4::Members::Search";
 
     my $search_string;
     my $found_borrower;
@@ -259,6 +259,7 @@ sub Search {
 
     if ( C4::Context->preference("IndependentBranches") ) { # && !$showallbranches){
         unless ( C4::Context->IsSuperLibrarian() ){
+            $filter = clone( $filter ); # Modify a copy only
             my @branches = GetIndependentGroupModificationRights();
             if ( my $fr = ref $filter ) {
                 if ( $fr eq "HASH" ) {
