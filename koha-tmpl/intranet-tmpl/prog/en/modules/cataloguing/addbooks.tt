@@ -28,7 +28,9 @@
     function GetZ3950Terms(fw){
         var strQuery="&frameworkcode=" + fw;
         [% FOREACH z3950_search_param IN z3950_search_params %]
+/*
             strQuery += "&" + "[% z3950_search_param.name %]" + "=" + "[% z3950_search_param.encvalue %]";
+*/
         [% END %]
         return strQuery;
     }

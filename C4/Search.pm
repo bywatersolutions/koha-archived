@@ -302,6 +302,20 @@ sub SimpleSearch {
         $zoom_query->destroy();
     }
 
+    if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
+        my @new_results;
+        my $dbh = C4::Context->dbh();
+        foreach my $result ( @{$results} ) {
+            my $marc_record = MARC::Record->new_from_usmarc($result);
+            my $koha_record = TransformMarcToKoha( $dbh, $marc_record );
+            my $is_allowed = $koha_record->{branchcode} ? GetIndependentGroupModificationRights( { for => $koha_record->{branchcode} } ) : 1;
+
+            push( @new_results, $result ) if ( $is_allowed );
+        }
+        $results = \@new_results;
+        $total_hits = scalar( @new_results );
+    }
+
     return ( undef, $results, $total_hits );
 }
 
