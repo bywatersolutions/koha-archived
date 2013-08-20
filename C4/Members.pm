@@ -1281,6 +1281,12 @@ sub checkuniquemember {
             ($dateofbirth) ?
             "SELECT borrowernumber,categorycode FROM borrowers WHERE surname=? and firstname=?  and dateofbirth=?" :
             "SELECT borrowernumber,categorycode FROM borrowers WHERE surname=? and firstname=?";
+
+    if ( C4::Context->preference('IndependentBranches') ) {
+        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
+        $request .= " AND branchcode IN ( $branches )";
+    }
+
     my $sth = $dbh->prepare($request);
     if ($collectivity) {
         $sth->execute( uc($surname) );
