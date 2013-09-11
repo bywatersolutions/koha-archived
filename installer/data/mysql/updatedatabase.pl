@@ -9807,6 +9807,13 @@ if ( CheckVersion($DBversion) ) {
     SetVersion($DBversion);
 }
 
+$DBversion = "XXX";
+if (C4::Context->preference("Version") < TransformToNum($DBversion)) {
+    $dbh->do("ALTER TABLE import_batches ADD is_order BOOLEAN NOT NULL DEFAULT '0' AFTER comments");
+   print "Upgrade to $DBversion done (Bug 10877 - Add 'Order Record' processing)\n";
+   SetVersion ($DBversion);
+}
+
 # DEVELOPER PROCESS, search for anything to execute in the db_update directory
 # SEE bug 13068
 # if there is anything in the atomicupdate, read and execute it.
@@ -9822,7 +9829,6 @@ while ( my $file = readdir $dirh ) {
         do $update_dir . $file;
     }
 }
-
 
 =head1 FUNCTIONS
 
