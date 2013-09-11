@@ -138,7 +138,15 @@
 
             return disableUnchecked($(this));
         });
+
         $('#tabs').tabs();
+
+        [% IF is_order %]
+            $("#checkAll").click();
+
+            $("#all_budget_id").hide();
+            $('label[for="all_budget_id"]').hide();
+        [% END %]
     });
 
     function disableUnchecked(form){
@@ -166,7 +174,9 @@
                 <div id="tabs" class="toptabs">
                   <ul>
                     <li><a href="#records_to_import">Select to import</a></li>
-                    <li><a href="#items_info" class="items_info">Item information</a></li>
+                    [% UNLESS is_order %]
+                        <li><a href="#items_info" class="items_info">Item information</a></li>
+                    [% END %]
                     <li><a href="#accounting_details">Default accounting details</a></li>
                   </ul>
 
@@ -183,6 +193,12 @@
 
                         [% FOREACH cur IN loop_currencies %]
                             <input type="hidden" name="[% cur.currency %]" value="[% cur.rate %]" />
+                        [% END %]
+
+                        [% IF is_order %]
+                            <p>
+                                <input type="submit" value="Save" /><a class="cancel" href="/cgi-bin/koha/acqui/basket.pl?basketno=[% basketno %]">Cancel</a>
+                            </p>
                         [% END %]
 
                         [% FOREACH biblio IN biblio_list %]
@@ -261,11 +277,11 @@
                         </fieldset>
                         [% END %]
                       </div>
+                      [% IF ( items && !is_order ) %]
                       <div id="items_info">
                         <h2>Item information</h2>
                         <p>Import all the checked items in the basket with the following parameters:</p>
 
-                        [% IF ( items ) %]
                         <fieldset class="rows" style="float:none;">
                             <legend>Item</legend>
                             [% IF ( NoACQframework ) %]
@@ -309,8 +325,8 @@
                             </div>
                             [% END %] <!-- /items -->
                         </fieldset>
-                        [% END %] <!-- items -->
                       </div>
+                      [% END %] <!-- items tab -->
                       <div id="accounting_details">
                         <p>Import all the checked items in the basket with the following accounting details (used only if no information is filled for the item):</p>
                         <fieldset class="rows" style="float:none;">
@@ -320,6 +336,7 @@
                                     <!-- origquantityrec only here for javascript compatibility (additem.js needs it, useless here, usefull when receiveing an order -->
                                     <input id="origquantityrec" readonly="readonly" type="hidden" name="origquantityrec" value="1" />
                                 </li>
+                                [% UNLESS is_order %]
                                 <li>
                                     [% IF ( close ) %]
                                         <span class="label">Fund: </span>
@@ -352,6 +369,7 @@
                                         </li>
                                     [% END %]
                                 </li>
+                                [% END %]
                                 <li>
                                     <label for="all_order_internalnote">Internal note: </label>
                                     <textarea id="all_order_internalnote" cols="30" rows="3" name="all_order_internalnote"></textarea>
@@ -360,6 +378,7 @@
                                     <label for="all_order_vendornote">Vendor note: </label>
                                     <textarea id="all_order_vendornote" cols="30" rows="3" name="all_order_vendornote"></textarea>
                                 </li>
+                                [% UNLESS is_order %]
                                 <li>
                                     <div class="hint">The 2 following fields are available for your own usage. They can be useful for statistical purposes</div>
                                     <label for="all_sort1">Statistic 1: </label>
@@ -369,14 +388,16 @@
                                     <label for="all_sort2">Statistic 2: </label>
                                     <input type="text" id="all_sort2" size="20" name="all_sort2" value="" />
                                 </li>
+                                [% END %]
                             </ol>
                         </fieldset>
                       </div>
                       </div>
 
-                      <fieldset class="action">
-                          <input type="submit" value="Save" /><a class="cancel" href="/cgi-bin/koha/acqui/basket.pl?basketno=[% basketno %]">Cancel</a>
-                      </fieldset>
+                        <fieldset class="action">
+                            <input type="hidden" name="is_order" value="[% is_order %]" />
+                            <input type="submit" value="Save" /><a class="cancel" href="/cgi-bin/koha/acqui/basket.pl?basketno=[% basketno %]">Cancel</a>
+                        </fieldset>
                     </form>
                 [% ELSE %]
                 <div>
@@ -415,8 +436,8 @@
                           [% END %]
                         </td>
                         <td><span title="[% batch_lis.staged_date %]">[% batch_lis.staged_date | $KohaDates with_hours => 1 %]</span></td>
-                        <td>[% batch_lis.num_records %]</td>
-                        <td><a href="[% batch_lis.scriptname %]?import_batch_id=[% batch_lis.import_batch_id %]&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]">Add orders</a></td>
+                        <td>[% batch_lis.num_biblios %]</td>
+                        <td><a href="[% batch_lis.scriptname %]?import_batch_id=[% batch_lis.import_batch_id %]&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]&amp;is_order=[% is_order %]">Add orders</a></td>
                       </tr>
                       [% END %]
                     </tbody>
