@@ -55,6 +55,7 @@ my $parse_items = $input->param('parse_items');
 my $item_action = $input->param('item_action');
 my $comments = $input->param('comments');
 my $record_type = $input->param('record_type');
+my $is_order = $input->param('is_order') eq 'on';
 my $encoding = $input->param('encoding');
 my $marc_modification_template = $input->param('marc_modification_template_id');
 
@@ -127,14 +128,8 @@ if ($completedJobID) {
     $dbh->{AutoCommit} = 0;
     # FIXME branch code
     my ( $batch_id, $num_valid, $num_items, @import_errors ) =
-      BatchStageMarcRecords(
-        $record_type,                $encoding,
-        $marcrecord,                 $filename,
-        $marc_modification_template, $comments,
-        '',                          $parse_items,
-        0,                           50,
-        staging_progress_callback( $job, $dbh )
-      );
+      BatchStageMarcRecords( $record_type, $encoding, $marcrecord, $filename, $marc_modification_template, $comments,
+        '', $parse_items, 0, $is_order, 50, staging_progress_callback( $job, $dbh ) );
 
     my $num_with_matches = 0;
     my $checked_matches = 0;
