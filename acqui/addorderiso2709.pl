@@ -60,12 +60,14 @@ my ($template, $loggedinuser, $cookie, $userflags) = get_template_and_user({
 my $cgiparams = $input->Vars;
 my $op = $cgiparams->{'op'} || '';
 my $booksellerid  = $input->param('booksellerid');
+my $is_order = $input->param('is_order');
 my $bookseller = Koha::Acquisition::Bookseller->fetch({ id => $booksellerid });
 my $data;
 
 $template->param(scriptname => "/cgi-bin/koha/acqui/addorderiso2709.pl",
                 booksellerid => $booksellerid,
                 booksellername => $bookseller->{name},
+                is_order => $is_order,
                 );
 
 if ($cgiparams->{'import_batch_id'} && $op eq ""){
@@ -83,7 +85,7 @@ if (! $cgiparams->{'basketno'}){
 if ($op eq ""){
     $template->param("basketno" => $cgiparams->{'basketno'});
 #display batches
-    import_batches_list($template);
+    import_batches_list( $template, $is_order );
 #
 # 2nd step = display the content of the choosen file
 #
@@ -269,6 +271,35 @@ if ($op eq ""){
             my @serials      = $input->param('serial');
             my @ind_tag   = $input->param('ind_tag');
             my @indicator = $input->param('indicator');
+
+            if ($is_order) {
+                my ( $notforloan_field, $notforloan_subfield ) =
+                  GetMarcFromKohaField('items.notforloan');
+                push( @tags,         $notforloan_field );
+                push( @subfields,    $notforloan_subfield );
+                push( @field_values, '-1' );
+
+                my ( $homebranch_field, $homebranch_subfield ) =
+                  GetMarcFromKohaField('items.homebranch');
+                push( @tags,         $homebranch_field );
+                push( @subfields,    $homebranch_subfield );
+                push( @field_values, C4::Context->userenv->{'branch'} );
+
+                my ( $holdingbranch_field, $holdingbranch_subfield ) =
+                  GetMarcFromKohaField('items.holdingbranch');
+                push( @tags,         $holdingbranch_field );
+                push( @subfields,    $holdingbranch_subfield );
+                push( @field_values, C4::Context->userenv->{'branch'} );
+
+                my $infos = get_infos_syspref($marcrecord, ['itype']);
+                my ( $itype_field, $itype_subfield ) =
+                  GetMarcFromKohaField('items.itype');
+                push( @tags,         $itype_field );
+                push( @subfields,    $itype_subfield );
+                push( @field_values, $infos->{itype} );
+                warn "ITYPE: " . $infos->{itype};
+            }
+
             my $item;
             push @{ $item->{tags} },         $tags[0];
             push @{ $item->{subfields} },    $subfields[0];
@@ -324,8 +355,8 @@ output_html_with_http_headers $input, $cookie, $template->output;
 
 
 sub import_batches_list {
-    my ($template) = @_;
-    my $batches = GetImportBatchRangeDesc();
+    my ($template, $is_order) = @_;
+    my $batches = GetImportBatchRangeDesc(undef,undef,$is_order);
 
     my @list = ();
     foreach my $batch (@$batches) {
@@ -420,6 +451,8 @@ sub import_biblios_list {
                         item_action => $item_action
                     );
     batch_info($template, $batch);
+
+    return \@list;
 }
 
 sub batch_info {
@@ -463,8 +496,7 @@ sub add_matcher_list {
     $template->param(available_matchers => \@matchers);
 }
 
-sub get_infos_syspref {
-    my ($record, $field_list) = @_;
+sub GetMarcFieldsToOrderAsYAML {
     my $syspref = C4::Context->preference('MarcFieldsToOrder');
     $syspref = "$syspref\n\n"; # YAML is anal on ending \n. Surplus does not hurt
     my $yaml = eval {
@@ -472,8 +504,18 @@ sub get_infos_syspref {
     };
     if ( $@ ) {
         warn "Unable to parse MarcFieldsToOrder syspref : $@";
-        return ();
+        return;
+    } else {
+        return $yaml;
     }
+}
+
+sub get_infos_syspref {
+    my ($record, $field_list) = @_;
+
+    my $yaml = GetMarcFieldsToOrderAsYAML;
+    return unless $yaml;
+
     my $r;
     for my $field_name ( @$field_list ) {
         next unless exists $yaml->{$field_name};

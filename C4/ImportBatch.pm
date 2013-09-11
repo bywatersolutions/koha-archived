@@ -238,7 +238,8 @@ sub AddImportBatch {
     my (@fields, @vals);
     foreach (qw( matcher_id template_id branchcode
                  overlay_action nomatch_action item_action
-                 import_status batch_type file_name comments record_type )) {
+                 import_status batch_type file_name comments
+                 record_type is_order )) {
         if (exists $params->{$_}) {
             push @fields, $_;
             push @vals, $params->{$_};
@@ -354,8 +355,8 @@ sub ModAuthInBatch {
     $file_name,                  $to_marc_plugin,
     $marc_modification_template, $comments,
     $branch_code,                $parse_items,
-    $leave_as_staging,           $progress_interval,
-    $progress_callback
+    $leave_as_staging,           $is_order,
+    $progress_interval,          $progress_callback
   );
 
 =cut
@@ -371,6 +372,7 @@ sub BatchStageMarcRecords {
     my $branch_code = shift;
     my $parse_items = shift;
     my $leave_as_staging = shift;
+    my $is_order = shift;
 
     # optional callback to monitor status 
     # of job
@@ -390,6 +392,7 @@ sub BatchStageMarcRecords {
             file_name => $file_name,
             comments => $comments,
             record_type => $record_type,
+            is_order => $is_order,
         } );
     if ($parse_items) {
         SetImportBatchItemAction($batch_id, 'always_add');
@@ -998,21 +1001,29 @@ sub  GetStagedWebserviceBatches {
 
 =head2 GetImportBatchRangeDesc
 
-  my $results = GetImportBatchRangeDesc($offset, $results_per_group);
+  my $results = GetImportBatchRangeDesc($offset, $results_per_group, $is_order);
 
 Returns a reference to an array of hash references corresponding to
 import_batches rows (sorted in descending order by import_batch_id)
 start at the given offset.
 
+Pass in $is_order = 1 to get only batches marked as order records
+
 =cut
 
 sub GetImportBatchRangeDesc {
-    my ($offset, $results_per_group) = @_;
+    my ($offset, $results_per_group,$is_order) = @_;
+
+    my $is_order_limit = $is_order ? "AND is_order = 1" : q{};
 
     my $dbh = C4::Context->dbh;
-    my $query = "SELECT * FROM import_batches
-                                    WHERE batch_type IN ('batch', 'webservice')
-                                    ORDER BY import_batch_id DESC";
+    my $query = "
+        SELECT * FROM import_batches
+        WHERE batch_type IN ('batch', 'webservice')
+        $is_order_limit
+        ORDER BY import_batch_id DESC
+    ";
+
     my @params;
     if ($results_per_group){
         $query .= " LIMIT ?";

@@ -56,6 +56,7 @@ my $parse_items                = $input->param('parse_items');
 my $item_action                = $input->param('item_action');
 my $comments                   = $input->param('comments');
 my $record_type                = $input->param('record_type');
+my $is_order = $input->param('is_order') eq 'on';
 my $encoding                   = $input->param('encoding');
 my $to_marc_plugin             = $input->param('to_marc_plugin');
 my $marc_modification_template = $input->param('marc_modification_template_id');
@@ -140,7 +141,8 @@ if ($completedJobID) {
         $to_marc_plugin, $marc_modification_template,
         $comments,       '',
         $parse_items,    0,
-        50, staging_progress_callback( $job, $dbh )
+        $is_order,       50,
+        staging_progress_callback( $job, $dbh )
       );
 
     my $num_with_matches = 0;
