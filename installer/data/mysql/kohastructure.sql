@@ -1031,6 +1031,7 @@ CREATE TABLE `import_batches` ( -- information about batches of marc records tha
   `record_type` enum('biblio', 'auth', 'holdings') NOT NULL default 'biblio', -- type of record in the batch
   `file_name` varchar(100), -- the name of the file uploaded
   `comments` mediumtext, -- any comments added when the file was uploaded
+  `is_order` tinyint(1) NOT NULL DEFAULT '0', -- defines if this is an Order Record for processing
   PRIMARY KEY (`import_batch_id`),
   KEY `branchcode` (`branchcode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

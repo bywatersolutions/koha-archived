@@ -9848,7 +9848,6 @@ if ( CheckVersion($DBversion) ) {
     print "Upgrade to $DBversion done \n";
 }
 
-
 # DEVELOPER PROCESS, search for anything to execute in the db_update directory
 # SEE bug 13068
 # if there is anything in the atomicupdate, read and execute it.
@@ -9864,7 +9863,6 @@ while ( my $file = readdir $dirh ) {
         do $update_dir . $file;
     }
 }
-
 
 =head1 FUNCTIONS
 

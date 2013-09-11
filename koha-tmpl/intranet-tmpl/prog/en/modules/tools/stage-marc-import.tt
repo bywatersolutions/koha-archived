@@ -112,6 +112,10 @@ function CheckForm(f) {
             <option value='auth'>Authority</option>
         </select>
     </li>
+    <li>
+        <input type="checkbox" name="is_order" id="is_order" />
+        <label for="is_order">Is an order file:</label>
+    </li>
 	<li>
 		<label for="encoding">Character encoding: </label>
             <select name="encoding" id="encoding"><option value="utf8" selected="selected">UTF-8 (Default)</option><option value="MARC-8">MARC 8</option><option value="ISO_5426">ISO 5426</option><option value="ISO_6937">ISO 6937</option><option value=ISO_8859-1">ISO 8859-1</option><option value="EUC-KR">EUC-KR</option></select>
