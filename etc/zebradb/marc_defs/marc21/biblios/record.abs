@@ -87,6 +87,7 @@ melm 043        Code-geographic
 #melm 046       pubdate
 melm 050$b      LC-call-number:w,LC-call-number:p,LC-call-number:s
 melm 050        LC-call-number:w,LC-call-number:p,LC-call-number:s
+melm 092        LC-call-number:w,LC-call-number:p,LC-call-number:s
 melm 052        Geographic-class
 melm 060        NLM-call-number
 melm 070        NAL-call-number
