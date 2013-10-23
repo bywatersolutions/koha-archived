@@ -899,7 +899,9 @@ sub CheckReserves {
            itemtypes.notforloan,
            items.notforloan AS itemnotforloan,
            items.itemnumber,
-           items.damaged
+           items.damaged,
+           items.homebranch,
+           items.holdingbranch
            FROM   items
            LEFT JOIN biblioitems ON items.biblioitemnumber = biblioitems.biblioitemnumber
            LEFT JOIN itemtypes   ON items.itype   = itemtypes.itemtype
@@ -912,7 +914,9 @@ sub CheckReserves {
            itemtypes.notforloan,
            items.notforloan AS itemnotforloan,
            items.itemnumber,
-           items.damaged
+           items.damaged,
+           items.homebranch,
+           items.holdingbranch
            FROM   items
            LEFT JOIN biblioitems ON items.biblioitemnumber = biblioitems.biblioitemnumber
            LEFT JOIN itemtypes   ON biblioitems.itemtype   = itemtypes.itemtype
@@ -928,14 +932,14 @@ sub CheckReserves {
         $sth->execute($barcode);
     }
     # note: we get the itemnumber because we might have started w/ just the barcode.  Now we know for sure we have it.
-    my ( $biblio, $bibitem, $notforloan_per_itemtype, $notforloan_per_item, $itemnumber, $damaged ) = $sth->fetchrow_array;
+    my ( $biblio, $bibitem, $notforloan_per_itemtype, $notforloan_per_item, $itemnumber, $damaged, $item_homebranch, $item_holdingbranch ) = $sth->fetchrow_array;
 
     return if ( $damaged && !C4::Context->preference('AllowHoldsOnDamagedItems') );
 
     return unless $itemnumber; # bail if we got nothing.
 
     # if item is not for loan it cannot be reserved either.....
-    #    execpt where items.notforloan < 0 :  This indicates the item is holdable. 
+    # except where items.notforloan < 0 :  This indicates the item is holdable.
     return if  ( $notforloan_per_item > 0 ) or $notforloan_per_itemtype;
 
     # Find this item in the reserves
@@ -947,21 +951,47 @@ sub CheckReserves {
     # $highest is the most important item we've seen so far.
     my $highest;
     if (scalar @reserves) {
+        my $LocalHoldsPriority = C4::Context->preference('LocalHoldsPriority');
+        my $LocalHoldsPriorityPatronControl = C4::Context->preference('LocalHoldsPriorityPatronControl');
+        my $LocalHoldsPriorityItemControl = C4::Context->preference('LocalHoldsPriorityItemControl');
+
         my $priority = 10000000;
         foreach my $res (@reserves) {
             if ( $res->{'itemnumber'} == $itemnumber && $res->{'priority'} == 0) {
                 return ( "Waiting", $res, \@reserves ); # Found it
             } else {
+                my $borrowerinfo;
+                my $iteminfo;
+                my $local_hold_match;
+
+                if ($LocalHoldsPriority) {
+                    $borrowerinfo = C4::Members::GetMember( borrowernumber => $res->{'borrowernumber'} );
+                    $iteminfo = C4::Items::GetItem($itemnumber);
+
+                    my $local_holds_priority_item_branchcode =
+                      $iteminfo->{$LocalHoldsPriorityItemControl};
+                    my $local_holds_priority_patron_branchcode =
+                      ( $LocalHoldsPriorityPatronControl eq 'PickupLibrary' )
+                      ? $res->{branchcode}
+                      : ( $LocalHoldsPriorityPatronControl eq 'HomeLibrary' )
+                      ? $borrowerinfo->{branchcode}
+                      : undef;
+                    $local_hold_match =
+                      $local_holds_priority_item_branchcode eq
+                      $local_holds_priority_patron_branchcode;
+                }
+
                 # See if this item is more important than what we've got so far
-                if ( $res->{'priority'} && $res->{'priority'} < $priority ) {
-                    my $borrowerinfo=C4::Members::GetMember(borrowernumber => $res->{'borrowernumber'});
-                    my $iteminfo=C4::Items::GetItem($itemnumber);
+                if ( ( $res->{'priority'} && $res->{'priority'} < $priority ) || $local_hold_match ) {
+                    $borrowerinfo ||= C4::Members::GetMember( borrowernumber => $res->{'borrowernumber'} );
+                    $iteminfo ||= C4::Items::GetItem($itemnumber);
                     my $branch = GetReservesControlBranch( $iteminfo, $borrowerinfo );
                     my $branchitemrule = C4::Circulation::GetBranchItemRule($branch,$iteminfo->{'itype'});
                     next if ($branchitemrule->{'holdallowed'} == 0);
                     next if (($branchitemrule->{'holdallowed'} == 1) && ($branch ne $borrowerinfo->{'branchcode'}));
                     $priority = $res->{'priority'};
                     $highest  = $res;
+                    last if $local_hold_match;
                 }
             }
         }
@@ -1823,6 +1853,7 @@ sub _Findgroupreserve {
         AND itemnumber = ?
         AND reservedate <= DATE_ADD(NOW(),INTERVAL ? DAY)
         AND suspend = 0
+        ORDER BY priority
     /;
     my $sth = $dbh->prepare($item_level_target_query);
     $sth->execute($itemnumber, $lookahead||0);
@@ -1855,6 +1886,7 @@ sub _Findgroupreserve {
         AND hold_fill_targets.itemnumber = ?
         AND reservedate <= DATE_ADD(NOW(),INTERVAL ? DAY)
         AND suspend = 0
+        ORDER BY priority
     /;
     $sth = $dbh->prepare($title_level_target_query);
     $sth->execute($itemnumber, $lookahead||0);
@@ -1888,6 +1920,7 @@ sub _Findgroupreserve {
           AND (reserves.itemnumber IS NULL OR reserves.itemnumber = ?)
           AND reserves.reservedate <= DATE_ADD(NOW(),INTERVAL ? DAY)
           AND suspend = 0
+          ORDER BY priority
     /;
     $sth = $dbh->prepare($query);
     $sth->execute( $biblio, $bibitem, $itemnumber, $lookahead||0);
