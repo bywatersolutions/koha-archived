@@ -6817,18 +6817,18 @@ if (C4::Context->preference("Version") < TransformToNum($DBversion)) {
         ALTER TABLE `deletedbiblioitems` ADD KEY `itemtype_idx` (`itemtype`)
     });
     # statistics
-    $dbh->do(q{
-        ALTER TABLE `statistics`
-            ADD KEY `branch_idx` (`branch`),
-            ADD KEY `proccode_idx` (`proccode`),
-            ADD KEY `type_idx` (`type`),
-            ADD KEY `usercode_idx` (`usercode`),
-            ADD KEY `itemnumber_idx` (`itemnumber`),
-            ADD KEY `itemtype_idx` (`itemtype`),
-            ADD KEY `borrowernumber_idx` (`borrowernumber`),
-            ADD KEY `associatedborrower_idx` (`associatedborrower`),
-            ADD KEY `ccode_idx` (`ccode`)
-    });
+#    $dbh->do(q{
+#        ALTER TABLE `statistics`
+#            ADD KEY `branch_idx` (`branch`),
+#            ADD KEY `proccode_idx` (`proccode`),
+#            ADD KEY `type_idx` (`type`),
+#            ADD KEY `usercode_idx` (`usercode`),
+#            ADD KEY `itemnumber_idx` (`itemnumber`),
+#            ADD KEY `itemtype_idx` (`itemtype`),
+#            ADD KEY `borrowernumber_idx` (`borrowernumber`),
+#            ADD KEY `associatedborrower_idx` (`associatedborrower`),
+#            ADD KEY `ccode_idx` (`ccode`)
+#    });
 
     print "Upgrade to $DBversion done (Bug 9681: Add some database indexes)\n";
     SetVersion($DBversion);
