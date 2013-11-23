@@ -338,6 +338,15 @@ definition file (probably something like {biblio,authority}-koha-indexdefs.xml) 
       </xslo:if>
     </xslo:for-each>
   </xslo:template>
+  <xslo:template mode="index_subfields" match="marc:datafield[@tag='264']">
+    <xslo:for-each select="marc:subfield">
+      <xslo:if test="contains('b', @code)">
+        <z:index name="Publisher:w Publisher:p">
+          <xslo:value-of select="."/>
+        </z:index>
+      </xslo:if>
+    </xslo:for-each>
+  </xslo:template>
   <xslo:template mode="index_subfields" match="marc:datafield[@tag='400']">
     <xslo:for-each select="marc:subfield">
       <xslo:if test="contains('a', @code)">

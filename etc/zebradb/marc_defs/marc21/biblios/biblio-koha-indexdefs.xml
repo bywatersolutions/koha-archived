@@ -428,6 +428,11 @@
   <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="260">
     <target_index>pl:w</target_index>
   </index_data_field>
+ <!--BWS added index ticket 11109 jen   PUblisher:w,Publisher:p-->
+  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="264" subfields="b">
+    <target_index>Publisher:w</target_index>
+    <target_index>Publisher:p</target_index>
+  </index_subfields>
   <!--record.abs line 123: melm 300        Extent:w,Extent:p-->
   <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="300">
     <target_index>Extent:w</target_index>
