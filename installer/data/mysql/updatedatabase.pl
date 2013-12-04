@@ -9714,7 +9714,60 @@ if ( CheckVersion($DBversion) ) {
 
 $DBversion = "3.18.04.000";
 if ( CheckVersion($DBversion) ) {
-    print "Upgrade to $DBversion done (3.18.4 release)\n";
+    $dbh->do(q|
+        INSERT INTO userflags (bit, flag, flagdesc, defaulton) VALUES
+        (20, 'lists', 'Lists', 0)
+    |);
+    $dbh->do(q|
+        INSERT INTO permissions (module_bit, code, description) VALUES
+        (20, 'delete_public_lists', 'Delete public lists')
+    |);
+    print "Upgrade to $DBversion done (Bug 13417: Add permission to delete public lists)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.19.00.012";
+if(CheckVersion($DBversion)) {
+    $dbh->do(q{
+        ALTER TABLE biblioitems MODIFY COLUMN marcxml longtext
+    });
+
+    $dbh->do(q{
+        ALTER TABLE deletedbiblioitems MODIFY COLUMN marcxml longtext
+    });
+
+    print "Upgrade to $DBversion done (Bug 13523 - Remove NOT NULL restriction on field marcxml due to mysql STRICT_TRANS_TABLES)\n";
+    SetVersion ($DBversion);
+}
+
+
+
+$DBversion = "3.19.00.XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q|
+        CREATE TABLE `additional_fields` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `tablename` varchar(255) NOT NULL DEFAULT '',
+          `name` varchar(255) NOT NULL DEFAULT '',
+          `authorised_value_category` varchar(16) NOT NULL DEFAULT '',
+          `marcfield` varchar(16) NOT NULL DEFAULT '',
+          `searchable` tinyint(1) NOT NULL DEFAULT '0',
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `fields_uniq` (`tablename`,`name`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+    |);
+    $dbh->do(q|
+        CREATE TABLE `additional_field_values` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `field_id` int(11) NOT NULL,
+          `record_id` int(11) NOT NULL,
+          `value` varchar(255) NOT NULL DEFAULT '',
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `field_record` (`field_id`,`record_id`),
+          CONSTRAINT `afv_fk` FOREIGN KEY (`field_id`) REFERENCES `additional_fields` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+    |);
+    print "Upgrade to $DBversion done (Bug 10855: Add tables additional_fields and additional_field_values)\n";
     SetVersion($DBversion);
 }
 
