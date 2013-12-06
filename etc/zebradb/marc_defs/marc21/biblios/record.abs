@@ -220,6 +220,8 @@ melm 700        Author,Author:p,Author-name-personal,Name,Editor,Personal-name
 melm 710$t      Author-title,Name-and-title,Title,Title-uniform
 #melm 710$a     author,author:p,Name-and-title
 melm 710$a      Name-and-title
+# BWS change. Adding 710$2. (Don't know when or by whom. 20121119.lrb)
+melm 710$2      Author,Author:p,Corporate-name,Name
 melm 710$9      Koha-Auth-Number
 melm 710        Author,Author:p,Corporate-name,Name
 melm 711$a      Name-and-title
