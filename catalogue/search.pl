@@ -675,8 +675,8 @@ for (my $i=0;$i<@servers;$i++) {
 } #/end of the for loop
 #$template->param(FEDERATED_RESULTS => \@results_array);
 
-$template->{'VARS'}->{'searchid'} = $cgi->param('searchid')
-  || String::Random::random_string('ssssssss');
+$template->{'VARS'}->{'searchid'} = $cgi->param('searchid');
+
 my $gotonumber = $cgi->param('gotoNumber');
 if ($gotonumber eq 'last' || $gotonumber eq 'first') {
     $template->{'VARS'}->{'gotoNumber'} = $gotonumber;
