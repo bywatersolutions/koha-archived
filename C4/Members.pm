@@ -43,6 +43,7 @@ use Koha::Borrower::Debarments qw(IsDebarred);
 use Text::Unaccent qw( unac_string );
 use Koha::AuthUtils qw(hash_password);
 use C4::Branch qw(GetBranchDetail GetIndependentGroupModificationRights);
+use List::MoreUtils qw(any);
 our ($VERSION,@ISA,@EXPORT,@EXPORT_OK,$debug);
 
 BEGIN {
@@ -260,33 +261,25 @@ sub Search {
     # $showallbranches was not used at the time SearchMember() was mainstreamed into Search().
     # Mentioning for the reference
 
-    if ( C4::Context->preference("IndependentBranches") ) {
-        unless ( C4::Context->IsSuperLibrarian() ) {
-            $filter = clone($filter);    # Modify a copy only
-            my @branches = GetIndependentGroupModificationRights();
-            if ( my $fr = ref $filter ) {
-                if ( $fr eq "HASH" ) {
-                    $filter->{branchcode} = \@branches;
-                }
-                else {
-                    foreach (@$filter) {
-                        $_ = { '' => $_ } unless ref $_;
-                        $_->{branchcode} = \@branches;
-                    }
-                }
-            }
-            else {
-                $filter = { '' => $filter, branchcode => \@branches };
-            }
-        }
-    }
-
     if ($found_borrower) {
         $searchtype = "exact";
     }
     $searchtype ||= "start_with";
 
-    return SearchInTable( "borrowers", $filter, $orderby, $limit, $columns_out, $search_on_fields, $searchtype );
+    my $results = SearchInTable( "borrowers", $filter, $orderby, $limit, $columns_out, $search_on_fields, $searchtype );
+
+    if ( C4::Context->preference("IndependentBranches") ) { # && !$showallbranches){
+        unless ( C4::Context->IsSuperLibrarian() ){
+            my @branches = GetIndependentGroupModificationRights();
+            my @filtered_results;
+            foreach my $r ( @$results ) {
+                push( @filtered_results, $r ) if any { /$r->{branchcode}/ } @branches;
+            }
+            $results = \@filtered_results;
+        }
+    }
+
+    return $results;
 }
 
 =head2 GetMemberDetails
