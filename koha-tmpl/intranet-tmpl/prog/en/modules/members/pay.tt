@@ -102,7 +102,7 @@ function enableCheckboxActions(){
         [% IF CAN_user_updatecharges_writeoff %]<input type="submit" name="wo_indiv_[% line.accountno %]" value="Write off" />[% END %]
     [% END %]
     <input type="hidden" name="itemnumber[% line.accountno %]" value="[% line.itemnumber %]" />
-    <input type="hidden" name="description[% line.accountno %]" value="[% line.description %]" />
+    <input type="hidden" name="description[% line.accountno %]" value="[% line.description | uri %]" />
     <input type="hidden" name="accounttype[% line.accountno %]" value="[% line.accounttype %]" />
     <input type="hidden" name="amount[% line.accountno %]" value="[% line.amount %]" />
     <input type="hidden" name="accountlines_id[% line.accountno %]" value="[% line.accountlines_id %]" />
