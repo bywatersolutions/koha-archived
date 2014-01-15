@@ -21,7 +21,7 @@ use Modern::Perl;
 use C4::Context;
 use Data::Dumper;
 
-use Test::More tests => 69;
+use Test::More tests => 70;
 
 use C4::Branch;
 
@@ -388,6 +388,9 @@ is_deeply( \@branches_bra, [ 'BRA', 'BRB' ], 'Libraries in LIBCATCODE returned c
 
 $string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
 ok( $string eq q{'BRA','BRB'}, "String returns correctly" );
+
+$string = GetIndependentGroupModificationRights({ branch => 'BRC', stringify => 1 });
+ok( $string eq q{'BRC'}, "String returns correctly" );
 
 ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRA' }), 'Boolean test for BRA rights to BRA returns true' );
 ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRB'}), 'Boolean test for BRA rights to BRB returns true' );

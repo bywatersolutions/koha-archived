@@ -503,16 +503,13 @@ sub GetIndependentGroupModificationRights {
         push( @params, $other_branch );
     }
 
+    $sql .= q{ UNION SELECT branchcode FROM branches WHERE branchcode = ? };
+    push( @params, $this_branch );
+
     my $dbh = C4::Context->dbh;
     my @branchcodes = @{ $dbh->selectcol_arrayref( $sql, {}, @params ) };
 
-    if ( $stringify ) {
-        if ( @branchcodes ) {
-            return join( ',', map { qq{'$_'} } @branchcodes );
-        } else {
-            return qq{'$this_branch'};
-        }
-    }
+    return join( ',', map { qq{'$_'} } @branchcodes ) if $stringify;
 
     if ( wantarray() ) {
         if ( @branchcodes ) {
@@ -521,7 +518,7 @@ sub GetIndependentGroupModificationRights {
             return $this_branch;
         }
     } else {
-        return scalar(@branchcodes);
+        return scalar(@branchcodes) > 1;
     }
 }
 
