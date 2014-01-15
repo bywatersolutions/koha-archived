@@ -507,12 +507,15 @@ sub GetIndependentGroupModificationRights {
     $this_branch ||= $ENV{BRANCHCODE};
     $this_branch ||= C4::Context->userenv->{branch};
 
-    unless ($this_branch) {
+    my $is_opac = C4::Context->userenv ? C4::Context->userenv->{type} eq 'opac' : 1;
+
+    unless ( $this_branch || $is_opac ) {
         carp("No branch found!");
         return;
     }
 
-    return 1 if ( $this_branch eq $other_branch );
+    return 1
+      if ( $this_branch && $other_branch && $this_branch eq $other_branch );
 
     my $allow_all = 0;
     $allow_all = 1 if C4::Context->IsSuperLibrarian();

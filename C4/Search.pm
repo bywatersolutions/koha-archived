@@ -1763,19 +1763,19 @@ sub buildQuery {
     }
 
     if ( C4::Context->preference('IndependentBranchesRecordsAndItems') ) {
-        my $search_context = C4::Context->userenv->{type};
+        my $search_context = C4::Context->userenv ? C4::Context->userenv->{type} : undef;
         my $IndependentBranchesRecordsAndItems;
-        if ( $search_context eq 'opac' ) {
-            # For the OPAC, if IndependentBranchesRecordsAndItems is enabled,
-            # and BRANCHCODE has been set in the httpd conf,
-            # we need to filter the items
-            $IndependentBranchesRecordsAndItems = $ENV{BRANCHCODE};
-        }
-        else {
+        if ( $search_context eq 'intranet' ) {
             # For the intranet, if IndependentBranchesRecordsAndItems is enabled,
             # and the user is not a superlibrarian,
             # we need to filter the items
             $IndependentBranchesRecordsAndItems = !C4::Context->IsSuperLibrarian();
+        }
+        else {
+            # For the OPAC, if IndependentBranchesRecordsAndItems is enabled,
+            # and BRANCHCODE has been set in the httpd conf,
+            # we need to filter the items
+            $IndependentBranchesRecordsAndItems = $ENV{BRANCHCODE};
         }
         my @allowed_branches = $IndependentBranchesRecordsAndItems ? GetIndependentGroupModificationRights() : ();
 
@@ -2100,21 +2100,21 @@ sub searchResults {
         my @hiddenitems; # hidden itemnumbers based on OpacHiddenItems syspref
 
         my $IndependentBranchesRecordsAndItems;
-        if ( $search_context eq 'opac' ) {
-            # For the OPAC, if IndependentBranchesRecordsAndItems is enabled,
-            # and BRANCHCODE has been set in the httpd conf,
-            # we need to filter the items
-            $IndependentBranchesRecordsAndItems =
-              C4::Context->preference('IndependentBranchesRecordsAndItems')
-              && $ENV{BRANCHCODE};
-        }
-        else {
+        if ( $search_context eq 'intranet' ) {
             # For the intranet, if IndependentBranchesRecordsAndItems is enabled,
             # and the user is not a superlibrarian,
             # we need to filter the items
             $IndependentBranchesRecordsAndItems =
               C4::Context->preference('IndependentBranchesRecordsAndItems')
               && !C4::Context->IsSuperLibrarian();
+        }
+        else {
+            # For the OPAC, if IndependentBranchesRecordsAndItems is enabled,
+            # and BRANCHCODE has been set in the httpd conf,
+            # we need to filter the items
+            $IndependentBranchesRecordsAndItems =
+              C4::Context->preference('IndependentBranchesRecordsAndItems')
+              && $ENV{BRANCHCODE};
         }
         my @allowed_branches = $IndependentBranchesRecordsAndItems ? GetIndependentGroupModificationRights() : undef;
 
