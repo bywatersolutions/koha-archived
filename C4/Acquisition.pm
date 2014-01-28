@@ -31,6 +31,7 @@ use C4::Debug;
 use C4::SQLHelper qw(InsertInTable);
 use C4::Bookseller qw(GetBookSellerFromId);
 use C4::Templates qw(gettemplate);
+use C4::Branch qw(GetIndependentGroupModificationRights);
 
 use Time::localtime;
 use HTML::Entities;
