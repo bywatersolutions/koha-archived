@@ -52,7 +52,13 @@ sub _init {
     return;
 }
 
-sub exception_holidays {
+# FIXME: use of package-level variables for caching the holiday
+# lists breaks persistance engines.  As of 2013-12-10, the RM
+# is allowing this with the expectation that prior to release of
+# 3.16, bug 8089 will be fixed and we can switch the caching over
+# to Koha::Cache.
+our ( $exception_holidays, $single_holidays );
+sub _exception_holidays {
     my ( $self ) = @_;
 
     my $cache  = Koha::Cache->get_instance();
@@ -81,8 +87,9 @@ sub exception_holidays {
     return $self->{exception_holidays};
 }
 
-sub single_holidays {
+sub _single_holidays {
     my ( $self, $date ) = @_;
+    my $dbh = C4::Context->dbh;
     my $branchcode = $self->{branchcode};
     my $cache           = Koha::Cache->get_instance();
     my $single_holidays = $cache->get_from_cache('single_holidays');
@@ -128,8 +135,8 @@ sub single_holidays {
             76800 )    #24 hrs ;
     }
     my $holidays  = ( $single_holidays->{$branchcode} );
-    for my $hols  (@$holidays ) {
-            return 1 if ( $date == $hols )   #match ymds;
+    for my $hols (@$holidays ) {
+            return 1 if ( $date->ymd("") == $hols )   #match ymds;
     }
     return 0;
 }
@@ -237,8 +244,7 @@ sub is_holiday {
 
     $localdt->truncate( to => 'day' );
 
-
-    if ( $self->exception_holidays->contains($localdt) ) {
+    if ( $self->_exception_holidays->contains($localdt) ) {
         # exceptions are not holidays
         return 0;
     }
@@ -259,8 +265,7 @@ sub is_holiday {
         return 1;
     }
 
-    my $ymd   = $localdt->ymd('')  ;
-    if ($self->single_holidays(  $ymd  ) == 1 ) {
+    if ( $self->_single_holidays($localdt) ) {
         return 1;
     }
 
@@ -489,12 +494,6 @@ For testing only allows the calling script to change days mode
 In test mode changes the testing set of closed days to a new set with
 no closed days. TODO passing an array of closed days to this would
 allow testing of more configurations
-
-=head2 add_holiday
-
-Passed a datetime object this will add it to the calendar's list of
-closed days. This is for testing so that we can alter the Calenfar object's
-list of specified dates
 
 =head1 DIAGNOSTICS
 

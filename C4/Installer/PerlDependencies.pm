@@ -797,6 +797,11 @@ our $PERL_DEPS = {
         'required' => '0',
         'min_ver'  => '0.07'
     },
+    'Template::Plugin::JavaScript' => {
+        'usage'    => 'Core',
+        'required' => '1',
+        'min_ver'  => '0.02',
+    },
 };
 
 1;

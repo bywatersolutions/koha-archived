@@ -38,6 +38,7 @@ use C4::Letters;
 use C4::Overdues;
 use C4::Calendar;
 use Koha::DateUtils;
+use Koha::Calendar;
 
 sub usage {
     pod2usage( -verbose => 2 );
@@ -312,23 +313,18 @@ sub GetWaitingHolds {
           sprintf( "%04d-%02d-%02d", $date_due[0], $date_due[1], $date_due[2] );
         $issue->{'level'} = 1;   # only one level for Hold Waiting notifications
 
-        my $days_to_subtract = 0;
-        my $calendar = C4::Calendar->new( branchcode => $issue->{'site'} );
-        while (
-            $calendar->isHoliday(
-                reverse(
-                    Add_Delta_Days(
-                        $waitingdate[0], $waitingdate[1],
-                        $waitingdate[2], $days_to_subtract
-                    )
-                )
-            )
-          )
-        {
-            $days_to_subtract++;
-        }
-        $issue->{'days_since_waiting'} =
-          $issue->{'days_since_waiting'} - $days_to_subtract;
+        my $calendar = Koha::Calendar->new( branchcode => $issue->{'site'} );
+        $issue->{'days_since_waiting'} = $calendar->days_between(
+            DateTime->new(
+                year => $waitingdate[0],
+                month => $waitingdate[1],
+                day => $waitingdate[2],
+                time_zone => C4::Context->tz,
+            ),
+            DateTime->now(
+                time_zone => C4::Context->tz,
+            ),
+        );
 
         if (
             (

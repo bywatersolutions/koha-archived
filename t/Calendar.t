@@ -23,6 +23,8 @@ use Test::MockModule;
 use DateTime;
 use DateTime::Duration;
 use Koha::Cache;
+use Test::MockModule;
+use DBD::Mock;
 use Koha::DateUtils;
 
 use Module::Load::Conditional qw/check_install/;
@@ -52,6 +54,7 @@ sub fixtures {
             @$data,
         ],
     ], 'add fixtures';
+    use_ok('Koha::Calendar');
 }
 
 my $db = Test::MockModule->new('Koha::Database');
