@@ -5,57 +5,22 @@ use DateTime;
 use DateTime::TimeZone;
 
 use C4::Context;
-use Koha::DateUtils;
-use Test::More tests => 12;
+use C4::Calendar;
 use C4::Branch;
+use Test::More tests => 6;
 
 BEGIN { use_ok('Koha::Calendar'); }
-BEGIN { use_ok('C4::Calendar'); }
 
 my $dbh = C4::Context->dbh();
 # Start transaction
 $dbh->{AutoCommit} = 0;
 $dbh->{RaiseError} = 1;
 
-# Add branches if they don't exist
-if (not defined GetBranchDetail('CPL')) {
-    ModBranch({add => 1, branchcode => 'CPL', branchname => 'Centerville'});
-}
-if (not defined GetBranchDetail('MPL')) {
-    ModBranch({add => 1, branchcode => 'MPL', branchname => 'Midway'});
-}
-
-# Make the repeatable_holidays table ONLY the default data.
-$dbh->do("DELETE FROM repeatable_holidays");
-C4::Calendar->new( branchcode => 'MPL' )->insert_week_day_holiday(
-    weekday     => 0,
-    title       => '',
-    description => 'Sundays',
-);
-my $holiday2add = dt_from_string("2015-01-01");
-C4::Calendar->new( branchcode => 'MPL' )->insert_day_month_holiday(
-    day         => $holiday2add->day(),
-    month       => $holiday2add->month(),
-    year        => $holiday2add->year(),
-    title       => '',
-    description => "New Year's Day",
-);
-$holiday2add = dt_from_string("2014-12-25");
-C4::Calendar->new( branchcode => 'MPL' )->insert_day_month_holiday(
-    day         => $holiday2add->day(),
-    month       => $holiday2add->month(),
-    year        => $holiday2add->year(),
-    title       => '',
-    description => 'Christmas',
-);
-
 my $branchcode = 'MPL';
 
 my $koha_calendar = Koha::Calendar->new( branchcode => $branchcode );
-my $c4_calendar = C4::Calendar->new( branchcode => $branchcode );
 
 isa_ok( $koha_calendar, 'Koha::Calendar', 'Koha::Calendar class returned' );
-isa_ok( $c4_calendar,   'C4::Calendar',   'C4::Calendar class returned' );
 
 my $sunday = DateTime->new(
     year  => 2011,
@@ -82,28 +47,3 @@ is( $koha_calendar->is_holiday($sunday),    1, 'Sunday is a closed day' );
 is( $koha_calendar->is_holiday($monday),    0, 'Monday is not a closed day' );
 is( $koha_calendar->is_holiday($christmas), 1, 'Christmas is a closed day' );
 is( $koha_calendar->is_holiday($newyear), 1, 'New Years day is a closed day' );
-
-$dbh->do("DELETE FROM repeatable_holidays");
-$dbh->do("DELETE FROM special_holidays");
-
-my $custom_holiday = DateTime->new(
-    year  => 2013,
-    month => 11,
-    day   => 12,
-);
-is( $koha_calendar->is_holiday($custom_holiday), 0, '2013-11-10 does not start off as a holiday' );
-$koha_calendar->add_holiday($custom_holiday);
-is( $koha_calendar->is_holiday($custom_holiday), 1, 'able to add holiday for testing' );
-
-my $today = dt_from_string();
-C4::Calendar->new( branchcode => 'CPL' )->insert_single_holiday(
-    day         => $today->day(),
-    month       => $today->month(),
-    year        => $today->year(),
-    title       => "$today",
-    description => "$today",
-);
-is( Koha::Calendar->new( branchcode => 'CPL' )->is_holiday( $today ), 1, "Today is a holiday for CPL" );
-is( Koha::Calendar->new( branchcode => 'MPL' )->is_holiday( $today ), 0, "Today is not a holiday for MPL");
-
-$dbh->rollback;
