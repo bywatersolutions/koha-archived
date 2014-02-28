@@ -138,9 +138,10 @@ sub SearchSuggestion {
         && !C4::Context->IsSuperLibrarian()
         && !$suggestion->{branchcode} )
     {
-        my $branches =
-          GetIndependentGroupModificationRights( { stringify => 1 } );
-        push( @query, qq{ AND (suggestions.branchcode IN ( $branches ) OR suggestions.branchcode='') } );
+        my @branches =
+          GetIndependentGroupModificationRights();
+        push( @query, " AND (suggestions.branchcode IN ( " . join(',', ('?') x @branches) ." ) OR suggestions.branchcode='') " );
+        push( @sql_params, @branches );
     }
     else {
         if ( defined $suggestion->{branchcode} && $suggestion->{branchcode} ) {
@@ -345,12 +346,13 @@ sub GetSuggestionByStatus {
             && !C4::Context->IsSuperLibrarian() )
         {
 
-            my $branches =
-              GetIndependentGroupModificationRights( { stringify => 1 } );
+            my @branches =
+              GetIndependentGroupModificationRights();
 
-            $query .= qq{
-                AND (U1.branchcode IN ( $branches ) OR U1.branchcode ='')
-            };
+            $query .= "
+                AND (U1.branchcode IN ( " . join(',', ('?') x @branches) . " ) OR U1.branchcode ='')
+            ";
+            push( @sql_params, @branches );
         }
 
         if ($branchcode) {
@@ -398,22 +400,22 @@ sub CountSuggestion {
     if ( C4::Context->preference("IndependentBranches")
         && !C4::Context->IsSuperLibrarian() )
     {
-        my $branches =
-          GetIndependentGroupModificationRights( { stringify => 1 } );
+        my @branches =
+          GetIndependentGroupModificationRights();
 
-        my $query = qq{
+        my $query = "
             SELECT count(*)
             FROM suggestions
                 LEFT JOIN borrowers ON borrowers.borrowernumber=suggestions.suggestedby
             WHERE STATUS=?
                 AND (
-                    borrowers.branchcode IN ( $branches )
+                    borrowers.branchcode IN (" . join(',', ('?') x @branches) . ")
                     OR
                     borrowers.branchcode=?
                 )
-        };
+        ";
         $sth = $dbh->prepare($query);
-        $sth->execute( $status, $userenv->{branch} );
+        $sth->execute( $status, @branches, $userenv->{branch} );
     }
     else {
         my $query = q{

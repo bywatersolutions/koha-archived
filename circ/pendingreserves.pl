@@ -154,8 +154,9 @@ if ( $run_report ) {
 
 
     if (C4::Context->preference('IndependentBranches')){
-        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
-        $strsth .= " AND items.holdingbranch IN ( $branches ) ";
+        my @branches = GetIndependentGroupModificationRights();
+        $strsth .= " AND items.holdingbranch IN ( " . join(',', ('?') x @branches) . " ) ";
+        push( @query_params, @branches );
     }
     $strsth .= " GROUP BY reserves.biblionumber ORDER BY biblio.title ";
 

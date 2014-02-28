@@ -21,7 +21,7 @@ use Modern::Perl;
 use C4::Context;
 use Data::Dumper;
 
-use Test::More tests => 70;
+use Test::More tests => 66;
 
 use C4::Branch;
 
@@ -359,9 +359,6 @@ is( scalar(@$loop), GetBranchesCount(), 'There is the right number of branches' 
 my @branches_bra = GetIndependentGroupModificationRights({ branch => 'BRA' });
 is_deeply( \@branches_bra, [ 'BRA' ], 'Library with no group only has rights for its own branch' );
 
-my $string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
-ok( $string eq q{'BRA'}, "String returns correctly" );
-
 ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRA' }), 'Boolean test for BRA rights to BRA returns true' );
 ok( !GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRB' }), 'Boolean test for BRA rights to BRB returns false' );
 ok( !GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRC' }), 'Boolean test for BRA rights to BRC returns false' );
@@ -385,12 +382,6 @@ ModBranch({
 
 @branches_bra = GetIndependentGroupModificationRights({ branch => 'BRA' });
 is_deeply( \@branches_bra, [ 'BRA', 'BRB' ], 'Libraries in LIBCATCODE returned correctly' );
-
-$string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
-ok( $string eq q{'BRA','BRB'}, "String returns correctly" );
-
-$string = GetIndependentGroupModificationRights({ branch => 'BRC', stringify => 1 });
-ok( $string eq q{'BRC'}, "String returns correctly" );
 
 ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRA' }), 'Boolean test for BRA rights to BRA returns true' );
 ok( GetIndependentGroupModificationRights({ branch => 'BRA', for => 'BRB'}), 'Boolean test for BRA rights to BRB returns true' );
@@ -420,9 +411,6 @@ ok( GetIndependentGroupModificationRights({ branch => 'BRB', for => 'BRC'}), 'Bo
 ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRC' }), 'Boolean test for BRC rights to BRC returns true' );
 ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRA'}), 'Boolean test for BRC rights to BRA returns true' );
 ok( GetIndependentGroupModificationRights({ branch => 'BRC', for => 'BRA'}), 'Boolean test for BRC rights to BRB returns true' );
-
-$string = GetIndependentGroupModificationRights({ branch => 'BRA', stringify => 1 });
-ok( $string eq q{'BRA','BRB','BRC'}, "String returns correctly" );
 
 # End transaction
 $dbh->rollback;
