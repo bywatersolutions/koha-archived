@@ -1951,9 +1951,12 @@ sub GetParcel {
     my @query_params = ( $supplierid, $code, $datereceived );
     if ( C4::Context->preference("IndependentBranches") ) {
         unless ( C4::Context->IsSuperLibrarian() ) {
-            my $branches =
-              GetIndependentGroupModificationRights( { stringify => 1 } );
-            $strsth .= " AND ( borrowers.branchcode IN ( $branches ) OR borrowers.branchcode  = '')";
+            my @branches = GetIndependentGroupModificationRights();
+            $strsth .=
+                " AND ( borrowers.branchcode IN ( "
+              . join( ',', ('?') x @branches )
+              . " ) OR borrowers.branchcode  = '')";
+            push( @query_params, @branches );
         }
     }
     $strsth .= " ORDER BY aqbasket.basketno";
@@ -2168,8 +2171,9 @@ sub GetLateOrders {
     }
     if (C4::Context->preference("IndependentBranches")
             && !C4::Context->IsSuperLibrarian() ) {
-        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
-        $from .= qq{ AND borrowers.branchcode IN ( $branches ) };
+        my @branches = GetIndependentGroupModificationRights();
+        $from .= "AND borrowers.branchcode IN ( " . join(',', ('?') x @branches) . " ) ";
+        push( @query_params, @branches );
     }
     $from .= " AND orderstatus <> 'cancelled' ";
     my $query = "$select $from $having\nORDER BY latesince, basketno, borrowers.branchcode, supplier";
@@ -2390,9 +2394,11 @@ sub GetHistory {
     if ( C4::Context->preference("IndependentBranches")
         && !C4::Context->IsSuperLibrarian() )
     {
-        my $branches =
-          GetIndependentGroupModificationRights( { stringify => 1 } );
-        $query .= qq{ AND ( borrowers.branchcode = ? OR borrowers.branchcode IN ( $branches ) ) };
+        my @branches = GetIndependentGroupModificationRights();
+        $query .=
+          " AND ( borrowers.branchcode = ? OR borrowers.branchcode IN ( "
+          . join( ',', ('?') x @branches ) . " ) ) ";
+        push( @query_params, @branches );
     }
 
     $query .= " ORDER BY id";

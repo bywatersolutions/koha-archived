@@ -1453,19 +1453,25 @@ sub checkuniquemember {
             "SELECT borrowernumber,categorycode FROM borrowers WHERE surname=? and firstname=?  and dateofbirth=?" :
             "SELECT borrowernumber,categorycode FROM borrowers WHERE surname=? and firstname=?";
 
+    my @params;
+    if ($collectivity) {
+        push( @params, uc($surname) );
+    }
+    elsif ($dateofbirth) {
+        push( @params, uc($surname), ucfirst($firstname), $dateofbirth );
+    }
+    else {
+        push( @params, uc($surname), ucfirst($firstname) );
+    }
+
     if ( C4::Context->preference('IndependentBranches') ) {
-        my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
-        $request .= " AND branchcode IN ( $branches )";
+        my @branches = GetIndependentGroupModificationRights();
+        $request .= " AND branchcode IN ( " . join(',', ('?') x @branches) ." )";
+        push( @params, @branches );
     }
 
     my $sth = $dbh->prepare($request);
-    if ($collectivity) {
-        $sth->execute( uc($surname) );
-    } elsif($dateofbirth){
-        $sth->execute( uc($surname), ucfirst($firstname), $dateofbirth );
-    }else{
-        $sth->execute( uc($surname), ucfirst($firstname));
-    }
+    $sth->execute( @params );
     my @data = $sth->fetchrow;
     ( $data[0] ) and return $data[0], $data[1];
     return 0;

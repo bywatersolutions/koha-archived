@@ -2975,9 +2975,14 @@ sub PrepareItemrecordDisplay {
                     if ( $tagslib->{$tag}->{$subfield}->{'authorised_value'} eq "branches" ) {
                         if (   ( C4::Context->preference("IndependentBranches") )
                             && !C4::Context->IsSuperLibrarian() ) {
-                            my $branches = GetIndependentGroupModificationRights( { stringify => 1 } );
-                            my $sth = $dbh->prepare( "SELECT branchcode,branchname FROM branches WHERE branchcode IN ( $branches ) ORDER BY branchname" );
-                            $sth->execute();
+                            my @branches =
+                              GetIndependentGroupModificationRights();
+                            my $sql =
+                                "SELECT branchcode,branchname FROM branches WHERE branchcode IN ("
+                              . join( ',', ('?') x @branches )
+                              . ") ORDER BY branchname";
+                            my $sth = $dbh->prepare($sql);
+                            $sth->execute(@branches);
                             push @authorised_values, ""
                               unless ( $tagslib->{$tag}->{$subfield}->{mandatory} );
                             while ( my ( $branchcode, $branchname ) = $sth->fetchrow_array ) {

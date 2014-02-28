@@ -116,8 +116,9 @@ sub GetBranches {
     my $query = "SELECT * FROM branches";
     my @bind_parameters;
     if ($onlymine && C4::Context->userenv && C4::Context->userenv->{branch}){
-      my $branches = GetIndependentGroupModificationRights({ stringify => 1 });
-      $query .= qq{ WHERE branchcode IN ( $branches ) };
+      my @branches = GetIndependentGroupModificationRights();
+      $query .= " WHERE branchcode IN ( " . join(',', ('?') x @branches) . " ) ";
+      push( @bind_parameters, @branches );
     }
     $query .= " ORDER BY branchname";
     $sth = $dbh->prepare($query);
@@ -435,12 +436,11 @@ sub GetBranchesInCategory {
 =head2 GetIndependentGroupModificationRights
 
     GetIndependentGroupModificationRights(
-                                           {
-                                               branch => $this_branch,
-                                               for => $other_branch,
-                                               stringify => 1,
-                                           }
-                                          );
+        {
+            branch => $this_branch,
+            for => $other_branch,
+        }
+    );
 
     Returns a list of branches this branch shares a common
     independent group with.
@@ -455,12 +455,6 @@ sub GetBranchesInCategory {
 
     If called in a scalar context, it returns
     a count of matching branchcodes. Returns 1 if
-
-    If stringify param is passed, the return value will
-    be a string of the comma delimited branchcodes. This
-    is useful for "branchcode IN $branchcodes" clauses
-    in SQL queries.
-
     $this_branch and $other_branch are equal for efficiency.
 
     So you can write:
@@ -475,7 +469,6 @@ sub GetIndependentGroupModificationRights {
 
     my $this_branch  = $params->{branch};
     my $other_branch = $params->{for};
-    my $stringify    = $params->{stringify};
 
     $this_branch ||= C4::Context->userenv->{branch};
 
@@ -508,8 +501,6 @@ sub GetIndependentGroupModificationRights {
 
     my $dbh = C4::Context->dbh;
     my @branchcodes = @{ $dbh->selectcol_arrayref( $sql, {}, @params ) };
-
-    return join( ',', map { qq{'$_'} } @branchcodes ) if $stringify;
 
     if ( wantarray() ) {
         if ( @branchcodes ) {
