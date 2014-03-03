@@ -154,6 +154,11 @@ sub AddReserve {
         $constraint, $bibitems,  $priority, $resdate, $expdate, $notes,
         $title,      $checkitem, $found
     ) = @_;
+
+warn "AddReserve";
+warn Data::Dumper::Dumper( @_ );
+warn "Manager: " . C4::Context->userenv->{'number'};
+
     my $fee =
           GetReserveFee($borrowernumber, $biblionumber, $constraint,
             $bibitems );
