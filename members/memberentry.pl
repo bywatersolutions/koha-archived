@@ -320,12 +320,19 @@ if ($op eq 'save' || $op eq 'insert'){
         $newdata{'surname'} = uc($newdata{'surname'});
     }
 
-  if (C4::Context->preference("IndependentBranches")) {
-    unless ( C4::Context->IsSuperLibrarian() ){
-      $debug and print STDERR "  $newdata{'branchcode'} : ".$userenv->{flags}.":".$userenv->{branch};
-      unless (!$newdata{'branchcode'} || $userenv->{branch} eq $newdata{'branchcode'}){
-        push @errors, "ERROR_branch";
-      }
+if ( C4::Context->preference("IndependentBranches") ) {
+    unless ( C4::Context->IsSuperLibrarian() ) {
+        $debug && warn "  $newdata{'branchcode'} : " . $userenv->{flags} . ":" . $userenv->{branch};
+
+        unless (
+            !$newdata{'branchcode'}
+            || GetIndependentGroupModificationRights(
+                { for => $newdata{'branchcode'} }
+            )
+          )
+        {
+            push @errors, "ERROR_branch";
+        }
     }
   }
   # Check if the 'userid' is unique. 'userid' might not always be present in
@@ -463,10 +470,15 @@ if ($nok or !$nodouble){
         $template->param( step_1 => 1,step_2 => 1,step_3 => 1, step_4 => 1, step_5 => 1, step_6 => 1);
     }  
 } 
-if (C4::Context->preference("IndependentBranches")) {
+if ( C4::Context->preference("IndependentBranches") ) {
     my $userenv = C4::Context->userenv;
     if ( !C4::Context->IsSuperLibrarian() && $data{'branchcode'} ) {
-        unless ($userenv->{branch} eq $data{'branchcode'}){
+        unless (
+            GetIndependentGroupModificationRights(
+                { for => $data{'branchcode'} }
+            )
+          )
+        {
             print $input->redirect("/cgi-bin/koha/members/members-home.pl");
             exit;
         }
