@@ -165,6 +165,25 @@
   <index_data_field tag="034">
     <target_index>Map-scale:w</target_index>
   </index_data_field>
+  <!--record.abs line 75: melm 035$a      Other-control-number-->
+  <!--
+  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="035" subfields="a">
+    <target_index>Other-control-number:w</target_index>
+  </index_subfields>
+  -->
+  <!--record.abs line 76: melm 035$z      Other-control-number-->
+  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="035" subfields="z">
+    <target_index>Other-control-number:w</target_index>
+  </index_subfields>
+  <!--record.abs line 77: melm 035        Other-control-number-->
+  <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="035">
+    <target_index>Other-control-number:w</target_index>
+  </index_data_field>
+  <!--record.abs line 78: melm 037        Identifier-standard,Stock-number-->
+<!--Adding 035$a to  Identifier-standard jen see RT17598-->
+  <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="035" subfields="a">
+    <target_index>Identifier-standard:w</target_index>
+  </index_data_field>
   <!--record.abs line 68: melm 037        Identifier-standard,Stock-number-->
   <index_data_field tag="037">
     <target_index>Identifier-standard:w</target_index>
