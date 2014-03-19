@@ -35,7 +35,8 @@ BEGIN {
 			       $field_delimiter $last_response)]);
 }
 
-our $error_detection = 0;
+# BWS change. Enabling error_detection per ticket 12612. 20140317.lrb
+our $error_detection = 1;
 our $protocol_version = 1;
 our $field_delimiter = '|'; # Protocol Default
 
