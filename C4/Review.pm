@@ -21,6 +21,7 @@ use strict;
 use warnings;
 
 use C4::Context;
+use C4::Branch;
 
 use vars qw($VERSION @ISA @EXPORT);
 
@@ -124,13 +125,35 @@ sub getreviews {
 
 sub getallreviews {
     my ($status, $offset, $row_count) = @_;
-    my @params = ($status,($offset ? $offset : 0),($row_count ? $row_count : 20));
+    my @params;
     my $dbh      = C4::Context->dbh;
-    my $query    =
-      "SELECT * FROM reviews WHERE approved=? order by datereviewed desc LIMIT ?, ?";
+
+    my $query = "
+       SELECT reviews.* 
+       FROM reviews 
+       LEFT JOIN borrowers USING ( borrowernumber ) 
+       WHERE approved = ?
+    ";
+    push( @params, $status );
+
+    if ( C4::Context->preference("IndependentBranches") ) {
+         unless ( C4::Context->IsSuperLibrarian() ) {
+            my @branches = GetIndependentGroupModificationRights();
+            $query .=
+                " AND ( borrowers.branchcode IN ( "
+              . join( ',', ('?') x @branches )
+              . " ) OR borrowers.branchcode  = '')";
+            push( @params, @branches );
+         }
+     }
+
+    $query .= " ORDER BY datereviewed desc LIMIT ?, ?";
+    push( @params, ($offset ? $offset : 0),($row_count ? $row_count : 20) );
+
     my $sth = $dbh->prepare($query) || warn $dbh->err_str;
     $sth->execute(@params);
-	return $sth->fetchall_arrayref({});
+
+    return $sth->fetchall_arrayref({});
 }
 
 =head2 approvereview
