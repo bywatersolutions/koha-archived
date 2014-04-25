@@ -9848,30 +9848,6 @@ if ( CheckVersion($DBversion) ) {
     print "Upgrade to $DBversion done \n";
 }
 
-$DBversion = "3.17.00.XXX";
-if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
-    $dbh->do("ALTER TABLE reserves ADD printed BOOLEAN NULL AFTER suspend_until");
-    $dbh->do("INSERT INTO  `letter` (
-    `module` ,
-    `code` ,
-    `branchcode` ,
-    `name` ,
-    `is_html` ,
-    `title` ,
-    `content`
-    )
-    VALUES (
-    'reserves',  'HOLD_PLACED_PRINT',  '',  'Hold Placed ( Auto-Print )',  '0',  'Hold Placed ( Auto-Print )',  'Hold to pull at <<branches.branchname>>
-
-    For <<borrowers.firstname>> <<borrowers.surname>> ( <<borrowers.cardnumber>> )
-
-    <<biblio.title>> by <<biblio.author>>'
-    )");
-
-    print "Upgrade to $DBversion done (Add print holds to pull notices on demand feature)\n";
-    SetVersion($DBversion);
-}
-
 # DEVELOPER PROCESS, search for anything to execute in the db_update directory
 # SEE bug 13068
 # if there is anything in the atomicupdate, read and execute it.
