@@ -466,7 +466,7 @@ $(document).ready(function () {
 
             [% END %]
 [% IF ( soundon ) %]
-<audio src="[% interface %]/[% theme %]/sound/critical.ogg" autoplay="autoplay" autobuffer="autobuffer"></audio>
+<audio src="[% interface %]/[% theme %]/sound/fail.ogg" autoplay="autoplay" autobuffer="autobuffer"></audio>
 [% END %]
         [% ELSE %]
 [% IF ( soundon ) %]
