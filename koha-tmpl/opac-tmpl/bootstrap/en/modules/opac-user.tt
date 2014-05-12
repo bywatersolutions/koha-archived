@@ -527,6 +527,15 @@
                                             <td class="title">
                                                 <a class="title" href="/cgi-bin/koha/opac-detail.pl?biblionumber=[% RESERVE.biblionumber %]">[% RESERVE.reserves_title %] [% FOREACH subtitl IN RESERVE.subtitle %] [% subtitl.subfield %][% END %]</a>
                                                 [% RESERVE.author %]
+
+                                                [% IF RESERVE.type == 'document_delivery' %]
+                                                            <p><b>Document delivery</b></p>
+                                                            <p>Title: [% RESERVE.dd_title %]</p>
+                                                            <p>Author(s): [% RESERVE.dd_authors %]</p>
+                                                            <p>Vol/Issue/Date: [% RESERVE.dd_vol_issue_date %]</p>
+                                                            <p>Page(s): [% RESERVE.dd_pages %]</p>
+                                                            <p>Chapter(s): [% RESERVE.dd_chapters %]</p>
+                                                [% END %]
                                             </td>
                                             <td class="reservedate">
                                                 <span title="[% RESERVE.reservedate %]">

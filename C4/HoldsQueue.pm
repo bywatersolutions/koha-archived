@@ -120,14 +120,42 @@ sub GetHoldsQueueItems {
     my $dbh   = C4::Context->dbh;
 
     my @bind_params = ();
-    my $query = q/SELECT tmp_holdsqueue.*, biblio.author, items.ccode, items.itype, biblioitems.itemtype, items.location, items.enumchron, items.cn_sort, biblioitems.publishercode,biblio.copyrightdate,biblioitems.publicationyear,biblioitems.pages,biblioitems.size,biblioitems.publicationyear,biblioitems.isbn,items.copynumber
-                  FROM tmp_holdsqueue
-                       JOIN biblio      USING (biblionumber)
-                  LEFT JOIN biblioitems USING (biblionumber)
-                  LEFT JOIN items       USING (  itemnumber)
-                /;
+    my $query = q/
+        SELECT
+            h.*,
+            r.reserve_id,
+            r.type,
+            r.dd_title,
+            r.dd_authors,
+            r.dd_vol_issue_date,
+            r.dd_pages,
+            r.dd_chapters,
+            i.ccode,
+            i.itype,
+            i.location,
+            i.enumchron,
+            i.cn_sort,
+            i.copynumber,
+            i.itemcallnumber,
+            i.homebranch,
+            i.holdingbranch,
+            bi.itemtype,
+            bi.publishercode,
+            bi.publicationyear,
+            bi.pages,
+            bi.size,
+            bi.publicationyear,
+            bi.isbn,
+            b.author,
+            b.copyrightdate
+      FROM tmp_holdsqueue h
+      LEFT JOIN biblio b       USING (biblionumber)
+      LEFT JOIN biblioitems bi USING (biblionumber)
+      LEFT JOIN items i        USING (  itemnumber)
+      LEFT JOIN reserves r ON ( h.borrowernumber = r.borrowernumber AND h.biblionumber = r.biblionumber )
+    /;
     if ($branchlimit) {
-        $query .=" WHERE tmp_holdsqueue.holdingbranch = ?";
+        $query .=" WHERE h.holdingbranch = ?";
         push @bind_params, $branchlimit;
     }
     $query .= " ORDER BY ccode, location, cn_sort, author, title, pickbranch, reservedate";

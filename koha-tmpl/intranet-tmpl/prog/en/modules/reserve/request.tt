@@ -1,3 +1,4 @@
+[% USE Koha %]
 [% USE KohaDates %]
 [% INCLUDE 'doc-head-open.inc' %]
 [% UNLESS ( multi_hold ) %]
@@ -24,6 +25,8 @@ $(document).ready(function() {
     [% IF AutoResumeSuspendedHolds %]
         $(".suspend_until_datepicker, .datepickerfrom, .datepickerto").datepicker("option", "minDate", 1);
     [% END %]
+
+    $("#document_delivery").hide();
 });
 
 function check() {
@@ -366,6 +369,7 @@ function checkMultiHold() {
         <a href="#" id="clear-date-to" class="clear-date">Clear date</a>
 	</li>
 
+
         [% UNLESS ( multi_hold ) %]
           <li> <label for="requestany">Place a hold on the next available item </label>
                <input type="checkbox" id="requestany" name="request" checked="checked" value="Any" />
@@ -373,8 +377,48 @@ function checkMultiHold() {
                <input type="hidden" name="alreadyreserved" value="[% alreadyreserved %]" />
           </li>
         [% END %]
-
 </ol>
+
+    [% UNLESS ( multi_hold ) %]
+        [% IF Koha.Preference('UseDocumentDelivery') %]
+            <ol>
+                <li>
+                    <label for="is_document_delivery">Document delivery:</label>
+                    <input type="checkbox" id="is_document_delivery" name="is_document_delivery" onchange="$('#document_delivery').toggle()"/>
+                </li>
+            </ol>
+
+            <fieldset id="document_delivery" class="rows">
+                <legend>Document delivery</legend>
+
+                <li>
+                    <label for="dd_title">Article title:</label>
+                    <input type="text" name="dd_title" id="dd_title" />
+                </li>
+
+                <li>
+                    <label for="dd_authors">Article author(s):</label>
+                    <input type="text" name="dd_authors" id="dd_authors" />
+                </li>
+
+                <li>
+                    <label for="dd_vol_issue_date">Volume / Issue / Date:</label>
+                    <input type="text" name="dd_vol_issue_date" id="dd_vol_issue_date" />
+                </li>
+
+                <li>
+                    <label for="dd_pages">Page(s):</label>
+                    <input type="text" name="dd_pages" id="dd_pages" />
+                </li>
+
+                <li>
+                    <label for="dd_chapters">Chapters(s):</label>
+                    <input type="text" name="dd_chapters" id="dd_chapters" />
+                </li>
+            </fieldset>
+        [% END %]
+    [% END %]
+
    [% UNLESS ( multi_hold ) %]
         <fieldset class="action">
             [% IF ( borrowernumber ) %]
@@ -675,7 +719,20 @@ function checkMultiHold() {
 	  [% END %]
 	  </a>
         </td>
-        <td>[% reserveloo.notes %]</td>
+        <td>[% reserveloo.notes %]
+            [% IF reserveloo.type == 'document_delivery' %]
+                <p>
+                    <ul>
+                        <li><b>Document delivery</b></li>
+                        <li>Title: [% reserveloo.dd_title %]</li>
+                        <li>Author(s): [% reserveloo.dd_authors %]</li>
+                        <li>Vol/Issue/Date: [% reserveloo.dd_vol_issue_date %]</li>
+                        <li>Page(s): [% reserveloo.dd_pages %]</li>
+                        <li>Chapter(s): [% reserveloo.dd_chapters %]</li>
+                    </ul>
+                </p>
+            [% END %]
+        </td>
         <td>[% reserveloo.date %]</td>
 	<td>[% reserveloo.expirationdate %]</td>
         <td>

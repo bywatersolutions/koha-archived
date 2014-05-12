@@ -55,6 +55,14 @@ my $borrower=GetMember('borrowernumber'=>$borrowernumber);
 my $checkitem=$input->param('checkitem');
 my $expirationdate = $input->param('expiration_date');
 
+my $res_type =
+  $input->param('is_document_delivery') ? 'document_delivery' : 'hold';
+my $dd_title          = $input->param('dd_title')          || undef;
+my $dd_authors        = $input->param('dd_authors')        || undef;
+my $dd_vol_issue_date = $input->param('dd_vol_issue_date') || undef;
+my $dd_pages          = $input->param('dd_pages')          || undef;
+my $dd_chapters       = $input->param('dd_chapters')       || undef;
+
 my $multi_hold = $input->param('multi_hold');
 my $biblionumbers = $multi_hold ? $input->param('biblionumbers') : ($biblionumber . '/');
 my $bad_bibs = $input->param('bad_bibs');
@@ -109,18 +117,95 @@ if ($type eq 'str8' && $borrower){
 
         if ($multi_hold) {
             my $bibinfo = $bibinfos{$biblionumber};
-            AddReserve($branch,$borrower->{'borrowernumber'},$biblionumber,'a',[$biblionumber],
-                       $bibinfo->{rank},$startdate,$expirationdate,$notes,$bibinfo->{title},$checkitem,$found);
+            AddReserve(
+                {
+                    branchcode     => $branch,
+                    borrowernumber => $borrower->{'borrowernumber'},
+                    biblionumber   => $biblionumber,
+                    constraint     => 'a',
+                    biblioitems    => [$biblionumber],
+                    priority       => $bibinfo->{rank},
+                    reservedate    => $startdate,
+                    expirationdate => $expirationdate,
+                    reservenotes   => $notes,
+                    title          => $bibinfo->{title},
+                    checkitem      => $checkitem,
+                    found          => $found,
+                }
+            );
         } else {
             if ($input->param('request') eq 'any'){
                 # place a request on 1st available
-                AddReserve($branch,$borrower->{'borrowernumber'},$biblionumber,'a',\@realbi,$rank[0],$startdate,$expirationdate,$notes,$title,$checkitem,$found);
+                AddReserve(
+                    {
+                        branchcode        => $branch,
+                        borrowernumber    => $borrower->{'borrowernumber'},
+                        biblionumber      => $biblionumber,
+                        constraint        => 'a',
+                        biblioitems       => \@realbi,
+                        priority          => $rank[0],
+                        reservedate       => $startdate,
+                        expirationdate    => $expirationdate,
+                        reservenotes      => $notes,
+                        title             => $title,
+                        checkitem         => $checkitem,
+                        found             => $found,
+                        type              => $res_type,
+                        dd_title          => $dd_title,
+                        dd_authors        => $dd_authors,
+                        dd_vol_issue_date => $dd_vol_issue_date,
+                        dd_pages          => $dd_pages,
+                        dd_chapters       => $dd_chapters,
+                    }
+                );
             } elsif ($reqbib[0] ne ''){
                 # FIXME : elsif probably never reached, (see top of the script)
                 # place a request on a given item
-                AddReserve($branch,$borrower->{'borrowernumber'},$biblionumber,'o',\@reqbib,$rank[0],$startdate,$expirationdate,$notes,$title,$checkitem, $found);
+                AddReserve(
+                    {
+                        branchcode        => $branch,
+                        borrowernumber    => $borrower->{'borrowernumber'},
+                        biblionumber      => $biblionumber,
+                        constraint        => 'o',
+                        biblioitems       => \@reqbib,
+                        priority          => $rank[0],
+                        reservedate       => $startdate,
+                        expirationdate    => $expirationdate,
+                        reservenotes      => $notes,
+                        title             => $title,
+                        checkitem         => $checkitem,
+                        found             => $found,
+                        type              => $res_type,
+                        dd_title          => $dd_title,
+                        dd_authors        => $dd_authors,
+                        dd_vol_issue_date => $dd_vol_issue_date,
+                        dd_pages          => $dd_pages,
+                        dd_chapters       => $dd_chapters,
+                    }
+                );
             } else {
-                AddReserve($branch,$borrower->{'borrowernumber'},$biblionumber,'a',\@realbi,$rank[0],$startdate,$expirationdate,$notes,$title,$checkitem, $found);
+                AddReserve(
+                    {
+                        branchcode        => $branch,
+                        borrowernumber    => $borrower->{'borrowernumber'},
+                        biblionumber      => $biblionumber,
+                        constraint        => 'a',
+                        biblioitems       => \@realbi,
+                        priority          => $rank[0],
+                        reservedate       => $startdate,
+                        expirationdate    => $expirationdate,
+                        reservenotes      => $notes,
+                        title             => $title,
+                        checkitem         => $checkitem,
+                        found             => $found,
+                        type              => $res_type,
+                        dd_title          => $dd_title,
+                        dd_authors        => $dd_authors,
+                        dd_vol_issue_date => $dd_vol_issue_date,
+                        dd_pages          => $dd_pages,
+                        dd_chapters       => $dd_chapters,
+                    }
+                );
             }
         }
     }
