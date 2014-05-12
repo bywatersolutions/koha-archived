@@ -249,6 +249,43 @@
                                                             </li>
                                                         [% END # / IF OpacHoldNotes %]
 
+                                                        [% IF Koha.Preference('UseDocumentDelivery') %]
+                                                            <li>
+                                                                <div>
+                                                                    <label for="toggle-document-delivery-options-[% bibitemloo.biblionumber %]">Request document delivery:</label>
+                                                                    <input type="checkbox" name="is_document_delivery-[% bibitemloo.biblionumber %]" class="toggle-document-delivery-options" id="toggle-document-delivery-options-[% bibitemloo.biblionumber %]" >
+                                                                    <span class="help-block">Instead of recieving the requested item, you will recieve a document of the specified sections of the item.</span>
+                                                                </div>
+                                                            </li>
+
+                                                            <span class="document-delivery" id="document-delivery-[% bibitemloo.biblionumber %]">
+                                                                <fieldset>
+                                                                    <legend>Document delivery</legend>
+
+                                                                    <li>
+                                                                        <label for="dd_title-[% bibitemloo.biblionumber %]">Title:</label>
+                                                                        <input name="dd_title-[% bibitemloo.biblionumber %]" id="dd_title-[% bibitemloo.biblionumber %]" />
+                                                                    </li>
+                                                                    <li>
+                                                                        <label for="dd_authors-[% bibitemloo.biblionumber %]">Author(s):</label>
+                                                                        <input name="dd_authors-[% bibitemloo.biblionumber %]" id="dd_authors-[% bibitemloo.biblionumber %]" />
+                                                                    </li>
+                                                                    <li>
+                                                                        <label for="dd_vol_issue_date-[% bibitemloo.biblionumber %]">Volume / Issue / Date:</label>
+                                                                        <input name="dd_vol_issue_date-[% bibitemloo.biblionumber %]" id="dd_vol_issue_date-[% bibitemloo.biblionumber %]" />
+                                                                    </li>
+                                                                    <li>
+                                                                        <label for="dd_pages-[% bibitemloo.biblionumber %]">Page(s):</label>
+                                                                        <input name="dd_pages-[% bibitemloo.biblionumber %]" id="dd_pages-[% bibitemloo.biblionumber %]" />
+                                                                    </li>
+                                                                    <li>
+                                                                        <label for="dd_chapters-[% bibitemloo.biblionumber %]">Chapter(s):</label>
+                                                                        <input name="dd_chapters-[% bibitemloo.biblionumber %]" id="dd_chapters-[% bibitemloo.biblionumber %]" />
+                                                                    </li>
+                                                                </fieldset>
+                                                            </span>
+                                                        [% END %]
+
                                                         [% IF OPACItemHolds == '1' or OPACItemHolds == 'force' %]
                                                             <!-- ITEM HOLDS -->
                                                             <li class="lradio place_on_type" style="display:none;">
@@ -427,6 +464,7 @@
     }
 
     $(document).ready(function() {
+        $(".document-delivery").hide();
         $("#hold-request-form").preventDoubleFormSubmit();
         var copiesRowId = null;
         var wasSpecific = false;
@@ -628,6 +666,20 @@
             $("#biblionumbers").val(biblionumbers);
 
             return true;
+        });
+
+        $(".toggle-hold-options").on("click",function(e){
+            e.preventDefault();
+            toggleLink = $(this);
+            var optionsID = this.id.replace("toggle-hold-options-","");
+            $("#hold-options-"+optionsID).toggle(0, function() {
+                toggleLink.text($(this).is(':visible') ? _("Hide options") : _("Show more options"));
+            });
+        });
+
+        $(".toggle-document-delivery-options").on("change",function(e){
+            var id = "#document-delivery-" + this.id.replace("toggle-document-delivery-options-","");
+            $(this).is(':checked') ? $(id).show() : $(id).hide();
         });
 
         [% FOREACH bibitemloo IN bibitemloop %]

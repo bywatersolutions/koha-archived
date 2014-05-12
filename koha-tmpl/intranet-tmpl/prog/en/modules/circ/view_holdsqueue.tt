@@ -17,12 +17,54 @@ $(document).ready(function() {
     $("#holdst").dataTable({
         "aaSorting": [[ 3, "asc" ]],
         "aoColumns": [
-            { "sType": "anti-the" },null,null,null,null,null,null,null,null,{ "sType": "title-string" },null
+            { "sType": "anti-the" },null,null,null,null,null,null,null,null,{ "sType": "title-string" },null,{ "bSortable": false }
         ],
         "sDom": 't',
         "bPaginate": false
     });
 });
+
+function Dopop(link) {
+    window.open(link, 'popup', 'width=600,height=400,resizable=1,toolbar=0,scrollbars=1,top');
+}
+
+function FillReserve( reserve_id, a, cancel ) {
+    a.closest('td').prepend('<img src="[% interface %]/[% theme %]/img/loading-small.gif"/>');
+    a.closest('div').hide();
+    $.ajax({
+        type: "POST",
+        url: '/cgi-bin/koha/svc/hold/fill',
+        data: {
+            reserve_id: reserve_id
+        },
+        success: function( data ) {
+            a.closest('tr').remove();
+        },
+        dataType: 'json' 
+    });
+}
+
+function CancelReserve( reserve_id, a ) {
+    cancel = prompt("Reason for cancelation:");
+    if ( cancel == null ) {
+        return;
+    }
+
+    a.closest('td').prepend('<img src="[% interface %]/[% theme %]/img/loading-small.gif"/>');
+    a.closest('div').hide();
+    $.ajax({
+        type: "POST",
+        url: '/cgi-bin/koha/svc/hold/cancel',
+        data: {
+            reserve_id: reserve_id,
+            note: cancel
+        },
+        success: function( data ) {
+            a.closest('tr').remove();
+        },
+        dataType: 'json' 
+    });
+}
 //]]>
 </script>
 
@@ -33,7 +75,6 @@ $(document).ready(function() {
 </div>
 
 <div id="doc" class="yui-t7">
-
    <div id="bd">
 	<div id="yui-main">
 	<div class="yui-g">
@@ -63,36 +104,85 @@ $(document).ready(function() {
         <th class="hq-sendto">Send to</th>
         <th class="hq-date">Date</th>
         <th class="hq-notes">Notes</th>
+        <th class="hq-actions">&nbsp;</th>
     </tr>
 	</thead>
-     <tbody>[% FOREACH itemsloo IN itemsloop %]
+     <tbody>[% FOREACH i IN itemsloop %]
+        [% IF i.reserve_id %]
         <tr>
-            <td class="hq-title"><p><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% itemsloo.biblionumber %]"><strong>[% itemsloo.title |html %]</strong> [% IF ( itemsloo.subtitle ) %][% itemsloo.subtitle %][% END %]</a></p>
-                         <p><strong>[% itemsloo.author %]</strong>
-                       <div class="hq-pubdata">  [% IF ( itemsloo.publishercode ) %][% itemsloo.publishercode %][% END %]
-                                                                                 [% IF ( itemsloo.publicationyear ) %], [% itemsloo.publicationyear %]
-                                                                                 [% ELSIF ( itemsloo.copyrightdate ) %], [% itemsloo.copyrightdate %][% END %]
-                                         [% IF ( itemsloo.pages ) %]: [% itemsloo.pages %] [% END %]
-                                         [% IF ( itemsloo.item('size') ) %][% itemsloo.item('size') %][% END %] [% IF ( itemsloo.isbn ) %]ISBN: [% itemsloo.isbn %][% END %]</p>
+            <td class="hq-title"><p><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% i.biblionumber %]"><strong>[% i.title |html %]</strong> [% IF ( i.subtitle ) %][% i.subtitle %][% END %]</a></p>
+                         <p><strong>[% i.author %]</strong>
+                       <div class="hq-pubdata">  [% IF ( i.publishercode ) %][% i.publishercode %][% END %]
+                                                                                 [% IF ( i.publicationyear ) %], [% i.publicationyear %]
+                                                                                 [% ELSIF ( i.copyrightdate ) %], [% i.copyrightdate %][% END %]
+                                         [% IF ( i.pages ) %]: [% i.pages %] [% END %]
+                                         [% IF ( i.size ) %][% i.size %][% END %] [% IF ( i.isbn ) %]ISBN: [% i.isbn %][% END %]</p>
 			</div>
 			</td>
-            <td class="hq-collection">[% AuthorisedValues.GetByCode( 'CCODE', itemsloo.ccode ) %]</td>
-            <td class="hq-itemtype">[% ItemTypes.GetDescription( itemsloo.itype ) %]</td>
-            <td class="hq-callnumber">[% IF ( itemsloo.location ) %]<em>[% AuthorisedValues.GetByCode( 'LOC', itemsloo.location ) %]</em> [% END %][% itemsloo.itemcallnumber %]</td>
-            <td class="hq-copynumber">[% itemsloo.copynumber %]</td>
-            <td class="hq-enumchron">[% itemsloo.enumchron %]</td>
+            <td class="hq-collection">[% AuthorisedValues.GetByCode( 'CCODE', i.ccode ) %]</td>
+            <td class="hq-itemtype">[% ItemTypes.GetDescription( i.itype ) %]</td>
+            <td class="hq-callnumber">[% i.location %] [% i.itemcallnumber %]</td>
+            <td class="hq-copynumber">[% i.copynumber %]</td>
+            <td class="hq-enumchron">[% i.enumchron %]</td>
             <td class="hq-barcode">
-                [% IF ( itemsloo.item_level_request ) %]
-			<em>Only Item:</em> <strong>[% itemsloo.barcode %]</strong>
+                [% IF ( i.item_level_request ) %]
+			<em>Only Item:</em> <strong>[% i.barcode %]</strong>
                 [% ELSE %]
-                    <strong>[% itemsloo.barcode %]</strong> <em>or any available</em>
+                    <strong>[% i.barcode %]</strong> <em>or any available</em>
                 [% END %]
             </td>
-			<td class="hq-patron"><p><a href="/cgi-bin/koha/circ/circulation.pl?findborrower=[% itemsloo.cardnumber %]#reserves">[% itemsloo.surname %], [% itemsloo.firstname %] ([% itemsloo.cardnumber %])</a></p> <p>[% itemsloo.phone %]</p></td>
-            <td class="hq-sendto">[% Branches.GetName( itemsloo.pickbranch ) %]</td>
-            <td class="hq-date"><span title="[% itemsloo.reservedate %]">[% itemsloo.reservedate | $KohaDates %]</span></td>
-            <td class="hq-notes">[% itemsloo.notes %]</td>
+			<td class="hq-patron"><p><a href="/cgi-bin/koha/circ/circulation.pl?findborrower=[% i.cardnumber %]#reserves">[% i.surname %], [% i.firstname %] ([% i.cardnumber %])</a></p> <p>[% i.phone %]</p></td>
+            <td class="hq-sendto">[% i.pickbranch %]</td>
+            <td class="hq-date"><span title="[% i.reservedate %]">[% i.reservedate | $KohaDates %]</span></td>
+            <td class="hq-notes">
+                [% i.notes %]
+                [% IF i.type == "document_delivery" %]
+                    <p>
+                    <div class="rows">
+                        <ul>
+                            <li><b>Document delivery</b></li>
+                            <li><b>Title:</b> [% i.dd_title %]</li>
+                            <li><b>Author(s):</b> [% i.dd_authors %]</li>
+                            <li><b>Vol/Issue/Date:</b> [% i.dd_vol_issue_date %]</li>
+                            <li><b>Page(s):</b> [% i.dd_pages %]</li>
+                            <li><b>Chapter(s):</b> [% i.dd_chapters %]</li>
+                        </ul>
+                    </div>
+                [% END %]
+            </div>
+            <td class="hq-actions">
+                <div class="dropdown">
+                    <a class="btn btn-mini dropdown-toggle" id="reportactions[% savedreport.id %]" role="button" data-toggle="dropdown" href="#">
+                        Actions <b class="caret"></b>
+                    </a>
+
+                    <ul class="dropdown-menu pull-right" role="menu" aria-labelledby="reportactions[% savedreport.id %]">
+                        <li>
+                            [% IF i.type == "document_delivery" %]
+                                <a href="#" onclick="FillReserve( [% i.reserve_id %], $(this) ); return false;">
+                                    <i class="icon-ok-circle"></i>
+                                    Mark document delivery as completed 
+                                </a>
+                            [% ELSE %]
+                                <a href="#" onclick="FillReserve( [% i.reserve_id %], $(this) ); return false;">
+                                    <i class="icon-ok-circle"></i>
+                                    Mark hold as filled 
+                                </a>
+                            [% END %]
+                            <a href="#" onclick="CancelReserve( [% i.reserve_id %], $(this) ); return false;">
+                                <i class="icon-remove-circle"></i>
+                                Cancel hold
+                            </a>
+                            <a href="#" onclick="Dopop('hold-transfer-slip.pl?reserve_id=[% i.reserve_id %]'); return false;">
+                                <i class="icon-print"></i>
+                                Print slip
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
         </tr>
+        [% END %]
     [% END %]</tbody>
     </table>
 	[% END %] 
