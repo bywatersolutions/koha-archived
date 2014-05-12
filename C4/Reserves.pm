@@ -20,9 +20,10 @@ package C4::Reserves;
 # You should have received a copy of the GNU General Public License
 # along with Koha; if not, see <http://www.gnu.org/licenses>.
 
+use Modern::Perl;
 
-use strict;
-#use warnings; FIXME - Bug 2505
+use Carp;
+
 use C4::Context;
 use C4::Biblio;
 use C4::Members;
@@ -149,11 +150,41 @@ BEGIN {
 =cut
 
 sub AddReserve {
+    my ( $params ) = @_;
+
     my (
-        $branch,    $borrowernumber, $biblionumber,
-        $constraint, $bibitems,  $priority, $resdate, $expdate, $notes,
-        $title,      $checkitem, $found
-    ) = @_;
+        $branch,   $borrowernumber, $biblionumber, $constraint,
+        $bibitems, $priority,       $resdate,      $expdate,
+        $notes,    $title,          $checkitem,    $found,
+        $type,     $dd_title,       $dd_authors,   $dd_vol_issue_date,
+        $dd_pages, $dd_chapters,
+    );
+
+    if ( ref $params eq "HASH" ) {
+        $branch         = $params->{branchcode};
+        $borrowernumber = $params->{borrowernumber};
+        $biblionumber   = $params->{biblionumber};
+        $constraint     = $params->{constraint};
+        $bibitems       = $params->{biblioitems};
+        $priority       = $params->{priority};
+        $resdate        = $params->{reservedate};
+        $expdate        = $params->{expirationdate};
+        $notes          = $params->{reservenotes};
+        $title          = $params->{title};
+        $checkitem      = $params->{checkitem};
+        $found          = $params->{found};
+
+        $params->{type} ||= 'hold';
+    }
+    else {
+        $params = { type => 'hold' };
+        (
+            $branch,   $borrowernumber, $biblionumber, $constraint,
+            $bibitems, $priority,       $resdate,      $expdate,
+            $notes,    $title,          $checkitem,    $found,
+        ) = @_;
+    }
+
     my $fee =
           GetReserveFee($borrowernumber, $biblionumber, $constraint,
             $bibitems );
@@ -196,16 +227,24 @@ sub AddReserve {
     my $query = qq/
         INSERT INTO reserves
             (borrowernumber,biblionumber,reservedate,branchcode,constrainttype,
-            priority,reservenotes,itemnumber,found,waitingdate,expirationdate)
+            priority,reservenotes,itemnumber,found,waitingdate,expirationdate,
+            type, dd_title, dd_authors, dd_vol_issue_date, dd_pages, dd_chapters )
         VALUES
              (?,?,?,?,?,
+             ?,?,?,?,?,?,
              ?,?,?,?,?,?)
     /;
     my $sth = $dbh->prepare($query);
     $sth->execute(
-        $borrowernumber, $biblionumber, $resdate, $branch,
-        $const,          $priority,     $notes,   $checkitem,
-        $found,          $waitingdate,	$expdate
+        $borrowernumber,              $biblionumber,
+        $resdate,                     $branch,
+        $const,                       $priority,
+        $notes,                       $checkitem,
+        $found,                       $waitingdate,
+        $expdate,                     $params->{type},
+        $params->{dd_title},          $params->{dd_authors},
+        $params->{dd_vol_issue_date}, $params->{dd_pages},
+        $params->{dd_chapters},
     );
     my $reserve_id = $sth->{mysql_insertid};
 
@@ -303,21 +342,8 @@ sub GetReservesFromBiblionumber {
     # Find the desired items in the reserves
     my @params;
     my $query = "
-        SELECT  reserve_id,
-                branchcode,
-                timestamp AS rtimestamp,
-                priority,
-                biblionumber,
-                borrowernumber,
-                reservedate,
-                constrainttype,
-                found,
-                itemnumber,
-                reservenotes,
-                expirationdate,
-                lowestPriority,
-                suspend,
-                suspend_until
+        SELECT  reserves.*,
+                timestamp AS rtimestamp
         FROM     reserves
         WHERE biblionumber = ? ";
     push( @params, $biblionumber );
@@ -1112,7 +1138,7 @@ sub AutoUnsuspendReserves {
 
 =head2 CancelReserve
 
-  CancelReserve({ reserve_id => $reserve_id, [ biblionumber => $biblionumber, borrowernumber => $borrrowernumber, itemnumber => $itemnumber ] });
+  CancelReserve({ reserve_id => $reserve_id, [ biblionumber => $biblionumber, borrowernumber => $borrrowernumber, itemnumber => $itemnumber, note => 'cancellation note' ] });
 
 Cancels a reserve.
 
@@ -1132,13 +1158,14 @@ sub CancelReserve {
     if ($reserve) {
         my $query = "
             UPDATE reserves
-            SET    cancellationdate = now(),
-                   found            = Null,
-                   priority         = 0
+            SET    cancellationdate  = NOW(),
+                   found             = NULL,
+                   priority          = 0,
+                   cancellation_note = ?
             WHERE  reserve_id = ?
         ";
         my $sth = $dbh->prepare($query);
-        $sth->execute( $reserve_id );
+        $sth->execute( $params->{note}, $reserve_id );
 
         $query = "
             INSERT INTO old_reserves
@@ -1254,56 +1281,34 @@ whose keys are fields from the reserves table in the Koha database.
 
 sub ModReserveFill {
     my ($res) = @_;
-    my $dbh = C4::Context->dbh;
+
     # fill in a reserve record....
     my $reserve_id = $res->{'reserve_id'};
-    my $biblionumber = $res->{'biblionumber'};
-    my $borrowernumber    = $res->{'borrowernumber'};
-    my $resdate = $res->{'reservedate'};
+    unless ( $reserve_id ) {
+        carp("No reserve_id!");
+        return;
+    };
 
-    # get the priority on this record....
-    my $priority;
-    my $query = "SELECT priority
-                 FROM   reserves
-                 WHERE  biblionumber   = ?
-                  AND   borrowernumber = ?
-                  AND   reservedate    = ?";
-    my $sth = $dbh->prepare($query);
-    $sth->execute( $biblionumber, $borrowernumber, $resdate );
-    ($priority) = $sth->fetchrow_array;
+    my $reserve = Koha::Database->new()->schema()->resultset('Reserve')->find( $reserve_id );
+
+    unless ( $reserve ) {
+        carp("Invalid reserve_id!");
+        return;
+    }
+    my $priority = $reserve->priority();
 
     # update the database...
-    $query = "UPDATE reserves
-                  SET    found            = 'F',
-                         priority         = 0
-                 WHERE  biblionumber     = ?
-                    AND reservedate      = ?
-                    AND borrowernumber   = ?
-                ";
-    $sth = $dbh->prepare($query);
-    $sth->execute( $biblionumber, $resdate, $borrowernumber );
+    $reserve->found('F');
+    $reserve->priority('0');
+    $reserve->update();
 
     # move to old_reserves
-    $query = "INSERT INTO old_reserves
-                 SELECT * FROM reserves
-                 WHERE  biblionumber     = ?
-                    AND reservedate      = ?
-                    AND borrowernumber   = ?
-                ";
-    $sth = $dbh->prepare($query);
-    $sth->execute( $biblionumber, $resdate, $borrowernumber );
-    $query = "DELETE FROM reserves
-                 WHERE  biblionumber     = ?
-                    AND reservedate      = ?
-                    AND borrowernumber   = ?
-                ";
-    $sth = $dbh->prepare($query);
-    $sth->execute( $biblionumber, $resdate, $borrowernumber );
+    C4::Context->dbh->do("INSERT INTO old_reserves SELECT * FROM reserves WHERE reserve_id = ?", undef, $reserve_id);
+    $reserve->delete();
     
-    # now fix the priority on the others (if the priority wasn't
-    # already sorted!)....
+    # now fix the priority on the others (if the priority wasn't already sorted!)
     unless ( $priority == 0 ) {
-        _FixPriority({ reserve_id => $reserve_id, biblionumber => $biblionumber });
+        _FixPriority({ reserve_id => $reserve_id, biblionumber => $res->{biblionumber} });
     }
 }
 
@@ -1463,13 +1468,7 @@ sub GetReserveInfo {
     my ( $reserve_id ) = @_;
     my $dbh = C4::Context->dbh;
     my $strsth="SELECT
-                   reserve_id,
-                   reservedate,
-                   reservenotes,
-                   reserves.borrowernumber,
-                   reserves.biblionumber,
-                   reserves.branchcode,
-                   reserves.waitingdate,
+                   reserves.*,
                    notificationdate,
                    reminderdate,
                    priority,
@@ -2315,14 +2314,17 @@ sub GetReserveId {
 =cut
 
 sub ReserveSlip {
-    my ($branch, $borrowernumber, $biblionumber) = @_;
+    my ( $branch, $borrowernumber, $biblionumber, $reserve_id ) = @_;
 
 #   return unless ( C4::Context->boolean_preference('printreserveslips') );
 
-    my $reserve_id = GetReserveId({
+    $reserve_id ||= GetReserveId({
         biblionumber => $biblionumber,
         borrowernumber => $borrowernumber
-    }) or return;
+    });
+
+    return unless ($reserve_id);
+
     my $reserve = GetReserveInfo($reserve_id) or return;
 
     return  C4::Letters::GetPreparedLetter (

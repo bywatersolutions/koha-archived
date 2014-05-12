@@ -276,6 +276,14 @@ if ( $query->param('place_reserve') ) {
         }
         my $notes = $query->param('notes_'.$biblioNum)||'';
 
+        my $res_type =
+              $query->param("is_document_delivery-$biblioNum") ? 'document_delivery' : 'hold';
+        my $dd_title          = $query->param("dd_title-$biblioNum")          || undef;
+        my $dd_authors        = $query->param("dd_authors-$biblioNum")        || undef;
+        my $dd_vol_issue_date = $query->param("dd_vol_issue_date-$biblioNum") || undef;
+        my $dd_pages          = $query->param("dd_pages-$biblioNum")          || undef;
+        my $dd_chapters       = $query->param("dd_chapters-$biblioNum")       || undef;
+
         if (   $maxreserves
             && $reserve_cnt >= $maxreserves )
         {
@@ -285,12 +293,26 @@ if ( $query->param('place_reserve') ) {
         # Here we actually do the reserveration. Stage 3.
         if ($canreserve) {
             AddReserve(
-                $branch,      $borrowernumber,
-                $biblioNum,   'a',
-                [$biblioNum], $rank,
-                $startdate,   $expiration_date,
-                $notes,       $biblioData->{title},
-                $itemNum,     $found
+                {
+                    branchcode        => $branch,
+                    borrowernumber    => $borrowernumber,
+                    biblionumber      => $biblioNum,
+                    constrain         => 'a',
+                    biblioitems       => [$biblioNum],
+                    priority          => $rank,
+                    reservedate       => $startdate,
+                    expirationdate    => $expiration_date,
+                    reservenotes      => $notes,
+                    title             => $biblioData->{title},
+                    checkitem         => $itemNum,
+                    found             => $found,
+                    type              => $res_type,
+                    dd_title          => $dd_title,
+                    dd_authors        => $dd_authors,
+                    dd_vol_issue_date => $dd_vol_issue_date,
+                    dd_pages          => $dd_pages,
+                    dd_chapters       => $dd_chapters,
+                }
             );
             ++$reserve_cnt;
         }
