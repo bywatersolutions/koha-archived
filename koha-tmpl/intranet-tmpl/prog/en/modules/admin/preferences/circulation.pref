@@ -427,6 +427,12 @@ Circulation:
                   no: "Don't allow"
             - a patron to renew an item with unfilled holds if other available items can fill that hold.
         -
+            - pref: UseDocumentDelivery
+              choices:
+                  yes: Allow
+                  no: "Don't allow"
+            - staff and patrons to place document delivery requests.
+        -
             - pref: AllowHoldPolicyOverride
               choices:
                   yes: Allow
