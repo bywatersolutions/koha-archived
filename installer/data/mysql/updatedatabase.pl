@@ -9025,6 +9025,54 @@ if ( CheckVersion($DBversion) ) {
         ('LocalHoldsPriorityPatronControl',  'PickupLibrary',  'HomeLibrary|PickupLibrary',  'decides if the feature operates using the library set as the patron''s home library, or the library set as the pickup library for the given hold.',  'Choice')
     });
     print "Upgrade to $DBversion done (Bug 11126 - Make the holds system optionally give precedence to local holds)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "XXX";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q{
+        INSERT INTO  systempreferences (
+            variable ,
+            value ,
+            options ,
+            explanation ,
+            type
+        ) VALUES (
+            'UseDocumentDelivery',
+            '0',
+            NULL,
+            'If ON, give patron''s placing holds the option for document delivery.',
+            'YesNo'
+        )
+    });
+
+    $dbh->do(q{
+        ALTER TABLE reserves
+            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
+            CHANGE cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
+            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
+            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
+            ADD dd_title TEXT NULL ,
+            ADD dd_authors TEXT NULL ,
+            ADD dd_vol_issue_date TEXT NULL ,
+            ADD dd_pages TEXT NULL ,
+            ADD dd_chapters TEXT NULL
+    });
+
+    $dbh->do(q{
+        ALTER TABLE old_reserves
+            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
+            CHANGE  cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
+            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
+            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
+            ADD dd_title TEXT NULL ,
+            ADD dd_authors TEXT NULL ,
+            ADD dd_vol_issue_date TEXT NULL ,
+            ADD dd_pages TEXT NULL ,
+            ADD dd_chapters TEXT NULL
+    });
+
+    print "Upgrade to $DBversion done ()\n";
     SetVersion($DBversion);
 }
 

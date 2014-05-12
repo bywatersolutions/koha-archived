@@ -560,6 +560,12 @@ foreach my $biblionumber (@biblionumbers) {
         $reserve{'suspend'} = $res->{'suspend'};
         $reserve{'suspend_until'} = $res->{'suspend_until'};
         $reserve{'reserve_id'} = $res->{'reserve_id'};
+        $reserve{'type'} = $res->{'type'};
+        $reserve{'dd_title'} = $res->{'dd_title'};
+        $reserve{'dd_authors'} = $res->{'dd_authors'};
+        $reserve{'dd_vol_issue_date'} = $res->{'dd_vol_issue_date'};
+        $reserve{'dd_pages'} = $res->{'dd_pages'};
+        $reserve{'dd_chapters'} = $res->{'dd_chapters'};
 
         if ( C4::Context->preference('IndependentBranches') && $flags->{'superlibrarian'} != 1 ) {
               $reserve{'branchloop'} = [ GetBranchDetail($res->{'branchcode'}) ];
