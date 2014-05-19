@@ -203,7 +203,7 @@ foreach my $biblionumber (@biblionumbers) {
     my $alreadyreserved = 0;
 
     foreach my $res (@$reserves) {
-        if ( defined $res->{found} && $res->{found} eq 'W' ) {
+        if ( defined $res->{found} ) {
             $count--;
         }
 
