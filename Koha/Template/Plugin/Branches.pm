@@ -25,6 +25,7 @@ use Encode qw{encode decode};
 
 use C4::Koha;
 use C4::Context;
+use C4::Branch qw( GetIndependentGroupModificationRights );
 
 sub GetName {
     my ( $self, $branchcode ) = @_;
@@ -52,6 +53,13 @@ sub GetURL {
     $sth->execute($branchcode);
     my $b = $sth->fetchrow_hashref();
     return encode( 'UTF-8', $b->{'branchurl'} );
+}
+
+sub HasRights {
+    my( $self, $for ) = @_;
+
+    my $has_rights = GetIndependentGroupModificationRights({ for => $for });
+    return $has_rights;
 }
 
 1;

@@ -1,4 +1,5 @@
 [% USE Koha %]
+[% USE Branches %]
 [% USE KohaDates %]
 [% USE AuthorisedValues %]
 
@@ -767,7 +768,11 @@ function verify_images() {
                     </td>
                 [% END %]
                 [% IF ( CAN_user_editcatalogue_edit_items ) %]
-                    <td><a href="/cgi-bin/koha/cataloguing/additem.pl?op=edititem&biblionumber=[% item.biblionumber %]&itemnumber=[% item.itemnumber %]#edititem">Edit</a></td>
+                    [% IF !Koha.Preference('IndependentBranches') || Branches.HasRights( item.homebranchcode ) %]
+                        <td><a href="/cgi-bin/koha/cataloguing/additem.pl?op=edititem&biblionumber=[% item.biblionumber %]&itemnumber=[% item.itemnumber %]#edititem">Edit</a></td>
+                    [% ELSE %]
+                        <td>&nbsp;</td>
+                    [% END %]
                 [% END %]
                 </tr>
             [% END %]
