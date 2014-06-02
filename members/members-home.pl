@@ -34,7 +34,7 @@ my $template_name;
 
 $branch = q{} unless defined $branch;
 
-my ($template, $loggedinuser, $cookie)
+my ($template, $loggedinuser, $cookie, $flags)
     = get_template_and_user({template_name => "members/member.tmpl",
                  query => $query,
                  type => "intranet",
@@ -79,7 +79,11 @@ else {
 
 
 my $pending_borrower_modifications =
-  Koha::Borrower::Modifications->GetPendingModificationsCount( $branch );
+  Koha::Borrower::Modifications->GetPendingModificationsCount( 
+  C4::Context->preference("IndependentBranches")
+  && !$flags->{'superlibrarian'}
+  ? C4::Context->userenv()->{'branch'}
+  : undef );
 
 $template->param( 
         "AddPatronLists_".C4::Context->preference("AddPatronLists")=> "1",
