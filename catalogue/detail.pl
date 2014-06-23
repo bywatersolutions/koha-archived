@@ -460,7 +460,10 @@ foreach my $myorder (@allorders_using_biblio) {
 }
 
 my $count_orders_using_biblio = scalar @orders_using_biblio ;
-$template->param (countorders => $count_orders_using_biblio);
+$template->param(
+    countorders => $count_orders_using_biblio,
+    orders_using_biblio => \@orders_using_biblio,
+);
 
 my $count_deletedorders_using_biblio = scalar @deletedorders_using_biblio ;
 $template->param (countdeletedorders => $count_deletedorders_using_biblio);
