@@ -39,7 +39,14 @@
          }
         else if (countorders > 0){
             [% IF ( CAN_user_acquisition_order_manage ) %]
-                is_confirmed = confirm( _("Warning: This record is used in %s order(s). Deleting it could cause serious issues on acquisition module. Are you sure you want to delete this record?").format(countorders) );
+                var msg = _("Warning: This record is used in")+" "+ countorders + " " +_("order(s). Deleting it could cause serious issues on acquisition module. Are you sure you want to delete this record? Orders this record is being used in: ")
+		[% FOREACH o IN orders_using_biblio %]
+                   msg = msg + "[% o.ordernumber %]";
+                   [% UNLESS loop.last %]
+                       msg = msg + ",";
+                   [% END %]
+		[% END %]
+                is_confirmed = confirm( msg );
             [% ELSE %]
                 is_confirmed = alert( _("%s order(s) are using this record. You need order managing permissions to delete this record.").format(countorders) );
             [% END %]
