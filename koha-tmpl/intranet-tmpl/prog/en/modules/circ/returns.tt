@@ -129,7 +129,7 @@ $(document).ready(function () {
 [% IF ( fines ) %]
     <div class="dialog alert">
         <h3>Patron has outstanding fines of [% fines %].</h3>
-        <p><a href="/cgi-bin/koha/members/pay.pl?borrowernumber=[% fineborrowernumber %]">Make payment</a>.</p>
+        <p><a href="/cgi-bin/koha/members/account_payment.pl?borrowernumber=[% fineborrowernumber %]">Make payment</a>.</p>
     </div>
 [% END %]
 
