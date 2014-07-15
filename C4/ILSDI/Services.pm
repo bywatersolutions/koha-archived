@@ -24,7 +24,6 @@ use C4::Members;
 use C4::Items;
 use C4::Circulation;
 use C4::Branch;
-use C4::Accounts;
 use C4::Biblio;
 use C4::Reserves qw(AddReserve GetReservesFromBiblionumber GetReservesFromBorrowernumber CanBookBeReserved CanItemBeReserved IsAvailableForItemLevelRequest);
 use C4::Context;
@@ -34,6 +33,7 @@ use HTML::Entities;
 use CGI qw ( -utf8 );
 use DateTime;
 use C4::Auth;
+use Koha::Database;
 
 =head1 NAME
 
@@ -387,10 +387,9 @@ sub GetPatronInfo {
 
     # Fines management
     if ( $cgi->param('show_fines') eq "1" ) {
-        my @charges;
-        for ( my $i = 1 ; my @charge = getcharges( $borrowernumber, undef, $i ) ; $i++ ) {
-            push( @charges, @charge );
-        }
+        my @charges =
+          Koha::Database->new()->schema()->resultset('AccountDebit')
+          ->search( { borrowernumber => $borrowernumber } );
         $borrower->{'fines'}->{'fine'} = \@charges;
     }
 
