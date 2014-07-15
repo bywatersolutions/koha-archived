@@ -397,6 +397,12 @@ __PACKAGE__->table("borrowers");
   default_value: 1
   is_nullable: 0
 
+=head2 account_balance
+
+  data_type: 'decimal'
+  is_nullable: 0
+  size: [28,6]
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -546,6 +552,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 50 },
   "privacy",
   { data_type => "integer", default_value => 1, is_nullable => 0 },
+  "account_balance",
+  { data_type => "decimal", is_nullable => 0, size => [28, 6] },
 );
 
 =head1 PRIMARY KEY
@@ -576,32 +584,32 @@ __PACKAGE__->add_unique_constraint("cardnumber", ["cardnumber"]);
 
 =head1 RELATIONS
 
-=head2 accountlines
+=head2 account_credits
 
 Type: has_many
 
-Related object: L<Koha::Schema::Result::Accountline>
+Related object: L<Koha::Schema::Result::AccountCredit>
 
 =cut
 
 __PACKAGE__->has_many(
-  "accountlines",
-  "Koha::Schema::Result::Accountline",
+  "account_credits",
+  "Koha::Schema::Result::AccountCredit",
   { "foreign.borrowernumber" => "self.borrowernumber" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 accountoffsets
+=head2 account_debits
 
 Type: has_many
 
-Related object: L<Koha::Schema::Result::Accountoffset>
+Related object: L<Koha::Schema::Result::AccountDebit>
 
 =cut
 
 __PACKAGE__->has_many(
-  "accountoffsets",
-  "Koha::Schema::Result::Accountoffset",
+  "account_debits",
+  "Koha::Schema::Result::AccountDebit",
   { "foreign.borrowernumber" => "self.borrowernumber" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -1072,9 +1080,13 @@ Composing rels: L</course_instructors> -> course
 __PACKAGE__->many_to_many("courses", "course_instructors", "course");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07025 @ 2013-10-31 16:31:19
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:z4kW3xYX1CyrwvGdZu32nA
+# Created by DBIx::Class::Schema::Loader v0.07040 @ 2014-07-15 10:03:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gX8z941Rx6fISHCN9hafCg
 
+__PACKAGE__->belongs_to(
+    "branch",
+    "Koha::Schema::Result::Branch",
+    { branchcode => "branchcode" },
+);
 
-# You can replace this text with custom content, and it will be preserved on regeneration
 1;

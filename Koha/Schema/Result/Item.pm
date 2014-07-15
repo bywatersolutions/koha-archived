@@ -403,21 +403,6 @@ __PACKAGE__->add_unique_constraint("itembarcodeidx", ["barcode"]);
 
 =head1 RELATIONS
 
-=head2 accountlines
-
-Type: has_many
-
-Related object: L<Koha::Schema::Result::Accountline>
-
-=cut
-
-__PACKAGE__->has_many(
-  "accountlines",
-  "Koha::Schema::Result::Accountline",
-  { "foreign.itemnumber" => "self.itemnumber" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 biblioitemnumber
 
 Type: belongs_to
@@ -609,8 +594,8 @@ __PACKAGE__->might_have(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07025 @ 2013-12-19 06:29:02
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h6fPG62SifJ5T8QKPZNBBw
+# Created by DBIx::Class::Schema::Loader v0.07040 @ 2014-07-15 09:35:15
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bMp3BulwBjowVB0NYJWvEQ
 
 __PACKAGE__->belongs_to(
     "biblio",
