@@ -1,4 +1,5 @@
 <script type="text/javascript" src="[% interface %]/lib/jquery/plugins/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="[% interface %]/lib/jquery/plugins/TableTools/media/js/TableTools.min.js"></script>
 <script type="text/javascript">
 //<![CDATA[
     var MSG_DT_FIRST = _("First");

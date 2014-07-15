@@ -1,6 +1,7 @@
 [% USE Koha %]
 [% USE Branches %]
 [% USE KohaDates %]
+[% USE Currency %]
 [% INCLUDE 'doc-head-open.inc' %]
     <title>Summary for [% firstname %] [% surname %] ([% cardnumber %])</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -67,37 +68,57 @@
         </table>
     [% END %]
 
-    [% IF ( accounts && ( totaldue != '0.00' ) ) %]
+[% IF account_balance %]
+    [% IF account_debits %]
         <table>
-            <caption>Account fines and payments</caption>
+            <caption>Account fees</caption>
             <tr>
-                <th>Description of charges</th>
+                <th>Description</th>
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Outstanding</th>
             </tr>
-
-            [% FOREACH account IN accounts %]
-                [% NEXT IF account.amountoutstanding == '0.00' %]
-                <tr>
-                    <td>
-                        [% IF ( account.itemnumber ) %]<a href="/cgi-bin/koha/catalogue/moredetail.pl?biblionumber=[% account.biblionumber %]&amp;itemnumber=[% account.itemnumber %]">[% END %]
-                        [% account.description %]&nbsp;[% IF ( account.printtitle ) %] [% account.title |html %][% END %]
-                        [% IF ( account.itemnumber ) %]</a>[% END %]
-                    </td>
-                    <td>[% account.date | $KohaDates %]</td>
-                    <td>[% account.amount %]</td>
-                    <td>[% account.amountoutstanding %]</td>
-                </tr>
+            [% FOREACH d IN account_debits %]
+                [% IF d.amount_outstanding > 0 %]
+                    <tr>
+                        <td>[% d.description %]</td>
+                        <td>[% d.created_on | $KohaDates %]</td>
+                        <td>[% d.amount_original | $Currency %]</td>
+                        <td>[% d.amount_outstanding | $Currency %]</td>
+                    </tr>
+                [% END %]
             [% END %]
-
             <tfoot>
                 <tr>
                     <td colspan="3">Total due</td>
-                    <td colspan="2">[% totaldue %]</td>
+                    <td colspan="2">[% totaldue | $Currency %]</td>
                 </tr>
             </tfoot>
         </table>
     [% END %]
+
+    [% FOREACH c IN account_credits %]
+        [% total_remaining = total_remaining + c.amount_remaining %]
+    [% END %]
+    [% IF total_remaining %]
+        <table>
+            <caption>Account payments</caption>
+            <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Balance remaining</th>
+            </tr>
+            [% FOREACH c IN account_credits %]
+                [% IF c.amount_remaining > 0 %]
+                    <tr>
+                        <td>[% c.created_on | $KohaDates %]</td>
+                        <td>[% c.amount_paid | $Currency %]</td>
+                        <td>[% c.amount_remaining | $Currency %]</td>
+                    </tr>
+                [% END %]
+            [% END %]
+        </table>
+    [% END %]
+[% END %]
 
 [% INCLUDE 'intranet-bottom.inc' %]
