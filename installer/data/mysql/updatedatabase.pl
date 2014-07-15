@@ -9576,22 +9576,16 @@ if ( CheckVersion($DBversion) ) {
 $DBversion = "3.18.00.000";
 if ( CheckVersion($DBversion) ) {
     print "Upgrade to $DBversion done (3.18.0 release)\n";
-    SetVersion ($DBversion);
-}
-
-$DBversion = "3.18.01.000";
-if ( CheckVersion($DBversion) ) {
-    print "Upgrade to $DBversion done (3.18.1 release)\n";
-    SetVersion ($DBversion);
-}
-
-$DBversion = "3.18.02.000";
-if ( CheckVersion($DBversion) ) {
-    print "Upgrade to $DBversion done (3.18.2 release)\n";
     SetVersion($DBversion);
 }
 
-$DBversion = "3.18.02.001";
+$DBversion = "3.19.00.000";
+if ( CheckVersion($DBversion) ) {
+    print "Upgrade to $DBversion done (there's life after 3.18)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.19.00.001";
 if ( CheckVersion($DBversion) ) {
     $dbh->do("
         UPDATE systempreferences
@@ -9605,7 +9599,7 @@ if ( CheckVersion($DBversion) ) {
     SetVersion ($DBversion);
 }
 
-$DBversion = "3.18.02.002";
+$DBversion = "3.19.00.002";
 if ( CheckVersion($DBversion) ) {
     $dbh->do(q|
         UPDATE suggestions SET branchcode="" WHERE branchcode="__ANY__"
@@ -9614,7 +9608,7 @@ if ( CheckVersion($DBversion) ) {
     SetVersion ($DBversion);
 }
 
-$DBversion = "3.18.02.003";
+$DBversion = "3.19.00.003";
 if ( CheckVersion($DBversion) ) {
     my ($count) = $dbh->selectrow_array("SELECT COUNT(*) FROM borrowers GROUP BY userid HAVING COUNT(userid) > 1");
 
@@ -9634,14 +9628,54 @@ if ( CheckVersion($DBversion) ) {
     SetVersion($DBversion);
 }
 
-$DBversion = "3.18.03.000";
+$DBversion = "3.19.00.004";
 if ( CheckVersion($DBversion) ) {
-    print "Upgrade to $DBversion done (3.18.3 release)\n";
+    my $pref_value = C4::Context->preference('OpacExportOptions');
+    $pref_value =~ s/\|/,/g; # multiple is separated by ,
+    $dbh->do(q{
+        UPDATE systempreferences
+            SET value = ?,
+                type = 'multiple'
+        WHERE variable = 'OpacExportOptions'
+    }, {}, $pref_value );
+    print "Upgrade to $DBversion done (Bug 13346: OpacExportOptions is now multiple)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.19.00.005";
+if(CheckVersion($DBversion)) {
+    $dbh->do(q{
+        ALTER TABLE authorised_values MODIFY COLUMN category VARCHAR(32) NOT NULL DEFAULT ''
+    });
+
+    $dbh->do(q{
+        ALTER TABLE borrower_attribute_types MODIFY COLUMN authorised_value_category VARCHAR(32) DEFAULT NULL
+    });
+
+    print "Upgrade to $DBversion done (Bug 13379 - Modify authorised_values.category to varchar(32))\n";
     SetVersion($DBversion);
 }
 
+$DBversion = "3.19.00.006";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q|SET foreign_key_checks = 0|);
+    my $sth = $dbh->table_info( '','','','TABLE' );
+    my ( $cat, $schema, $name, $type, $remarks );
+    while ( ( $cat, $schema, $name, $type, $remarks ) = $sth->fetchrow_array ) {
+        my $table_sth = $dbh->prepare(qq|SHOW CREATE TABLE $name|);
+        $table_sth->execute;
+        my @table = $table_sth->fetchrow_array;
+        unless ( $table[1] =~ /COLLATE=utf8mb4_unicode_ci/ ) { #catches utf8mb4 collated tables
+            $dbh->do(qq|ALTER TABLE $name CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci|);
+        }
+    }
+    $dbh->do(q|SET foreign_key_checks = 1|);;
 
-$DBversion = "3.18.03.001";
+    print "Upgrade to $DBversion done (Bug 11944 - Convert DB tables to utf8_unicode_ci)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.19.00.007";
 if ( CheckVersion($DBversion) ) {
     my $orphan_budgets = $dbh->selectall_arrayref(q|
         SELECT budget_id, budget_name, budget_code
@@ -9663,16 +9697,173 @@ if ( CheckVersion($DBversion) ) {
     SetVersion($DBversion);
 }
 
-$DBversion = "3.18.03.002";
+$DBversion = "3.19.00.008";
+if ( CheckVersion($DBversion) ) {
+    my $number_of_orders_not_linked = $dbh->selectcol_arrayref(q|
+        SELECT COUNT(*)
+        FROM aqorders o
+        WHERE NOT EXISTS (
+            SELECT NULL
+            FROM aqbudgets b
+            WHERE b.budget_id = o.budget_id
+        );
+    |);
+
+    if ( $number_of_orders_not_linked->[0] > 0 ) {
+        $dbh->do(q|
+            INSERT INTO aqbudgetperiods(budget_period_startdate, budget_period_enddate, budget_period_active, budget_period_description, budget_period_total) VALUES ( CAST(NOW() AS date), CAST(NOW() AS date), 0, "WARNING: This budget has been automatically created by the updatedatabase script, please see bug 12601 for more information", 0)
+        |);
+        my $budget_period_id = $dbh->last_insert_id( undef, undef, 'aqbudgetperiods', undef );
+        $dbh->do(qq|
+            INSERT INTO aqbudgets(budget_code, budget_name, budget_amount, budget_period_id) VALUES ( "BACKUP_TMP", "WARNING: fund created by the updatedatabase script, please see bug 12601", 0, $budget_period_id );
+        |);
+        my $budget_id = $dbh->last_insert_id( undef, undef, 'aqbudgets', undef );
+        $dbh->do(qq|
+            UPDATE aqorders o
+            SET budget_id = $budget_id
+            WHERE NOT EXISTS (
+                SELECT NULL
+                FROM aqbudgets b
+                WHERE b.budget_id = o.budget_id
+            )
+        |);
+    }
+
+    $dbh->do(q|
+        ALTER TABLE aqorders
+        ADD CONSTRAINT aqorders_budget_id_fk FOREIGN KEY (budget_id) REFERENCES aqbudgets(budget_id) ON DELETE CASCADE ON UPDATE CASCADE
+    |);
+
+    print "Upgrade to $DBversion done (Bug 12601 - Add new foreign key aqorders.budget_id" . ( ( $number_of_orders_not_linked->[0] > 0 )  ? ' WARNING: temporary budget and fund have been created (search for "BACKUP_TMP"). At least one of your order was not linked to a budget' : '' ) . ")\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.19.00.009";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q|
+        UPDATE suggestions s SET s.budgetid = NULL
+        WHERE NOT EXISTS (
+            SELECT NULL
+            FROM aqbudgets b
+            WHERE b.budget_id = s.budgetid
+        );
+    |);
+
+    $dbh->do(q|
+        ALTER TABLE suggestions
+        ADD CONSTRAINT suggestions_budget_id_fk FOREIGN KEY (budgetid) REFERENCES aqbudgets(budget_id) ON DELETE SET NULL ON UPDATE CASCADE
+    |);
+
+    print "Upgrade to $DBversion done (Bug 13007 - Add new foreign key suggestions.budgetid)\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.19.00.010";
 if ( CheckVersion($DBversion) ) {
     $dbh->do("INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('SessionRestrictionByIP','1','Check for Change in  Remote IP address for Session Security. Disable when remote ip address changes frequently.','','YesNo')");
-    print "Upgrade to $DBversion done (Bug 5511 - SessionRestrictionByIP)";
+    print "Upgrade to $DBversion done (Bug 5511 - SessionRestrictionByIP)\n";
     SetVersion ($DBversion);
 }
 
-$DBversion = "3.18.04.000";
+$DBversion = "3.19.00.011";
 if ( CheckVersion($DBversion) ) {
-    print "Upgrade to $DBversion done (3.18.4 release)\n";
+    $dbh->do(q|
+        INSERT INTO userflags (bit, flag, flagdesc, defaulton) VALUES
+        (20, 'lists', 'Lists', 0)
+    |);
+    $dbh->do(q|
+        INSERT INTO permissions (module_bit, code, description) VALUES
+        (20, 'delete_public_lists', 'Delete public lists')
+    |);
+    print "Upgrade to $DBversion done (Bug 13417: Add permission to delete public lists)\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.19.00.012";
+if(CheckVersion($DBversion)) {
+    $dbh->do(q{
+        ALTER TABLE biblioitems MODIFY COLUMN marcxml longtext
+    });
+
+    $dbh->do(q{
+        ALTER TABLE deletedbiblioitems MODIFY COLUMN marcxml longtext
+    });
+
+    print "Upgrade to $DBversion done (Bug 13523 - Remove NOT NULL restriction on field marcxml due to mysql STRICT_TRANS_TABLES)\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.19.00.013";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q|
+        INSERT INTO permissions (module_bit, code, description) VALUES
+          (13, 'records_batchmod', 'Perform batch modification of records (biblios or authorities)')
+    |);
+    print "Upgrade to $DBversion done (Bug 11395: Add permission tools_records_batchmod)\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.19.00.014";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q|
+        CREATE TABLE aqorder_users (
+            ordernumber int(11) NOT NULL,
+            borrowernumber int(11) NOT NULL,
+            PRIMARY KEY (ordernumber, borrowernumber),
+            CONSTRAINT aqorder_users_ibfk_1 FOREIGN KEY (ordernumber) REFERENCES aqorders (ordernumber) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT aqorder_users_ibfk_2 FOREIGN KEY (borrowernumber) REFERENCES borrowers (borrowernumber) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+    |);
+
+    $dbh->do(q|
+        INSERT INTO letter(module, code, branchcode, name, title, content, message_transport_type)
+        VALUES ('acquisition', 'ACQ_NOTIF_ON_RECEIV', '', 'Notification on receiving', 'Order received', 'Dear <<borrowers.firstname>> <<borrowers.surname>>,\n\n The order <<aqorders.ordernumber>> (<<biblio.title>>) has been received.\n\nYour library.', 'email')
+    |);
+    print "Upgrade to $DBversion done (Bug 12648: Add letter ACQ_NOTIF_ON_RECEIV )\n";
+    SetVersion ($DBversion);
+}
+
+$DBversion = "3.19.00.015";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q|
+        ALTER TABLE search_history ADD COLUMN id INT(11) NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY(id);
+    |);
+    print "Upgrade to $DBversion done (Bug 11430 - Add primary key for search_history)\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.19.00.016";
+if(CheckVersion($DBversion)) {
+    $dbh->do(q{
+        INSERT INTO authorised_values (category, authorised_value, lib) VALUES
+         ('ORDER_CANCELLATION_REASON', 0, 'No reason provided'),
+         ('ORDER_CANCELLATION_REASON', 1, 'Out of stock'),
+         ('ORDER_CANCELLATION_REASON', 2, 'Restocking')
+    });
+
+    my $already_existing_reasons = $dbh->selectcol_arrayref(q{
+        SELECT DISTINCT( cancellationreason )
+        FROM aqorders;
+    }, { Slice => {} });
+
+    my $update_orders_sth = $dbh->prepare(q{
+        UPDATE aqorders
+        SET cancellationreason = ?
+        WHERE cancellationreason = ?
+    });
+
+    my $insert_av_sth = $dbh->prepare(q{
+        INSERT INTO authorised_values (category, authorised_value, lib) VALUES
+         ('ORDER_CANCELLATION_REASON', ?, ?)
+    });
+    my $i = 3;
+    for my $reason ( @$already_existing_reasons ) {
+        next unless $reason;
+        $insert_av_sth->execute( $i, $reason );
+        $update_orders_sth->execute( $i, $reason );
+        $i++;
+    }
+    print "Upgrade to $DBversion done (Bug 13380: Add the ORDER_CANCELLATION_REASON authorised value)\n";
     SetVersion($DBversion);
 }
 
