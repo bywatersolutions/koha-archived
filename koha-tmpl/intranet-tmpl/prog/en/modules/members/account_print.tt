@@ -1,0 +1,149 @@
+[% USE KohaDates %]
+[% USE Currency %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Print Receipt for [% cardnumber %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" href="[% IF ( IntranetFavicon ) %][% IntranetFavicon %][% ELSE %][% interface %]/[% theme %]/img/favicon.ico[% END %]" type="image/x-icon" />
+<script type="text/javascript">
+    function printThenClose() {
+        window.print();
+        window.close();
+    }
+</script>
+</head>
+
+[% SET account = debit || credit %]
+[% SET borrower = account.borrower %]
+
+<body id="account-print-body" onload="printThenClose();">
+
+    <table>
+        <thead>
+            <tr>
+                <th colspan="99">
+                    [% IF debit %]
+                        Invoice
+                    [% ELSIF credit %]
+                        Payment receipt
+                    [% END %]
+                </th>
+            </tr>
+
+            <tr>
+                <th colspan="99">
+                    [% IF credit %]
+                        [% account.branch.branchname %]
+                    [% ELSE %]
+                        [% borrower.branch.branchname %]
+                    [% END %]
+                </th>
+            </tr>
+
+            <tr>
+                <th>Name:</th>
+                <th colspan="99">[% borrower.firstname %] [% borrower.surname %]</th>
+            </tr>
+
+            <tr>
+                <th>Card number:</th>
+                <th colspan="99">[% borrower.cardnumber %]</th>
+            </tr>
+
+            <tr>
+                <th>Date:</th>
+                <th colspan="99">[% account.created_on | $KohaDates %]</th>
+            </tr>
+
+            [% IF account.description %]
+                <tr>
+                    <th>Description:</th>
+                    <th colspan="99">[% account.description %]</th>
+                </tr>
+            [% END %]
+
+            [% IF credit %]
+                <tr>
+                    <th>Amount paid:</th>
+                    <th colspan="99">[% credit.amount_paid | $Currency highlight => type %]</th>
+                </tr>
+                [% IF credit.amount_received > 0 %]
+                    <tr>
+                        <th>Amount received:</th>
+                        <th colspan="99">[% credit.amount_received | $Currency highlight => type %]</th>
+                    </tr>
+                    <tr>
+                        <th>Change due:</th>
+                        <th colspan="99">[% credit.amount_received - credit.amount_paid | $Currency highlight => type %]</th>
+                    </tr>
+                [% END %]
+                <tr>
+                    <th>Balance:</th>
+                    <th colspan="99">[% credit.amount_remaining | $Currency highlight => type %]</th>
+                </tr>
+                [% IF credit.account_offsets %]
+                    <tr>
+                        <th colspan="99">Fees paid</th>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Outstanding</th>
+                        <th>Date</th>
+                    </tr>
+                [% END %]
+            [% ELSIF debit %]
+                <tr>
+                    <th>Amount:</th>
+                    <th colspan="99">[% debit.amount_original | $Currency highlight => type %]</th>
+                </tr>
+                <tr>
+                    <th>Outstanding:</th>
+                    <th colspan="99">[% debit.amount_outstanding | $Currency highlight => type %]</th>
+                </tr>
+                [% IF debit.account_offsets %]
+                    <tr>
+                        <th colspan="99">Payments applied</th>
+                    </tr>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Payment</th>
+                        <th>Applied</th>
+                        <th>Balance</th>
+                        <th>Notes</th>
+                    </tr>
+                [% END %]
+            [% END %]
+        </thead>
+
+        <tbody>
+            [% IF credit.account_offsets %]
+                [% FOREACH ao IN credit.account_offsets %]
+                    <tr>
+                        <td>[% ao.debit.description %]</td>
+                        <td>[% ao.debit.type %]</td>
+                        <td>[% ao.debit.amount_original | $Currency highlight => 'debit' %]</td>
+                        <td>[% ao.amount | $Currency highlight => 'offset' %]</td>
+                        <td>[% ao.debit.amount_outstanding | $Currency highlight => 'debit' %]</td>
+                        <td>[% ao.debit.created_on | $KohaDates %]</td>
+                    </tr>
+                [% END %]
+            [% ELSIF debit.account_offsets %]
+                [% FOREACH ao IN debit.account_offsets %]
+                    <tr>
+                        <td>[% ao.credit.created_on | $KohaDates %]</td>
+                        <td>[% ao.credit.type %]</td>
+                        <td>[% ao.credit.amount_paid | $Currency highlight => 'credit' %]</td>
+                        <td>[% ao.amount | $Currency highlight => 'offset' %]</td>
+                        <td>[% ao.credit.amount_remaining | $Currency highlight => 'credit' %]</td>
+                        <td>[% ao.credit.notes %]</td>
+                    </tr>
+                [% END %]
+            [% END %]
+        </tbody>
+    </table>
+
+[% INCLUDE 'intranet-bottom.inc' %]
