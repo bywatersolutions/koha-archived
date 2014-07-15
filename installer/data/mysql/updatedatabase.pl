@@ -7304,6 +7304,7 @@ if ( CheckVersion($DBversion) ) {
 
     $dbh->{AutoCommit} = 1;
     $dbh->{RaiseError} = 0;
+   SetVersion ($DBversion);
 }
 
 $DBversion = "3.13.00.031";
@@ -8861,7 +8862,7 @@ if ( CheckVersion($DBversion) ) {
     $dbh->do("ALTER TABLE  `biblioitems` CHANGE  `cn_sort`  `cn_sort` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL");
     $dbh->do("ALTER TABLE  `deletedbiblioitems` CHANGE  `cn_sort`  `cn_sort` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL");
     print "Upgrade to $DBversion done (Bug 12424 - ddc sorting of call numbers truncates long Cutter parts)\n";
-    SetVersion ($DBversion);
+    SetVersion($DBversion);
 }
 
 $DBversion = "3.17.00.030";
@@ -11498,6 +11499,7 @@ foreach my $file ( sort readdir $dirh ) {
         my $rv = $installer->load_sql( $update_dir . $file ) ? 0 : 1;
     } elsif ( $file =~ /\.perl$/ ) {
         do $update_dir . $file;
+        warn $@ if $@;
     }
 }
 
