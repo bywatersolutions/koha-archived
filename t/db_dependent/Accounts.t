@@ -19,165 +19,198 @@
 use strict;
 use warnings;
 
-use Test::More tests => 15;
-use Test::Warn;
+use Test::More tests => 19;
 
-BEGIN {
-    use_ok('C4::Accounts');
-    use_ok('Koha::Object');
-    use_ok('Koha::Borrower');
-    use_ok('Data::Dumper');
-}
-
-can_ok(	'C4::Accounts',
-	qw(	recordpayment
-		makepayment
-		getnextacctno
-
-		chargelostitem
-		manualinvoice
-		getcharges
-		ModNote
-		getcredits
-		getrefunds
-		ReversePayment
-		recordpayment_selectaccts
-		makepartialpayment
-		WriteOffFee	)
-);
+use C4::Context;
 
 my $dbh = C4::Context->dbh;
 $dbh->{RaiseError}=1;
 $dbh->{AutoCommit}=0;
-$dbh->do(q|DELETE FROM accountlines|);
-$dbh->do(q|DELETE FROM borrowers|);
-$dbh->do(q|DELETE FROM issues|);
 
-# Mock userenv
-local $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
-my $userenv;
-*C4::Context::userenv = \&Mock_userenv;
-$userenv = { flags => 1, id => 'my_userid', branch => 'CPL' };
+BEGIN {
+    use_ok('Koha::Database');
+    use_ok('Koha::Accounts');
+    use_ok('Koha::Accounts::DebitTypes');
+    use_ok('Koha::Accounts::CreditTypes');
+}
 
-# A Borrower for the tests ----------------------
-my $categorycode = Koha::Database->new()->schema()->resultset('Category')->first()->categorycode();
-my $branchcode = Koha::Database->new()->schema()->resultset('Branch')->first()->branchcode();
-
-my $borrower = Koha::Borrower->new( {
-	cardnumber => '1234567890',
-	surname => 'McFly',
-	firstname => 'Marty',
-} );
-$borrower->categorycode( $categorycode );
-$borrower->branchcode( $branchcode );
-$borrower->store;
-
-my $sth = $dbh->prepare(
-	"INSERT INTO accountlines (
-		borrowernumber,
-		amountoutstanding )
-	VALUES ( ?, ? )"
+## Intial Setup ##
+my $borrower = Koha::Database->new()->schema->resultset('Borrower')->create(
+    {
+        surname         => 'Test',
+        categorycode    => 'S',
+        branchcode      => 'MPL',
+        account_balance => 0,
+    }
 );
-$sth->execute($borrower->borrowernumber, '100');
-$sth->execute($borrower->borrowernumber, '200');
 
-$sth = $dbh->prepare("SELECT count(*) FROM accountlines");
-$sth->execute;
-my $count = $sth->fetchrow_array;
-is ($count, 2, 'There is 2 lines as expected');
+my $biblio =
+  Koha::Database->new()->schema->resultset('Biblio')
+  ->create( { title => "Test Record" } );
+my $biblioitem =
+  Koha::Database->new()->schema->resultset('Biblioitem')
+  ->create( { biblionumber => $biblio->biblionumber() } );
+my $item = Koha::Database->new()->schema->resultset('Item')->create(
+    {
+        biblionumber     => $biblio->biblionumber(),
+        biblioitemnumber => $biblioitem->biblioitemnumber(),
+        replacementprice => 25.00,
+        barcode          => q{TEST_ITEM_BARCODE}
+    }
+);
 
-# Testing recordpayment -------------------------
-# There is $100 in the account
-$sth = $dbh->prepare("SELECT amountoutstanding FROM accountlines WHERE borrowernumber=?");
-my $amountoutstanding = $dbh->selectcol_arrayref($sth, {}, $borrower->borrowernumber);
-my $amountleft = 0;
-for my $line ( @$amountoutstanding ) {
-    $amountleft += $line;
-}
-ok($amountleft == 300, 'The account has 300$ as expected' );
+my $issue = Koha::Database->new()->schema->resultset('Issue')->create(
+    {
+        borrowernumber => $borrower->borrowernumber(),
+        itemnumber     => $item->itemnumber(),
+    }
+);
+## END initial setup
 
-# We make a $20 payment
-my $borrowernumber = $borrower->borrowernumber;
-my $data = '20.00';
-my $sys_paytype;
-my $payment_note = '$20.00 payment note';
-recordpayment($borrowernumber, $data, $sys_paytype, $payment_note);
-# There is now $280 in the account
-$sth = $dbh->prepare("SELECT amountoutstanding FROM accountlines WHERE borrowernumber=?");
-$amountoutstanding = $dbh->selectcol_arrayref($sth, {}, $borrower->borrowernumber);
-$amountleft = 0;
-for my $line ( @$amountoutstanding ) {
-    $amountleft += $line;
-}
-ok($amountleft == 280, 'The account has $280 as expected' );
-# Is the payment note well registered
-$sth = $dbh->prepare("SELECT note FROM accountlines WHERE borrowernumber=? ORDER BY accountlines_id DESC LIMIT 1");
-$sth->execute($borrower->borrowernumber);
-my $note = $sth->fetchrow_array;
-is($note,'$20.00 payment note', '$20.00 payment note is registered');
+ok( Koha::Accounts::DebitTypes::Fine eq 'FINE', 'Test DebitTypes::Fine' );
+ok( Koha::Accounts::DebitTypes::Lost eq 'LOST', 'Test DebitTypes::Lost' );
+ok(
+    Koha::Accounts::DebitTypes::IsValid('FINE'),
+    'Test DebitTypes::IsValid with valid debit type'
+);
+ok(
+    !Koha::Accounts::DebitTypes::IsValid('Not A Valid Fee Type'),
+    'Test DebitTypes::IsValid with an invalid debit type'
+);
+my $authorised_value =
+  Koha::Database->new()->schema->resultset('AuthorisedValue')->create(
+    {
+        category         => 'MANUAL_INV',
+        authorised_value => 'TEST',
+        lib              => 'Test',
+    }
+  );
+ok( Koha::Accounts::DebitTypes::IsValid('TEST'),
+    'Test DebitTypes::IsValid with valid authorised value debit type' );
+$authorised_value->delete();
 
-# We make a -$30 payment (a NEGATIVE payment)
-$data = '-30.00';
-$payment_note = '-$30.00 payment note';
-recordpayment($borrowernumber, $data, $sys_paytype, $payment_note);
-# There is now $310 in the account
-$sth = $dbh->prepare("SELECT amountoutstanding FROM accountlines WHERE borrowernumber=?");
-$amountoutstanding = $dbh->selectcol_arrayref($sth, {}, $borrower->borrowernumber);
-$amountleft = 0;
-for my $line ( @$amountoutstanding ) {
-    $amountleft += $line;
-}
-ok($amountleft == 310, 'The account has $310 as expected' );
-# Is the payment note well registered
-$sth = $dbh->prepare("SELECT note FROM accountlines WHERE borrowernumber=? ORDER BY accountlines_id DESC LIMIT 1");
-$sth->execute($borrower->borrowernumber);
-$note = $sth->fetchrow_array;
-is($note,'-$30.00 payment note', '-$30.00 payment note is registered');
+my $debit = AddDebit(
+    {
+        borrower   => $borrower,
+        amount     => 5.00,
+        type       => Koha::Accounts::DebitTypes::Fine,
+        branchcode => 'MPL',
+    }
+);
+ok( $debit, "AddDebit returned a valid debit id " . $debit->id() );
 
-#We make a $150 payment ( > 1stLine )
-$data = '150.00';
-$payment_note = '$150.00 payment note';
-recordpayment($borrowernumber, $data, $sys_paytype, $payment_note);
-# There is now $160 in the account
-$sth = $dbh->prepare("SELECT amountoutstanding FROM accountlines WHERE borrowernumber=?");
-$amountoutstanding = $dbh->selectcol_arrayref($sth, {}, $borrower->borrowernumber);
-$amountleft = 0;
-for my $line ( @$amountoutstanding ) {
-    $amountleft += $line;
-}
-ok($amountleft == 160, 'The account has $160 as expected' );
-# Is the payment note well registered
-$sth = $dbh->prepare("SELECT note FROM accountlines WHERE borrowernumber=? ORDER BY accountlines_id DESC LIMIT 1");
-$sth->execute($borrower->borrowernumber);
-$note = $sth->fetchrow_array;
-is($note,'$150.00 payment note', '$150.00 payment note is registered');
+ok(
+    $borrower->account_balance() == 5.00,
+    "Borrower's account balance updated correctly. Should be 5.00, is " . $borrower->account_balance()
+);
 
-#We make a $200 payment ( > amountleft )
-$data = '200.00';
-$payment_note = '$200.00 payment note';
-recordpayment($borrowernumber, $data, $sys_paytype, $payment_note);
-# There is now -$40 in the account
-$sth = $dbh->prepare("SELECT amountoutstanding FROM accountlines WHERE borrowernumber=?");
-$amountoutstanding = $dbh->selectcol_arrayref($sth, {}, $borrower->borrowernumber);
-$amountleft = 0;
-for my $line ( @$amountoutstanding ) {
-    $amountleft += $line;
-}
-ok($amountleft == -40, 'The account has -$40 as expected, (credit situation)' );
-# Is the payment note well registered
-$sth = $dbh->prepare("SELECT note FROM accountlines WHERE borrowernumber=? ORDER BY accountlines_id DESC LIMIT 1");
-$sth->execute($borrower->borrowernumber);
-$note = $sth->fetchrow_array;
-is($note,'$200.00 payment note', '$200.00 payment note is registered');
+my $debit2 = AddDebit(
+    {
+        borrower   => $borrower,
+        amount     => 7.00,
+        type       => Koha::Accounts::DebitTypes::Fine,
+        branchcode => 'MPL',
+    }
+);
 
+my $credit = AddCredit(
+    {
+        borrower   => $borrower,
+        type       => Koha::Accounts::CreditTypes::Payment,
+        amount     => 9.00,
+        branchcode => 'MPL',
+    }
+);
 
+RecalculateAccountBalance( { borrower => $borrower } );
+ok(
+    sprintf( "%.2f", $borrower->account_balance() ) eq "3.00",
+    "RecalculateAccountBalance updated balance correctly."
+);
 
-$dbh->rollback;
+Koha::Database->new()->schema->resultset('AccountCredit')->create(
+    {
+        borrowernumber   => $borrower->borrowernumber(),
+        type             => Koha::Accounts::CreditTypes::Payment,
+        amount_paid      => 3.00,
+        amount_remaining => 3.00,
+    }
+);
+NormalizeBalances( { borrower => $borrower } );
+ok(
+    $borrower->account_balance() == 0.00,
+    "NormalizeBalances updated balance correctly."
+);
 
+# Adding advance credit with no balance due
+$credit = AddCredit(
+    {
+        borrower   => $borrower,
+        type       => Koha::Accounts::CreditTypes::Payment,
+        amount     => 9.00,
+        branchcode => 'MPL',
+    }
+);
+ok(
+    $borrower->account_balance() == -9,
+'Adding a $9 credit for borrower with 0 balance results in a -9 dollar account balance'
+);
 
-# Sub -------------------------------------------
+my $debit3 = AddDebit(
+    {
+        borrower   => $borrower,
+        amount     => 5.00,
+        type       => Koha::Accounts::DebitTypes::Fine,
+        branchcode => 'MPL',
+    }
+);
+ok(
+    $borrower->account_balance() == -4,
+'Adding a $5 debit when the balance is negative results in the debit being automatically paid, resulting in a balance of -4'
+);
 
-# C4::Context->userenv
-sub Mock_userenv {
-    return $userenv;
-}
+my $debit4 = AddDebit(
+    {
+        borrower   => $borrower,
+        amount     => 6.00,
+        type       => Koha::Accounts::DebitTypes::Fine,
+        branchcode => 'MPL',
+    }
+);
+ok(
+    $borrower->account_balance() == 2,
+'Adding another debit ( 6.00 ) more than the negative account balance results in a partial credit and a balance due of 2.00'
+);
+$credit = AddCredit(
+    {
+        borrower   => $borrower,
+        type       => Koha::Accounts::CreditTypes::WriteOff,
+        amount     => 2.00,
+        branchcode => 'MPL',
+        debit_id   => $debit4->debit_id(),
+    }
+);
+ok( $borrower->account_balance() == 0,
+    'WriteOff of remaining 2.00 balance succeeds' );
+
+my $debit5 = DebitLostItem(
+    {
+        borrower => $borrower,
+        issue    => $issue,
+    }
+);
+ok( $borrower->account_balance() == 25,
+    'DebitLostItem adds debit for replacement price of item' );
+
+my $lost_credit =
+  CreditLostItem( { borrower => $borrower, debit => $debit5 } );
+ok(
+    $borrower->account_balance() == 0,
+    'CreditLostItem adds credit for same about as the debit for the lost tiem'
+);
+
+## Post test cleanup ##
+$issue->delete();
+$item->delete();
+$biblio->delete();
+$borrower->delete();

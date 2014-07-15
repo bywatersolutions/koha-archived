@@ -170,7 +170,7 @@ $dbh->do(
 );
 
 # Test C4::Circulation::ProcessOfflinePayment
-my $sth = C4::Context->dbh->prepare("SELECT COUNT(*) FROM accountlines WHERE amount = '-123.45' AND accounttype = 'Pay'");
+my $sth = C4::Context->dbh->prepare("SELECT COUNT(*) FROM account_credits WHERE amount_paid = '123.45' AND type = 'PAYMENT'");
 $sth->execute();
 my ( $original_count ) = $sth->fetchrow_array();
 
@@ -183,9 +183,9 @@ my ( $new_count ) = $sth->fetchrow_array();
 
 ok( $new_count == $original_count  + 1, 'ProcessOfflinePayment makes payment correctly' );
 
-C4::Context->dbh->do("DELETE FROM accountlines WHERE borrowernumber IN ( SELECT borrowernumber FROM borrowers WHERE cardnumber = '99999999999' )");
+C4::Context->dbh->do("DELETE FROM account_credits");
+C4::Context->dbh->do("DELETE FROM account_debits");
 C4::Context->dbh->do("DELETE FROM borrowers WHERE cardnumber = '99999999999'");
-C4::Context->dbh->do("DELETE FROM accountlines");
 {
 # CanBookBeRenewed tests
 
@@ -429,8 +429,15 @@ C4::Context->dbh->do("DELETE FROM accountlines");
     C4::Context->set_preference('WhenLostForgiveFine','1');
     C4::Context->set_preference('WhenLostChargeReplacementFee','1');
 
-    C4::Overdues::UpdateFine( $itemnumber, $renewing_borrower->{borrowernumber},
-        15.00, q{}, Koha::DateUtils::output_pref($datedue) );
+    C4::Overdues::UpdateFine(
+        {
+            itemnumber     => $itemnumber,
+            borrowernumber => $renewing_borrower->{borrowernumber},
+            amount         => 15.00,
+            due            => Koha::DateUtils::output_pref($datedue),
+            issue_id       => GetItemIssue($itemnumber)->{issue_id}
+        }
+    );
 
     LostItem( $itemnumber, 1 );
 
@@ -438,19 +445,28 @@ C4::Context->dbh->do("DELETE FROM accountlines");
     ok( !$item->onloan(), "Lost item marked as returned has false onloan value" );
 
     my $total_due = $dbh->selectrow_array(
-        'SELECT SUM( amountoutstanding ) FROM accountlines WHERE borrowernumber = ?',
+        'SELECT account_balance FROM borrowers WHERE borrowernumber = ?',
         undef, $renewing_borrower->{borrowernumber}
     );
 
     ok( $total_due == 12, 'Borrower only charged replacement fee with both WhenLostForgiveFine and WhenLostChargeReplacementFee enabled' );
 
-    C4::Context->dbh->do("DELETE FROM accountlines");
+    C4::Context->dbh->do("DELETE FROM account_credits");
+    C4::Context->dbh->do("DELETE FROM account_debits");
+    C4::Context->dbh->do("UPDATE borrowers SET account_balance = 0");
 
     C4::Context->set_preference('WhenLostForgiveFine','0');
     C4::Context->set_preference('WhenLostChargeReplacementFee','0');
 
-    C4::Overdues::UpdateFine( $itemnumber2, $renewing_borrower->{borrowernumber},
-        15.00, q{}, Koha::DateUtils::output_pref($datedue) );
+    C4::Overdues::UpdateFine(
+        {
+            itemnumber     => $itemnumber2,
+            borrowernumber => $renewing_borrower->{borrowernumber},
+            amount         => 15.00,
+            due            => Koha::DateUtils::output_pref($datedue),
+            issue_id       => GetItemIssue($itemnumber2)->{issue_id},
+        }
+    );
 
     LostItem( $itemnumber2, 0 );
 
@@ -458,7 +474,7 @@ C4::Context->dbh->do("DELETE FROM accountlines");
     ok( $item2->onloan(), "Lost item *not* marked as returned has true onloan value" );
 
     $total_due = $dbh->selectrow_array(
-        'SELECT SUM( amountoutstanding ) FROM accountlines WHERE borrowernumber = ?',
+        'SELECT account_balance FROM borrowers WHERE borrowernumber = ?',
         undef, $renewing_borrower->{borrowernumber}
     );
 
