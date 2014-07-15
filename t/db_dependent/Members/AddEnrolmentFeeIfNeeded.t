@@ -49,7 +49,7 @@ my %borrower_data = (
 my $borrowernumber = C4::Members::AddMember( %borrower_data );
 $borrower_data{borrowernumber} = $borrowernumber;
 
-my ( $total ) = C4::Members::GetMemberAccountRecords( $borrowernumber );
+my ( $total ) = C4::Members::GetMemberAccountBalance( $borrowernumber );
 is( $total, $enrolmentfee_K, "New kid pay $enrolmentfee_K" );
 
 C4::Context->set_preference( 'FeeOnChangePatronCategory', 0 );
@@ -64,10 +64,10 @@ C4::Context->set_preference( 'FeeOnChangePatronCategory', 1 );
 
 $borrower_data{categorycode} = 'J';
 C4::Members::ModMember( %borrower_data );
-( $total ) = C4::Members::GetMemberAccountRecords( $borrowernumber );
+( $total ) = C4::Members::GetMemberAccountBalance( $borrowernumber );
 is( $total, $enrolmentfee_K + $enrolmentfee_J, "Kid growing and become a juvenile, he should pay " . ( $enrolmentfee_K + $enrolmentfee_J ) );
 
 # Check with calling directly AddEnrolmentFeeIfNeeded
 C4::Members::AddEnrolmentFeeIfNeeded( 'YA', $borrowernumber );
-( $total ) = C4::Members::GetMemberAccountRecords( $borrowernumber );
+( $total ) = C4::Members::GetMemberAccountBalance( $borrowernumber );
 is( $total, $enrolmentfee_K + $enrolmentfee_J + $enrolmentfee_YA, "Juvenile growing and become an young adult, he should pay " . ( $enrolmentfee_K + $enrolmentfee_J + $enrolmentfee_YA ) );
