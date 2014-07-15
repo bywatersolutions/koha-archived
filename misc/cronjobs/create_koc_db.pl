@@ -256,10 +256,8 @@ SELECT borrowernumber,
        city,
        phone,
        dateofbirth,
-       sum( accountlines.amountoutstanding ) as total_fines
+       account_balance as total_fines
 FROM borrowers
-LEFT JOIN accountlines USING (borrowernumber)
-GROUP BY borrowernumber;
 END_SQL
 
     my $fields_count = $sth_mysql->execute();
@@ -278,43 +276,6 @@ END_SQL
     }
     $dbh_sqlite->commit();
     print "inserted $count borrowers\n" if $verbose;
-    # add_fines_to_borrowers_table();
-}
-
-=head2 add_fines_to_borrowers_table
-
-Import the fines from koha.accountlines into the sqlite db
-
-=cut
-
-sub add_fines_to_borrowers_table {
-
-    print "preparing to update borrowers\n" if $verbose;
-    my $sth_mysql = $dbh_mysql->prepare(
-        "SELECT DISTINCT borrowernumber, SUM( amountoutstanding ) AS total_fines
-                                    FROM accountlines
-                                    GROUP BY borrowernumber"
-    );
-    $sth_mysql->execute();
-    my $count;
-    while ( my $result = $sth_mysql->fetchrow_hashref() ) {
-        $count++;
-        if ( $verbose ) {
-            print '.' unless ( $count % 10 );
-            print "$count\n" unless ( $count % 1000 );
-        }
-
-        my $borrowernumber = $result->{'borrowernumber'};
-        my $total_fines    = $result->{'total_fines'};
-
-        # warn "Fines for Borrower # $borrowernumber are \$ $total_fines \n" if $verbose;
-        my $sql = "UPDATE borrowers SET total_fines = ? WHERE borrowernumber = ?";
-
-        my $sth_sqlite = $dbh_sqlite->prepare($sql);
-        $sth_sqlite->execute( $total_fines, $borrowernumber );
-        $sth_sqlite->finish();
-    }
-    print "updated $count borrowers\n" if ( $verbose && $count );
 }
 
 =head2 create_issue_table
