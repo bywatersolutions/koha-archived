@@ -515,7 +515,8 @@ sub GetServices {
 
     # Issuing management
     my $barcode = $item->{'barcode'} || '';
-    $barcode = barcodedecode($barcode) if ( $barcode && C4::Context->preference('itemBarcodeInputFilter') );
+    $barcode = barcodedecode($barcode) if ( $barcode && C4::Context->preference('itemBarcodeInputFilter')
+                                            || C4::Context->preference('itembarcodelength') );
     if ($barcode) {
         my ( $issuingimpossible, $needsconfirmation ) = CanBookBeIssued( $borrower, $barcode );
 
