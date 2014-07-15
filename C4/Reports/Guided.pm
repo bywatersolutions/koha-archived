@@ -92,18 +92,27 @@ my %table_areas = (
     CAT  => [ 'items', 'biblioitems', 'biblio' ],
     PAT  => ['borrowers'],
     ACQ  => [ 'aqorders', 'biblio', 'items' ],
-    ACC  => [ 'borrowers', 'accountlines' ],
+    ACC  => [ 'borrowers', 'account_credits', 'account_debits' ],
 );
 my %keys = (
-    CIRC => [ 'statistics.borrowernumber=borrowers.borrowernumber',
-              'items.itemnumber = statistics.itemnumber',
-              'biblioitems.biblioitemnumber = items.biblioitemnumber' ],
-    CAT  => [ 'items.biblioitemnumber=biblioitems.biblioitemnumber',
-              'biblioitems.biblionumber=biblio.biblionumber' ],
-    PAT  => [],
-    ACQ  => [ 'aqorders.biblionumber=biblio.biblionumber',
-              'biblio.biblionumber=items.biblionumber' ],
-    ACC  => ['borrowers.borrowernumber=accountlines.borrowernumber'],
+    CIRC => [
+        'statistics.borrowernumber=borrowers.borrowernumber',
+        'items.itemnumber = statistics.itemnumber',
+        'biblioitems.biblioitemnumber = items.biblioitemnumber'
+    ],
+    CAT => [
+        'items.biblioitemnumber=biblioitems.biblioitemnumber',
+        'biblioitems.biblionumber=biblio.biblionumber'
+    ],
+    PAT => [],
+    ACQ => [
+        'aqorders.biblionumber=biblio.biblionumber',
+        'biblio.biblionumber=items.biblionumber'
+    ],
+    ACC => [
+        'borrowers.borrowernumber=account_credits.borrowernumber',
+        'borrowers.borrowernumber=account_debits.borrowernumber'
+    ],
 );
 
 # have to do someting here to know if its dropdown, free text, date etc

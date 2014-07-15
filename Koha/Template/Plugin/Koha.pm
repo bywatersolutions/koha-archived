@@ -44,4 +44,9 @@ sub Preference {
     return C4::Context->preference( $pref );
 }
 
+sub Get {
+    my ( $self, $category, $selected, $opac ) = @_;
+    return GetAuthorisedValues( $category, $selected, $opac );
+}
+
 1;
