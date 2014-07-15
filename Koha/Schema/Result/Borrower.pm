@@ -395,6 +395,12 @@ __PACKAGE__->table("borrowers");
   default_value: 1
   is_nullable: 0
 
+=head2 account_balance
+
+  data_type: 'decimal'
+  is_nullable: 0
+  size: [28,6]
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -560,6 +566,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 50 },
   "privacy",
   { data_type => "integer", default_value => 1, is_nullable => 0 },
+  "account_balance",
+  { data_type => "decimal", is_nullable => 0, size => [28, 6] },
 );
 
 =head1 PRIMARY KEY
@@ -602,32 +610,32 @@ __PACKAGE__->add_unique_constraint("userid", ["userid"]);
 
 =head1 RELATIONS
 
-=head2 accountlines
+=head2 account_credits
 
 Type: has_many
 
-Related object: L<Koha::Schema::Result::Accountline>
+Related object: L<Koha::Schema::Result::AccountCredit>
 
 =cut
 
 __PACKAGE__->has_many(
-  "accountlines",
-  "Koha::Schema::Result::Accountline",
+  "account_credits",
+  "Koha::Schema::Result::AccountCredit",
   { "foreign.borrowernumber" => "self.borrowernumber" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 accountoffsets
+=head2 account_debits
 
 Type: has_many
 
-Related object: L<Koha::Schema::Result::Accountoffset>
+Related object: L<Koha::Schema::Result::AccountDebit>
 
 =cut
 
 __PACKAGE__->has_many(
-  "accountoffsets",
-  "Koha::Schema::Result::Accountoffset",
+  "account_debits",
+  "Koha::Schema::Result::AccountDebit",
   { "foreign.borrowernumber" => "self.borrowernumber" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -1156,6 +1164,10 @@ __PACKAGE__->many_to_many("ordernumbers", "aqorder_users", "ordernumber");
 # Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-10-21 19:50:05
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QafovaRBnm36nyoyQTGIgQ
 
+__PACKAGE__->belongs_to(
+    "branch",
+    "Koha::Schema::Result::Branch",
+    { branchcode => "branchcode" },
+);
 
-# You can replace this text with custom content, and it will be preserved on regeneration
 1;
