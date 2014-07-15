@@ -23,6 +23,12 @@ __PACKAGE__->table("issues");
 
 =head1 ACCESSORS
 
+=head2 issue_id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+
 =head2 borrowernumber
 
   data_type: 'integer'
@@ -104,6 +110,8 @@ __PACKAGE__->table("issues");
 =cut
 
 __PACKAGE__->add_columns(
+  "issue_id",
+  { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
   "borrowernumber",
   { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "itemnumber",
@@ -153,6 +161,18 @@ __PACKAGE__->add_columns(
   { data_type => "integer", default_value => 0, is_nullable => 0 },
 );
 
+=head1 PRIMARY KEY
+
+=over 4
+
+=item * L</issue_id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("issue_id");
+
 =head1 RELATIONS
 
 =head2 borrowernumber
@@ -200,10 +220,15 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7Y+5IerDnajn5GLwAY5thg
 
 __PACKAGE__->belongs_to(
-    "borrower",
-    "Koha::Schema::Result::Borrower",
-    { borrowernumber => "borrowernumber" },
-    { join_type => "LEFT", on_delete => "CASCADE", on_update => "CASCADE" },
+  "borrower",
+  "Koha::Schema::Result::Borrower",
+  { borrowernumber => "borrowernumber" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "CASCADE",
+  },
 );
 
 __PACKAGE__->belongs_to(
