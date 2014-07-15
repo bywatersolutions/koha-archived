@@ -33,6 +33,7 @@ sub do_renew_for  {
     my $self = shift;
     my $borrower = shift;
     my ($renewokay,$renewerror) = CanBookBeRenewed($borrower->{borrowernumber},$self->{item}->{itemnumber});
+
     if ($renewokay) { # ok so far check charges
         my ($fee, undef) = GetIssuingCharges($self->{item}->{itemnumber}, $self->{patron}->{borrowernumber});
         if ($fee > 0) {
@@ -42,8 +43,15 @@ sub do_renew_for  {
                 $renewokay = 0;
             }
         }
-
     }
+
+    if ($renewokay) { # ok so far check if patron owes to much money
+        unless ( $borrower->{account_balance} < C4::Context->preference('OPACFineNoRenewals') ) {
+            $renewokay = 0;
+            $renewerror = 'too_many_fines'
+        }
+    }
+
     if ($renewokay){
         my $issue = AddIssue( $borrower, $self->{item}->id, undef, 0 );
         $self->{due} = $self->duedatefromissue($issue, $self->{item}->{itemnumber});

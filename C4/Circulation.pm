@@ -29,7 +29,8 @@ use C4::Reserves;
 use C4::Biblio;
 use C4::Items;
 use C4::Members;
-use C4::Accounts;
+use Koha::Accounts;
+use Koha::Accounts::CreditTypes;
 use C4::ItemCirculationAlertPreference;
 use C4::Message;
 use C4::Debug;
@@ -40,7 +41,7 @@ use C4::Koha qw(
     GetAuthValCode
     GetKohaAuthorisedValueLib
 );
-use C4::Overdues qw(CalcFine UpdateFine get_chargeable_units);
+use C4::Overdues qw(CalcFine UpdateFine);
 use C4::RotatingCollections qw(GetCollectionItemBranches);
 use Algorithm::CheckDigits;
 
@@ -1346,7 +1347,7 @@ sub AddIssue {
         ## If item was lost, it has now been found, reverse any list item charges if necessary.
         if ( $item->{'itemlost'} ) {
             if ( C4::Context->preference('RefundLostItemFeeOnReturn' ) ) {
-                _FixAccountForLostAndReturned( $item->{'itemnumber'}, undef, $item->{'barcode'} );
+                _FixAccountForLostAndReturned( $item->{'itemnumber'} );
             }
         }
 
@@ -1910,7 +1911,17 @@ sub AddReturn {
         }
 
         if ($borrowernumber) {
-            if ( ( C4::Context->preference('CalculateFinesOnReturn') && $issue->{'overdue'} ) || $return_date ) {
+            if (
+                ( !$item->{itemlost} ) # skip lost items
+                && (
+                    (
+                        C4::Context->preference('CalculateFinesOnReturn')
+                        && $issue->{'overdue'}
+                    )
+                    || $return_date # force fine recalculation in case fine needs reduced
+                )
+              )
+            {
                 # we only need to calculate and change the fines if we want to do that on return
                 # Should be on for hourly loans
                 my $control = C4::Context->preference('CircControl');
@@ -1928,21 +1939,32 @@ sub AddReturn {
 
                 $type ||= q{};
 
-                if ( C4::Context->preference('finesMode') eq 'production' ) {
-                    if ( $amount > 0 ) {
-                        C4::Overdues::UpdateFine( $issue->{itemnumber},
-                            $issue->{borrowernumber},
-                            $amount, $type, output_pref($datedue) );
-                    }
-                    elsif ($return_date) {
+                if ( $amount > 0
+                    && C4::Context->preference('finesMode') eq 'production' )
+                {
+                    C4::Overdues::UpdateFine(
+                        {
+                            itemnumber     => $issue->{itemnumber},
+                            borrowernumber => $issue->{borrowernumber},
+                            amount         => $amount,
+                            due            => output_pref($datedue),
+                            issue_id       => $issue->{issue_id}
+                        }
+                    );
+                }
+                elsif ($return_date) {
 
-                       # Backdated returns may have fines that shouldn't exist,
-                       # so in this case, we need to drop those fines to 0
-
-                        C4::Overdues::UpdateFine( $issue->{itemnumber},
-                            $issue->{borrowernumber},
-                            0, $type, output_pref($datedue) );
-                    }
+                    # Backdated returns may have fines that shouldn't exist,
+                    # so in this case, we need to drop those fines to 0
+                    C4::Overdues::UpdateFine(
+                        {
+                            itemnumber     => $issue->{itemnumber},
+                            borrowernumber => $issue->{borrowernumber},
+                            amount         => 0,
+                            due            => output_pref($datedue),
+                            issue_id       => $issue->{issue_id}
+                        }
+                    );
                 }
             }
 
@@ -2003,15 +2025,20 @@ sub AddReturn {
         $messages->{'WasLost'} = 1;
 
         if ( C4::Context->preference('RefundLostItemFeeOnReturn' ) ) {
-            _FixAccountForLostAndReturned($item->{'itemnumber'}, $borrowernumber, $barcode);    # can tolerate undef $borrowernumber
+            _FixAccountForLostAndReturned( $item->{'itemnumber'} );
             $messages->{'LostItemFeeRefunded'} = 1;
         }
     }
 
     # fix up the overdues in accounts...
     if ($borrowernumber) {
-        my $fix = _FixOverduesOnReturn($borrowernumber, $item->{itemnumber}, $exemptfine, $dropbox);
-        defined($fix) or warn "_FixOverduesOnReturn($borrowernumber, $item->{itemnumber}...) failed!";  # zero is OK, check defined
+        _FinalizeFine(
+            {
+                exempt_fine => $exemptfine,
+                dropbox     => $dropbox,
+                issue       => Koha::Database->new()->schema->resultset('OldIssue')->find( $issue->{issue_id} ),
+            }
+        );
         
         if ( $issue->{overdue} && $issue->{date_due} ) {
         # fix fine days
@@ -2122,10 +2149,6 @@ of the return. It is ignored when a dropbox_branch is passed in.
 
 C<$privacy> contains the privacy parameter. If the patron has set privacy to 2,
 the old_issue is immediately anonymised
-
-Ideally, this function would be internal to C<C4::Circulation>,
-not exported, but it is currently needed by one 
-routine in C<C4::Accounts>.
 
 =cut
 
@@ -2254,155 +2277,129 @@ sub _debar_user_on_return {
     return;
 }
 
-=head2 _FixOverduesOnReturn
+=head2 _FinalizeFine
 
-   &_FixOverduesOnReturn($brn,$itm, $exemptfine, $dropboxmode);
-
-C<$brn> borrowernumber
-
-C<$itm> itemnumber
+   _FinalizeFine({
+        exempt_fine => $exempt_fine,
+        dropbox     => $dropbox,
+        issue       => $issue,
+   });
 
 C<$exemptfine> BOOL -- remove overdue charge associated with this issue. 
 C<$dropboxmode> BOOL -- remove lastincrement on overdue charge associated with this issue.
+C<$issue> -- DBIx::Class::Row for the issue
 
-Internal function, called only by AddReturn
+This subrouting closes out the accuruing of a fine, and reduces if it exemptfine or
+dropbox flags are passed in.
 
 =cut
 
-sub _FixOverduesOnReturn {
-    my ($borrowernumber, $item);
-    unless ($borrowernumber = shift) {
-        warn "_FixOverduesOnReturn() not supplied valid borrowernumber";
-        return;
-    }
-    unless ($item = shift) {
-        warn "_FixOverduesOnReturn() not supplied valid itemnumber";
-        return;
-    }
-    my ($exemptfine, $dropbox) = @_;
+sub _FinalizeFine {
+    my ( $params ) = @_;
+
+    my $exemptfine = $params->{exempt_fine};
+    my $dropbox    = $params->{dropbox};
+    my $issue      = $params->{issue};
+
     my $dbh = C4::Context->dbh;
 
-    # check for overdue fine
-    my $sth = $dbh->prepare(
-"SELECT * FROM accountlines WHERE (borrowernumber = ?) AND (itemnumber = ?) AND (accounttype='FU' OR accounttype='O')"
+    my $schema = Koha::Database->new()->schema;
+    my $fine = $schema->resultset('AccountDebit')->single(
+        {
+            issue_id => $issue->issue_id(),
+            type     => Koha::Accounts::DebitTypes::Fine(),
+            accruing => 1,
+        }
     );
-    $sth->execute( $borrowernumber, $item );
 
-    # alter fine to show that the book has been returned
-    my $data = $sth->fetchrow_hashref;
-    return 0 unless $data;    # no warning, there's just nothing to fix
+    return unless ( $fine );
 
-    my $uquery;
-    my @bind = ($data->{'accountlines_id'});
+    $fine->accruing(0);
+
     if ($exemptfine) {
-        $uquery = "update accountlines set accounttype='FFOR', amountoutstanding=0";
+        AddCredit(
+            {
+                borrower => $fine->borrowernumber(),
+                amount   => $fine->amount_original(),
+                debit_id => $fine->debit_id(),
+                type     => Koha::Accounts::CreditTypes::Forgiven(),
+            }
+        );
         if (C4::Context->preference("FinesLog")) {
-            &logaction("FINES", 'MODIFY',$borrowernumber,"Overdue forgiven: item $item");
+            &logaction(
+                "FINES", 'MODIFY',
+                $issue->{borrowernumber},
+                "Overdue forgiven: item " . $issue->{itemnumber}
+            );
         }
-    } elsif ($dropbox && $data->{lastincrement}) {
-        my $outstanding = $data->{amountoutstanding} - $data->{lastincrement} ;
-        my $amt = $data->{amount} - $data->{lastincrement} ;
-        if (C4::Context->preference("FinesLog")) {
-            &logaction("FINES", 'MODIFY',$borrowernumber,"Dropbox adjustment $amt, item $item");
+    } elsif ($dropbox && $fine->amount_last_increment() != $fine->amount_original() ) {
+        if ( C4::Context->preference("FinesLog") ) {
+            &logaction( "FINES", 'MODIFY', $issue->{borrowernumber},
+                    "Dropbox adjustment "
+                  . $fine->amount_last_increment()
+                  . ", item " . $issue->{itemnumber} );
         }
-         $uquery = "update accountlines set accounttype='F' ";
-         if($outstanding  >= 0 && $amt >=0) {
-            $uquery .= ", amount = ? , amountoutstanding=? ";
-            unshift @bind, ($amt, $outstanding) ;
-        }
-    } else {
-        $uquery = "update accountlines set accounttype='F' ";
+        $fine->amount_original(
+            $fine->amount_original() - $fine->amount_last_increment() );
+        $fine->amount_outstanding(
+            $fine->amount_outstanding - $fine->amount_last_increment() );
+        $schema->resultset('AccountOffset')->create(
+            {
+                debit_id => $fine->debit_id(),
+                type     => Koha::Accounts::OffsetTypes::Dropbox(),
+                amount   => $fine->amount_last_increment() * -1,
+            }
+        );
     }
-    $uquery .= " where (accountlines_id = ?)";
-    my $usth = $dbh->prepare($uquery);
-    return $usth->execute(@bind);
+
+    return $fine->update();
 }
 
 =head2 _FixAccountForLostAndReturned
 
-  &_FixAccountForLostAndReturned($itemnumber, [$borrowernumber, $barcode]);
+  &_FixAccountForLostAndReturned($itemnumber);
 
-Calculates the charge for a book lost and returned.
-
-Internal function, not exported, called only by AddReturn.
-
-FIXME: This function reflects how inscrutable fines logic is.  Fix both.
-FIXME: Give a positive return value on success.  It might be the $borrowernumber who received credit, or the amount forgiven.
+  Refunds a lost item fee in necessary
 
 =cut
 
 sub _FixAccountForLostAndReturned {
-    my $itemnumber     = shift or return;
-    my $borrowernumber = @_ ? shift : undef;
-    my $item_id        = @_ ? shift : $itemnumber;  # Send the barcode if you want that logged in the description
-    my $dbh = C4::Context->dbh;
-    # check for charge made for lost book
-    my $sth = $dbh->prepare("SELECT * FROM accountlines WHERE itemnumber = ? AND accounttype IN ('L', 'Rep', 'W') ORDER BY date DESC, accountno DESC");
-    $sth->execute($itemnumber);
-    my $data = $sth->fetchrow_hashref;
-    $data or return;    # bail if there is nothing to do
-    $data->{accounttype} eq 'W' and return;    # Written off
+    my ( $itemnumber ) = @_;
 
-    # writeoff this amount
-    my $offset;
-    my $amount = $data->{'amount'};
-    my $acctno = $data->{'accountno'};
-    my $amountleft;                                             # Starts off undef/zero.
-    if ($data->{'amountoutstanding'} == $amount) {
-        $offset     = $data->{'amount'};
-        $amountleft = 0;                                        # Hey, it's zero here, too.
-    } else {
-        $offset     = $amount - $data->{'amountoutstanding'};   # Um, isn't this the same as ZERO?  We just tested those two things are ==
-        $amountleft = $data->{'amountoutstanding'} - $amount;   # Um, isn't this the same as ZERO?  We just tested those two things are ==
-    }
-    my $usth = $dbh->prepare("UPDATE accountlines SET accounttype = 'LR',amountoutstanding='0'
-        WHERE (accountlines_id = ?)");
-    $usth->execute($data->{'accountlines_id'});      # We might be adjusting an account for some OTHER borrowernumber now.  Not the one we passed in.
-    #check if any credit is left if so writeoff other accounts
-    my $nextaccntno = getnextacctno($data->{'borrowernumber'});
-    $amountleft *= -1 if ($amountleft < 0);
-    if ($amountleft > 0) {
-        my $msth = $dbh->prepare("SELECT * FROM accountlines WHERE (borrowernumber = ?)
-                            AND (amountoutstanding >0) ORDER BY date");     # might want to order by amountoustanding ASC (pay smallest first)
-        $msth->execute($data->{'borrowernumber'});
-        # offset transactions
-        my $newamtos;
-        my $accdata;
-        while (($accdata=$msth->fetchrow_hashref) and ($amountleft>0)){
-            if ($accdata->{'amountoutstanding'} < $amountleft) {
-                $newamtos = 0;
-                $amountleft -= $accdata->{'amountoutstanding'};
-            }  else {
-                $newamtos = $accdata->{'amountoutstanding'} - $amountleft;
-                $amountleft = 0;
-            }
-            my $thisacct = $accdata->{'accountlines_id'};
-            # FIXME: move prepares outside while loop!
-            my $usth = $dbh->prepare("UPDATE accountlines SET amountoutstanding= ?
-                    WHERE (accountlines_id = ?)");
-            $usth->execute($newamtos,$thisacct);
-            $usth = $dbh->prepare("INSERT INTO accountoffsets
-                (borrowernumber, accountno, offsetaccount,  offsetamount)
-                VALUES
-                (?,?,?,?)");
-            $usth->execute($data->{'borrowernumber'},$accdata->{'accountno'},$nextaccntno,$newamtos);
+    my $schema = Koha::Database->new()->schema;
+
+    # Find the last issue for this item
+    my $issue =
+      $schema->resultset('Issue')->single( { itemnumber => $itemnumber } );
+    $issue ||=
+      $schema->resultset('OldIssue')->single( { itemnumber => $itemnumber } );
+
+    return unless $issue;
+
+    # Find a lost fee for this issue
+    my $debit = $schema->resultset('AccountDebit')->single(
+        {
+            issue_id => $issue->issue_id(),
+            type     => Koha::Accounts::DebitTypes::Lost()
         }
-    }
-    $amountleft *= -1 if ($amountleft > 0);
-    my $desc = "Item Returned " . $item_id;
-    $usth = $dbh->prepare("INSERT INTO accountlines
-        (borrowernumber,accountno,date,amount,description,accounttype,amountoutstanding)
-        VALUES (?,?,now(),?,?,'CR',?)");
-    $usth->execute($data->{'borrowernumber'},$nextaccntno,0-$amount,$desc,$amountleft);
-    if ($borrowernumber) {
-        # FIXME: same as query above.  use 1 sth for both
-        $usth = $dbh->prepare("INSERT INTO accountoffsets
-            (borrowernumber, accountno, offsetaccount,  offsetamount)
-            VALUES (?,?,?,?)");
-        $usth->execute($borrowernumber, $data->{'accountno'}, $nextaccntno, $offset);
-    }
+    );
+
+    return unless $debit;
+
+    # Check for an existing found credit for this debit, if there is one, the fee has already been refunded and we do nothing
+    my @credits = $debit->account_offsets->search_related('credit', { 'credit.type' => Koha::Accounts::CreditTypes::Found() });
+
+    return if @credits;
+
+    # Ok, so we know we have an unrefunded lost item fee, let's refund it
+    CreditLostItem(
+        {
+            borrower => $issue->borrower(),
+            debit    => $debit
+        }
+    );
+
     ModItem({ paidfor => '' }, undef, $itemnumber);
-    return;
 }
 
 =head2 _GetCircControlBranch
@@ -2887,14 +2884,11 @@ sub AddRenewal {
     my $dbh = C4::Context->dbh;
 
     # Find the issues record for this book
-    my $sth =
-      $dbh->prepare("SELECT * FROM issues WHERE itemnumber = ?");
-    $sth->execute( $itemnumber );
-    my $issuedata = $sth->fetchrow_hashref;
+    my $issue = Koha::Database->new()->schema->resultset('Issue')->single({ itemnumber => $itemnumber });
 
-    return unless ( $issuedata );
+    return unless ( $issue );
 
-    $borrowernumber ||= $issuedata->{borrowernumber};
+    $borrowernumber ||= $issue->get_column('borrowernumber');
 
     if ( defined $datedue && ref $datedue ne 'DateTime' ) {
         carp 'Invalid date passed to AddRenewal.';
@@ -2910,41 +2904,45 @@ sub AddRenewal {
         my $itemtype = (C4::Context->preference('item-level_itypes')) ? $biblio->{'itype'} : $biblio->{'itemtype'};
 
         $datedue = (C4::Context->preference('RenewalPeriodBase') eq 'date_due') ?
-                                        dt_from_string( $issuedata->{date_due} ) :
+                                        dt_from_string( $issue->get_column('date_due') ) :
                                         DateTime->now( time_zone => C4::Context->tz());
-        $datedue =  CalcDateDue($datedue, $itemtype, $issuedata->{'branchcode'}, $borrower, 'is a renewal');
+        $datedue =  CalcDateDue($datedue, $itemtype, $issue->get_column('branchcode'), $borrower, 'is a renewal');
     }
 
     # Update the issues record to have the new due date, and a new count
     # of how many times it has been renewed.
-    my $renews = $issuedata->{'renewals'} + 1;
-    $sth = $dbh->prepare("UPDATE issues SET date_due = ?, renewals = ?, lastreneweddate = ?
-                            WHERE borrowernumber=? 
-                            AND itemnumber=?"
+    $issue->update(
+        {
+            date_due        => $datedue->strftime('%Y-%m-%d %H:%M'),
+            renewals        => $issue->renewals() + 1,
+            lastreneweddate => $lastreneweddate,
+        }
     );
 
-    $sth->execute( $datedue->strftime('%Y-%m-%d %H:%M'), $renews, $lastreneweddate, $borrowernumber, $itemnumber );
 
     # Update the renewal count on the item, and tell zebra to reindex
-    $renews = $biblio->{'renewals'} + 1;
+    my $renews = $biblio->{'renewals'} + 1;
     ModItem({ renewals => $renews, onloan => $datedue->strftime('%Y-%m-%d %H:%M')}, $biblio->{'biblionumber'}, $itemnumber);
 
     # Charge a new rental fee, if applicable?
     my ( $charge, $type ) = GetIssuingCharges( $itemnumber, $borrowernumber );
     if ( $charge > 0 ) {
-        my $accountno = getnextacctno( $borrowernumber );
         my $item = GetBiblioFromItemNumber($itemnumber);
-        my $manager_id = 0;
-        $manager_id = C4::Context->userenv->{'number'} if C4::Context->userenv; 
-        $sth = $dbh->prepare(
-                "INSERT INTO accountlines
-                    (date, borrowernumber, accountno, amount, manager_id,
-                    description,accounttype, amountoutstanding, itemnumber)
-                    VALUES (now(),?,?,?,?,?,?,?,?)"
+
+        my $borrower =
+          Koha::Database->new()->schema->resultset('Borrower')
+          ->find($borrowernumber);
+
+        AddDebit(
+            {
+                borrower   => $borrower,
+                itemnumber => $itemnumber,
+                amount     => $charge,
+                type       => Koha::Accounts::DebitTypes::Rental(),
+                description =>
+                  "Renewal of Rental Item $item->{'title'} $item->{'barcode'}"
+            }
         );
-        $sth->execute( $borrowernumber, $accountno, $charge, $manager_id,
-            "Renewal of Rental Item $item->{'title'} $item->{'barcode'}",
-            'Rent', $charge, $itemnumber );
     }
 
     # Send a renewal slip according to checkout alert preferencei
@@ -2986,6 +2984,9 @@ sub AddRenewal {
                 borrowernumber => $borrowernumber,
                 ccode => $item->{'ccode'}}
                 );
+
+    _FinalizeFine( { issue => $issue } );
+
 	return $datedue;
 }
 
@@ -3172,25 +3173,21 @@ sub _get_discount_from_rule {
 
 =head2 AddIssuingCharge
 
-  &AddIssuingCharge( $itemno, $borrowernumber, $charge )
+  &AddIssuingCharge( $itemnumber, $borrowernumber, $amount )
 
 =cut
 
 sub AddIssuingCharge {
-    my ( $itemnumber, $borrowernumber, $charge ) = @_;
-    my $dbh = C4::Context->dbh;
-    my $nextaccntno = getnextacctno( $borrowernumber );
-    my $manager_id = 0;
-    $manager_id = C4::Context->userenv->{'number'} if C4::Context->userenv;
-    my $query ="
-        INSERT INTO accountlines
-            (borrowernumber, itemnumber, accountno,
-            date, amount, description, accounttype,
-            amountoutstanding, manager_id)
-        VALUES (?, ?, ?,now(), ?, 'Rental', 'Rent',?,?)
-    ";
-    my $sth = $dbh->prepare($query);
-    $sth->execute( $borrowernumber, $itemnumber, $nextaccntno, $charge, $charge, $manager_id );
+    my ( $itemnumber, $borrowernumber, $amount ) = @_;
+
+    return AddDebit(
+        {
+            borrower       => Koha::Database->new()->schema->resultset('Borrower')->find($borrowernumber),
+            itemnumber     => $itemnumber,
+            amount         => $amount,
+            type           => Koha::Accounts::DebitTypes::Rental(),
+        }
+    );
 }
 
 =head2 GetTransfers
@@ -3642,30 +3639,34 @@ sub ReturnLostItem{
 sub LostItem{
     my ($itemnumber, $mark_returned) = @_;
 
-    my $dbh = C4::Context->dbh();
-    my $sth=$dbh->prepare("SELECT issues.*,items.*,biblio.title 
-                           FROM issues 
-                           JOIN items USING (itemnumber) 
-                           JOIN biblio USING (biblionumber)
-                           WHERE issues.itemnumber=?");
-    $sth->execute($itemnumber);
-    my $issues=$sth->fetchrow_hashref();
+    my $schema = Koha::Database->new()->schema;
+
+    my $issue =
+      $schema->resultset('Issue')->single( { itemnumber => $itemnumber } );
+
+    my ( $borrower, $item );
+
+    if ( $issue ) {
+        $borrower = $issue->borrower();
+        $item     = $issue->item();
+    }
 
     # If a borrower lost the item, add a replacement cost to the their record
-    if ( my $borrowernumber = $issues->{borrowernumber} ){
-        my $borrower = C4::Members::GetMemberDetails( $borrowernumber );
-
+    if ( $borrower ){
         if (C4::Context->preference('WhenLostForgiveFine')){
-            my $fix = _FixOverduesOnReturn($borrowernumber, $itemnumber, 1, 0); # 1, 0 = exemptfine, no-dropbox
-            defined($fix) or warn "_FixOverduesOnReturn($borrowernumber, $itemnumber...) failed!";  # zero is OK, check defined
+            _FinalizeFine(
+                {
+                    exempt_fine => 1,
+                    dropbox     => 0,
+                    issue       => $issue,
+                }
+            );
         }
-        if (C4::Context->preference('WhenLostChargeReplacementFee')){
-            C4::Accounts::chargelostitem($borrowernumber, $itemnumber, $issues->{'replacementprice'}, "Lost Item $issues->{'title'} $issues->{'barcode'}");
-            #FIXME : Should probably have a way to distinguish this from an item that really was returned.
-            #warn " $issues->{'borrowernumber'}  /  $itemnumber ";
+        if ( C4::Context->preference('WhenLostChargeReplacementFee') ) {
+            DebitLostItem( { borrower => $borrower, issue => $issue } );
         }
 
-        MarkIssueReturned($borrowernumber,$itemnumber,undef,undef,$borrower->{'privacy'}) if $mark_returned;
+        MarkIssueReturned( $borrower->borrowernumber(), $item->itemnumber(), undef, undef, $borrower->privacy() ) if $mark_returned;
     }
 }
 
@@ -3783,10 +3784,15 @@ sub ProcessOfflineIssue {
 sub ProcessOfflinePayment {
     my $operation = shift;
 
-    my $borrower = C4::Members::GetMemberDetails( undef, $operation->{cardnumber} ); # Get borrower from operation cardnumber
-    my $amount = $operation->{amount};
-
-    recordpayment( $borrower->{borrowernumber}, $amount );
+    AddCredit(
+        {
+            borrower => Koha::Database->new()->schema->resultset('Borrower')
+              ->single( { cardnumber => $operation->{cardnumber} } ),
+            amount => $operation->{amount},
+            notes  => 'via offline circulation',
+            type   => Koha::Accounts::CreditTypes::Payment,
+        }
+    );
 
     return "Success."
 }

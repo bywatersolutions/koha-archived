@@ -24,7 +24,7 @@ use Data::Dumper qw(Dumper);
 
 use C4::Context;
 use C4::Log qw(logaction);
-use Koha::DateUtils qw(get_timestamp);
+use Koha::DateUtils;
 use Koha::Accounts::CreditTypes;
 use Koha::Accounts::DebitTypes;
 use Koha::Accounts::OffsetTypes;
@@ -138,7 +138,7 @@ sub AddDebit {
             notes                 => $notes,
             branchcode            => $branchcode,
             manager_id            => $manager_id,
-            created_on            => get_timestamp(),
+            created_on            => Koha::DateUtils::get_timestamp(),
         }
       );
 
@@ -323,7 +323,7 @@ sub AddCredit {
             notes            => $notes,
             branchcode       => $branchcode,
             manager_id       => $manager_id,
-            created_on       => get_timestamp(),
+            created_on       => Koha::DateUtils::get_timestamp(),
         }
       );
 
@@ -388,12 +388,12 @@ sub CreditDebit {
     if ( $amount_to_pay > 0 ) {
         $debit->amount_outstanding(
             $debit->amount_outstanding() - $amount_to_pay );
-        $debit->updated_on( get_timestamp() );
+        $debit->updated_on( Koha::DateUtils::get_timestamp() );
         $debit->update();
 
         $credit->amount_remaining(
             $credit->amount_remaining() - $amount_to_pay );
-        $credit->updated_on( get_timestamp() );
+        $credit->updated_on( Koha::DateUtils::get_timestamp() );
         $credit->update();
 
         my $offset =
@@ -402,7 +402,7 @@ sub CreditDebit {
                 amount     => $amount_to_pay * -1,
                 debit_id   => $debit->id(),
                 credit_id  => $credit->id(),
-                created_on => get_timestamp(),
+                created_on => Koha::DateUtils::get_timestamp(),
             }
           );
 
@@ -478,7 +478,7 @@ sub VoidCredit {
 
         $debit->amount_outstanding(
             $debit->amount_outstanding() - $offset->amount() );
-        $debit->updated_on( get_timestamp() );
+        $debit->updated_on( Koha::DateUtils::get_timestamp() );
         $debit->update();
 
         Koha::Database->new()->schema->resultset('AccountOffset')->create(
@@ -486,7 +486,7 @@ sub VoidCredit {
                 amount     => $offset->amount() * -1,
                 debit_id   => $debit->id(),
                 credit_id  => $credit->id(),
-                created_on => get_timestamp(),
+                created_on => Koha::DateUtils::get_timestamp(),
                 type       => Koha::Accounts::OffsetTypes::Void(),
             }
         );
@@ -495,7 +495,7 @@ sub VoidCredit {
     $credit->amount_voided( $credit->amount_paid );
     $credit->amount_paid(0);
     $credit->amount_remaining(0);
-    $credit->updated_on( get_timestamp() );
+    $credit->updated_on( Koha::DateUtils::get_timestamp() );
     $credit->update();
 
     return RecalculateAccountBalance( { borrower => $credit->borrower() } );
