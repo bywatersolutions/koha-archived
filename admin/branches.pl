@@ -68,8 +68,10 @@ my ( $template, $borrowernumber, $cookie ) = get_template_and_user(
     }
 );
 $template->param(
-     script_name => $script_name,
-     action      => $script_name,
+     script_name         => $script_name,
+     action              => $script_name,
+     itembarcodelength   => C4::Context->preference('itembarcodelength'),
+     patronbarcodelength => C4::Context->preference('patronbarcodelength'),
 );
 $template->param( ($op || 'else') => 1 );
 
@@ -408,6 +410,8 @@ sub _branch_to_template {
          opac_info      => $data->{'opac_info'},
          branchip       => $data->{'branchip'},
          branchnotes    => $data->{'branchnotes'}, 
+         itembarcodeprefix    => $data->{'itembarcodeprefix'},
+         patronbarcodeprefix  => $data->{'patronbarcodeprefix'},
     );
 }
 
