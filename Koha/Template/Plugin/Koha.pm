@@ -59,4 +59,9 @@ sub Version {
     };
 }
 
+sub Get {
+    my ( $self, $category, $selected, $opac ) = @_;
+    return GetAuthorisedValues( $category, $selected, $opac );
+}
+
 1;
