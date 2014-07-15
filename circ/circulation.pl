@@ -541,8 +541,6 @@ foreach my $flag ( sort keys %$flags ) {
 my $amountold = $borrower->{flags}->{'CHARGES'}->{'message'} || 0;
 $amountold =~ s/^.*\$//;    # remove upto the $, if any
 
-my ( $total, $accts, $numaccts) = GetMemberAccountRecords( $borrowernumber );
-
 if ( $borrowernumber && $borrower->{'category_type'} eq 'C') {
     my  ( $catcodes, $labels ) =  GetborCatFromCatType( 'A', 'WHERE category_type = ?' );
     my $cnt = scalar(@$catcodes);
@@ -613,7 +611,7 @@ $template->param(
     duedatespec       => $duedatespec,
     restoreduedatespec => $restoreduedatespec,
     message           => $message,
-    totaldue          => sprintf('%.2f', $total),
+    totaldue          => sprintf('%.2f', $borrower->{account_balance}),
     inprocess         => $inprocess,
     is_child          => ($borrowernumber && $borrower->{'category_type'} eq 'C'),
     $view             => 1,

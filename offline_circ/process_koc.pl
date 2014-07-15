@@ -27,13 +27,14 @@ use C4::Auth;
 use C4::Koha;
 use C4::Context;
 use C4::Biblio;
-use C4::Accounts;
 use C4::Circulation;
 use C4::Items;
 use C4::Members;
 use C4::Stats;
 use Koha::Upload;
 use C4::BackgroundJob;
+use Koha::Accounts;
+use Koha::Database;
 
 use Date::Calc qw( Add_Delta_Days Date_to_Days );
 
@@ -357,8 +358,13 @@ sub kocReturnItem {
 
 sub kocMakePayment {
     my ( $circ ) = @_;
-    my $borrower = GetMember( 'cardnumber'=>$circ->{ 'cardnumber' } );
-    recordpayment( $borrower->{'borrowernumber'}, $circ->{'amount'} );
+
+    my $borrower =
+      Koha::Database->new()->schema()->resultset('Borrower')
+      ->single( { cardnumber => $circ->{'cardnumber'} } );
+
+    AddCredit({ borrower => $borrower, amount => $circ->{'amount'} });
+
     push @output, {
         payment => 1,
         amount => $circ->{'amount'},
