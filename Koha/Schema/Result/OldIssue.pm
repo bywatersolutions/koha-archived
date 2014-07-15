@@ -210,6 +210,32 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07039 @ 2015-04-23 13:04:51
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9GdzytyInRcFZns/q0qb3Q
 
+__PACKAGE__->belongs_to(
+  "borrower",
+  "Koha::Schema::Result::Borrower",
+  { borrowernumber => "borrowernumber" },
+  { join_type => "LEFT" },
+);
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+__PACKAGE__->belongs_to(
+  "item",
+  "Koha::Schema::Result::Item",
+  { itemnumber => "itemnumber" },
+  { join_type => "LEFT" },
+);
+
+__PACKAGE__->belongs_to(
+  "deletedborrower",
+  "Koha::Schema::Result::Deletedborrower",
+  { borrowernumber => "borrowernumber" },
+  { join_type => "LEFT" },
+);
+
+__PACKAGE__->belongs_to(
+  "deleteditem",
+  "Koha::Schema::Result::Deleteditem",
+  { itemnumber => "itemnumber" },
+  { join_type => "LEFT" },
+);
+
 1;
