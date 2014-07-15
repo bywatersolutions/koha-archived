@@ -132,7 +132,8 @@ if (C4::Context->preference("DisplayClearScreenButton")) {
 my $barcode        = $query->param('barcode') || q{};
 $barcode =~  s/^\s*|\s*$//g; # remove leading/trailing whitespace
 
-$barcode = barcodedecode($barcode) if( $barcode && C4::Context->preference('itemBarcodeInputFilter'));
+$barcode = barcodedecode($barcode) if( $barcode && (C4::Context->preference('itemBarcodeInputFilter')
+                                      ||  C4::Context->preference('itembarcodelength')));
 my $stickyduedate  = $query->param('stickyduedate') || $session->param('stickyduedate');
 my $duedatespec    = $query->param('duedatespec')   || $session->param('stickyduedate');
 my $issueconfirmed = $query->param('issueconfirmed');
