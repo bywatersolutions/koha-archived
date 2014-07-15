@@ -493,7 +493,13 @@ if ( $op eq "duplicate" ) {
     $data{'cardnumber'} = "";
 }
 
-$data{'cardnumber'}=fixup_cardnumber($data{'cardnumber'}) if ( ( $op eq 'add' ) or ( $op eq 'duplicate' ) );
+my $onlymine=(C4::Context->preference('IndependantBranches') &&
+              C4::Context->userenv &&
+              C4::Context->userenv->{flags} % 2 !=1  &&
+              C4::Context->userenv->{branch}?1:0);
+my $branches=GetBranches($onlymine);
+$data{'cardnumber'}=fixup_cardnumber( $data{'cardnumber'}, $branches->{C4::Context->userenv->{'branch'}} ) if ( ( $op eq 'add' ) or ( $op eq 'duplicate' ) );
+
 if(!defined($data{'sex'})){
     $template->param( none => 1);
 } elsif($data{'sex'} eq 'F'){
