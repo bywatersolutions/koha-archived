@@ -1,0 +1,552 @@
+[% SET accounts_view = 1 %]
+[% USE KohaDates %]
+[% USE Currency %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Patrons &rsaquo; Account for [% INCLUDE 'patron-title.inc' %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+
+<link rel="stylesheet" type="text/css" href="[% interface %]/[% theme %]/en/css/datatables.css" />
+[% INCLUDE 'datatables.inc' %]
+[% INCLUDE 'browser-strings.inc' %]
+
+<script type="text/javascript">
+//<![CDATA[
+$(document).ready(function() {
+    void_compare = "[% 0 FILTER $Currency highlight => highlight %]";
+
+    [% IF credit_id %]
+        accountPrint( 'credit', [% credit_id %] );
+    [% ELSIF debit_id %]
+        accountPrint( 'debit', [% debit_id %] );
+    [% END %]
+
+    $('#account-credits').hide();
+
+    var anOpen = [];
+    var sImageUrl = "[% interface %]/[% theme %]/img/";
+
+    var debitsTable = $('#debits-table').dataTable( {
+        "sDom": "<'row-fluid'<'span6'T><'span6'>r>t<'row-fluid'><'top pager'ilpf>t<'bottom pager'ip>",
+        "oTableTools": {
+            "sSwfPath": "[% interface %]/lib/jquery/plugins/TableTools/media/swf/copy_csv_xls_pdf.swf",
+            "aButtons": [
+                {
+                    "sExtends": "text",
+                    "sButtonText": _("View payments"),
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        $('#account-debits').slideUp();
+                        $('#account-credits').slideDown();
+                    }
+                },
+                {
+                    "sExtends": "text",
+                    "sButtonText": [% IF show_all %] "<i class='icon-eye-close'></i> " + _("Hide fees & payments with no balance") [% ELSE %] "<i class='icon-eye-open'></i> " + _("Show all fees & payments") [% END %],
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        [% IF show_all %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=0";
+                        [% ELSE %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=1";
+                        [% END %]
+                    }
+                },
+                {
+                    "sExtends": "print",
+                    "sButtonText": "<i class='icon-print'></i> " + _("Print")
+                },
+                {
+                    "sExtends":    "collection",
+                    "sButtonText": "<i class='icon-download'></i> " + _("Download") + " <span class='caret' />",
+                    "aButtons": [
+                        {
+                            "sExtends": "csv",
+                            "sButtonText": "<i class='icon-file'></i> " + _("CSV")
+                        }
+                    ]
+                }
+            ]
+        },
+        "oLanguage": {
+            "sEmptyTable": [% IF show_all %] _("Patron has no fees!") [% ELSE %] _("Patron has no outstanding fees!") [% END %]
+        },
+        "bProcessing": true,
+        "aoColumns": [
+            {
+                "mDataProp": null,
+                "sClass": "control center",
+                "sDefaultContent": '<img src="'+sImageUrl+'details_open.png'+'">'
+            },
+            { "mDataProp": "debit_id" },
+            { "mDataProp": "description" },
+            {
+                "mDataProp": "type",
+                "render": function ( data, type, full, meta ) {
+                    return STRINGS['DebitTypes'][data] || val;
+                },
+            },
+            { "mDataProp": "amount_original" },
+            { "mDataProp": "amount_outstanding" },
+            { "mDataProp": "created_on" },
+            { "mDataProp": "updated_on" }
+        ],
+        "aaData": [
+            [% FOREACH d IN debits %]
+                {
+                    [% PROCESS format_data data=d highlight='debit' %]
+
+                    // Data for related item if there is one linked
+                    "title": "[% d.item.biblio.title || d.deleted_item.biblio.title || d.deleted_item.deleted_biblio.title | replace('"', '\"') %]",
+                    "biblionumber": "[% d.item.biblio.biblionumber || d.deleted_item.biblio.biblionumber %]",
+                    "barcode": "[% d.item.barcode || d.deleted_item.barcode %]",
+                    "itemnumber": "[% d.item.itemnumber %]", //This way itemnumber will be undef if deleted
+
+
+                    // Data for related issue if there is one linked
+                    [% IF d.issue %]
+                        [% SET table = 'issue' %]
+                    [% ELSIF d.old_issue %]
+                        [% SET table = 'old_issue' %]
+                    [% END %]
+
+                    [% IF table %]
+                        "issue": {
+                            [% PROCESS format_data data=d.$table %]
+                        },
+                    [% END %]
+
+
+                    "account_offsets": [
+                        [% FOREACH ao IN d.account_offsets %]
+                            [% IF ao.credit %]
+                                {
+                                    [% PROCESS format_data data=ao highlight='offset'%]
+
+                                    "credit": {
+                                        [% PROCESS format_data data=ao.credit highlight='credit' %]
+                                    }
+                                },
+                            [% END %]
+                        [% END %]
+                    ]
+
+                },
+            [% END %]
+        ]
+    } );
+
+    $('#debits-table td.control').live( 'click', function () {
+        var nTr = this.parentNode;
+        var i = $.inArray( nTr, anOpen );
+
+        if ( i === -1 ) {
+            $('img', this).attr( 'src', sImageUrl+"details_close.png" );
+            var nDetailsRow = debitsTable.fnOpen( nTr, fnFormatDebitDetails(debitsTable, nTr), 'details' );
+            $('div.innerDetails', nDetailsRow).slideDown();
+            anOpen.push( nTr );
+        }
+        else {
+            $('img', this).attr( 'src', sImageUrl+"details_open.png" );
+            $('div.innerDetails', $(nTr).next()[0]).slideUp( function () {
+                debitsTable.fnClose( nTr );
+                anOpen.splice( i, 1 );
+            } );
+        }
+    } );
+
+    var creditsTable = $('#credits-table').dataTable( {
+        "sDom": "<'row-fluid'<'span6'T><'span6'>r>t<'row-fluid'><'top pager'ilpf>t<'bottom pager'ip>",
+        "oTableTools": {
+            "sSwfPath": "[% interface %]/lib/jquery/plugins/TableTools/media/swf/copy_csv_xls_pdf.swf",
+            "aButtons": [
+                {
+                    "sExtends": "text",
+                    "sButtonText": _("View fees"),
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        $('#account-credits').slideUp();
+                        $('#account-debits').slideDown();
+                    }
+                },
+                {
+                    "sExtends": "text",
+                    "sButtonText": [% IF show_all %] "<i class='icon-eye-close'></i> " + _("Hide fees & payments with no balance") [% ELSE %] "<i class='icon-eye-open'></i> " + _("Show all fees & payments") [% END %],
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        [% IF show_all %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=0";
+                        [% ELSE %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=1";
+                        [% END %]
+                    }
+                },
+                {
+                    "sExtends": "print",
+                    "sButtonText": "<i class='icon-print'></i> " + _("Print")
+                },
+                {
+                    "sExtends":    "collection",
+                    "sButtonText": "<i class='icon-download'></i> " + _("Download") + " <span class='caret' />",
+                    "aButtons": [
+                        {
+                            "sExtends": "csv",
+                            "sButtonText": "<i class='icon-file'></i> " + _("CSV")
+                        }
+                    ]
+                }
+            ]
+        },
+        "oLanguage": {
+            "sEmptyTable": [% IF show_all %] _("Patron has no payments!") [% ELSE %] _("Patron has no payments with an unused balance!") [% END %]
+        },
+        "bProcessing": true,
+        "aoColumns": [
+            {
+                "mDataProp": null,
+                "sClass": "control center",
+                "sDefaultContent": '<img src="'+sImageUrl+'details_open.png'+'">'
+            },
+            { "mDataProp": "credit_id" },
+            { "mDataProp": "notes" },
+            {
+                "mDataProp": "type",
+                "render": function ( data, type, full, meta ) {
+                    return STRINGS['CreditTypes'][data] || val;
+                },
+            },
+            {
+                "mDataProp": "amount_paid",
+                "mRender": function ( data, type, full ) {
+                    if ( full.amount_voided && full.amount_voided != void_compare ) {
+                        return "<strike>" + full.amount_voided + "</strike>";
+                    } else {
+                        return full.amount_paid;
+                    }
+                }
+            },
+            { "mDataProp": "amount_remaining" },
+            { "mDataProp": "created_on" },
+            { "mDataProp": "updated_on" }
+        ],
+        "aaData": [
+            [% FOREACH c IN credits %]
+                {
+                    [% PROCESS format_data data=c highlight='credit' %]
+
+                    "account_offsets": [
+                        [% FOREACH ao IN c.account_offsets %]
+                            {
+                                [% PROCESS format_data data=ao highlight='offset' %]
+
+                                "debit": {
+                                    [% PROCESS format_data data=ao.debit highlight='debit' %]
+                                }
+                            },
+                        [% END %]
+                    ]
+
+                },
+            [% END %]
+        ]
+    } );
+
+    $('#credits-table td.control').live( 'click', function () {
+        var nTr = this.parentNode;
+        var i = $.inArray( nTr, anOpen );
+
+        if ( i === -1 ) {
+            $('img', this).attr( 'src', sImageUrl+"details_close.png" );
+            var nDetailsRow = creditsTable.fnOpen( nTr, fnFormatCreditDetails(creditsTable, nTr), 'details' );
+            $('div.innerDetails', nDetailsRow).slideDown();
+            anOpen.push( nTr );
+        }
+        else {
+            $('img', this).attr( 'src', sImageUrl+"details_open.png" );
+            $('div.innerDetails', $(nTr).next()[0]).slideUp( function () {
+                creditsTable.fnClose( nTr );
+                anOpen.splice( i, 1 );
+            } );
+        }
+    } );
+
+} );
+
+function fnFormatDebitDetails( debitsTable, nTr ) {
+    var oData = debitsTable.fnGetData( nTr );
+
+    var sOut = "<div class='innerDetails' style='display:none;'>";
+
+    var account_offsets = oData.account_offsets;
+
+    sOut += "<a class='debit_print btn btn-small noprint' style='margin:5px;' onclick='accountPrint(\"debit\"," + oData.debit_id + ")'>" +
+                "<i class='icon-print'></i> " + _("Print receipt") +
+            "</a>";
+
+    sOut += "<ul>";
+    if ( oData.title ) {
+        sOut += "<li>" + _("Title: ");
+        if ( oData.biblionumber ) {
+            sOut += "<a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=" + oData.biblionumber + "'>";
+        }
+
+        sOut += oData.title;
+
+        if ( oData.biblionumber ) {
+            sOut += "</a>";
+        }
+
+        sOut += "</li>";
+    }
+
+    if ( oData.barcode ) {
+        sOut += "<li>" + _("Barcode: ");
+        if ( oData.itemnumber ) {
+            sOut += "<a href='/cgi-bin/koha/catalogue/moredetail.pl?itemnumber=11&biblionumber=" + oData.biblionumber + "&bi=" + oData.biblionumber + "#item" + oData.itemnumber + "" + oData.biblionumber + "'>";
+        }
+
+        sOut += oData.barcode;
+
+        if ( oData.itemnumber ) {
+            sOut += "</a>";
+        }
+
+        sOut += "</li>";
+    }
+
+    if ( oData.notes ) {
+        sOut += "<li>" + _("Notes: ") + oData.notes + "</li>";
+    }
+
+    sOut += "</ul>";
+
+    if ( account_offsets.length ) {
+        sOut +=
+            "<div class='innerDetails'>" +
+                "<table cellpadding='5' cellspacing='0' border='0' style='margin:10px;'>" +
+                    "<thead>" +
+                        "<tr><th colspan='99'>" + _("Payments applied") + "</th></tr>" +
+                        "<tr>" +
+                            "<th>" + _("ID") + "</th>" +
+                            "<th>" + _("Created on") + "</th>" +
+                            "<th>" + _("Payment amount") + "</th>" +
+                            "<th>" + _("Applied amount") + "</th>" +
+                            "<th>" + _("Type") + "</th>" +
+                            "<th>" + _("Notes") + "</th>" +
+                        "</tr>" +
+                    "</thead>" +
+                    "<tbody>";
+
+        for ( var i = 0; i < account_offsets.length; i++ ) {
+            ao = account_offsets[i];
+            credit_type = STRINGS["CreditTypes"][ao.credit.type] || ao.credit.type;
+            offset_type = STRINGS["OffsetTypes"][ao.type] || ao.type;
+            if ( offset_type ) offset_type = " (" + offset_type + ") ";
+
+            var payment_or_void;
+            if ( ao.credit.amount_voided && ao.credit.amount_voided != void_compare ) {
+                payment_or_void = "<strike>" + ao.credit.amount_voided + "</strike>";
+            } else {
+                payment_or_void = ao.credit.amount_paid;
+            }
+
+            sOut +=
+            "<tr>" +
+                "<td>" + ao.credit_id + "</td>" +
+                "<td>" + ao.created_on + "</td>" +
+                "<td>" + payment_or_void + "</td>" +
+                "<td>" + ao.amount + "</td>" +
+                "<td>" + credit_type + offset_type  + "</td>" +
+                "<td>" + ao.credit.notes + "</td>" +
+            "</tr>";
+        }
+
+        sOut +=
+            "</tbody>"+
+            "</table>";
+    }
+
+    sOut +=
+        "</div>";
+
+    return sOut;
+}
+
+function fnFormatCreditDetails( creditsTable, nTr ) {
+    var oData = creditsTable.fnGetData( nTr );
+
+    var sOut = "<div class='innerDetails' style='display:none;'>";
+
+    sOut += "<button class='credit_print btn btn-small noprint' style='margin:5px;' onclick='accountPrint(\"credit\"," + oData.credit_id + ")'>" +
+                "<i class='icon-print'></i> " + _("Print receipt") +
+            "</button>";
+
+    if ( ! oData.amount_voided_original ) {
+    sOut += "<a class='credit_void btn btn-small noprint' style='margin:5px;' onclick='accountVoid(\"credit\"," + oData.credit_id + ")'>" +
+                "<i class='icon-remove-sign'></i> " + _("Void payment") +
+            "</a>";
+    }
+
+    var account_offsets = oData.account_offsets;
+
+    if ( account_offsets.length ) {
+        sOut +=
+                "<table cellpadding='5' cellspacing='0' border='0' style='margin:10px;'>" +
+                    "<thead>" +
+                        "<tr><th colspan='99'>" + _("Fees paid") + "</th></tr>" +
+                        "<tr>" +
+                            "<th>" + _("ID") + "</th>" +
+                            "<th>" + _("Description") + "</th>" +
+                            "<th>" + _("Type") + "</th>" +
+                            "<th>" + _("Amount") + "</th>" +
+                            "<th>" + _("Amount applied") + "</th>" +
+                            "<th>" + _("Remaining") + "</th>" +
+                            "<th>" + _("Created on") + "</th>" +
+                            "<th>" + _("Updated on") + "</th>" +
+                            "<th>" + _("Notes") + "</th>" +
+                        "</tr>" +
+                    "</thead>" +
+                    "<tbody>";
+
+        for ( var i = 0; i < account_offsets.length; i++ ) {
+            ao = account_offsets[i];
+            debit_type = STRINGS["DebitTypes"][ao.debit.type] || ao.debit.type;
+            offset_type = STRINGS["OffsetTypes"][ao.type] || ao.type;
+            if ( offset_type ) offset_type = " (" + offset_type + ") ";
+
+            sOut +=
+            "<tr>" +
+                "<td>" + ao.debit.debit_id + "</td>" +
+                "<td>" + ao.debit.description + "</td>" +
+                "<td>" + debit_type + offset_type + "</td>" +
+                "<td>" + ao.debit.amount_original + "</td>" +
+                "<td>" + ao.amount + "</td>" +
+                "<td>" + ao.debit.amount_outstanding + "</td>" +
+                "<td>" + ao.debit.created_on + "</td>" +
+                "<td>" + ao.debit.updated_on + "</td>" +
+                "<td>" + ao.debit.notes + "</td>" +
+            "</tr>";
+        }
+
+        sOut +=
+            "</tbody>"+
+            "</table>";
+    }
+
+    sOut +=
+        "</div>";
+
+    return sOut;
+}
+
+function accountPrint( type, id ) {
+    window.open( "/cgi-bin/koha/members/account_print.pl?type=" + type + "&id=" + id );
+}
+
+function accountVoid( type, id ) {
+    if ( confirm(_("Are you sure you want to void this transaction?")) ) {
+        window.location.href = "/cgi-bin/koha/members/account_void.pl?borrowernumber=" + [% borrowernumber %] + "&id=" + id;
+    }
+}
+//]]>
+</script>
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'patron-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/members/members-home.pl">Patrons</a>  &rsaquo; Account for [% INCLUDE 'patron-title.inc' %]</div>
+
+<div id="doc3" class="yui-t2">
+    <div id="bd">
+           <div id="yui-main">
+                <div class="yui-b">
+                [% INCLUDE 'members-toolbar.inc' %]
+
+                <div class="statictabs">
+                    <ul>
+                        <li class="active">
+                            <a href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]">Account</a>
+                        </li>
+
+                        <li>
+                            <a href="/cgi-bin/koha/members/account_payment.pl?borrowernumber=[% borrowernumber %]" >Pay fines</a>
+                        </li>
+
+                        <li>
+                            <a href="/cgi-bin/koha/members/account_debit.pl?borrowernumber=[% borrowernumber %]" >Create manual invoice</a>
+                        </li>
+
+                        <li>
+                            <a href="/cgi-bin/koha/members/account_credit.pl?borrowernumber=[% borrowernumber %]" >Create manual credit</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tabs-container">
+
+                    <p>
+                        <h3>Account balance: [% borrower.account_balance | $Currency %]</h3>
+                    </p>
+
+                    <div>
+                        <div id="account-debits">
+                            <table cellpadding="0" cellspacing="0" border="0" class="display" id="debits-table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="99">Fees</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th>ID</th>
+                                        <th>Description</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Outstanding</th>
+                                        <th>Created on</th>
+                                        <th>Updated on</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <div id="account-credits">
+                            <table cellpadding="0" cellspacing="0" border="0" class="display" id="credits-table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="99">Payments</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th>ID</th>
+                                        <th>Notes</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Remaining</th>
+                                        <th>Created on</th>
+                                        <th>Updated on</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <div class="yui-b">
+        [% INCLUDE 'circ-menu.inc' %]
+    </div>
+</div>
+[% INCLUDE 'intranet-bottom.inc' %]
+
+[% BLOCK format_data %]
+    [% FOREACH key IN data.result_source.columns %]
+        [% IF key.match('^amount') %]
+            "[% key %]_original": "[% data.$key %]",
+            "[% key %]": "[% data.$key FILTER $Currency highlight => highlight %]",
+        [% ELSIF key.match('_on$') %]
+            "[% key %]_original": "[% data.$key %]",
+            "[% key %]": "[% data.$key | $KohaDates %]",
+        [% ELSE %]
+            "[% key %]": "[% data.$key | replace('"', '\"') %]",
+        [% END %]
+    [% END %]
+[% END %]
