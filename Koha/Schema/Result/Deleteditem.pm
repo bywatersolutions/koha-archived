@@ -390,6 +390,17 @@ __PACKAGE__->set_primary_key("itemnumber");
 # Created by DBIx::Class::Schema::Loader v0.07039 @ 2015-04-23 12:42:12
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+aDMnEj1EvLQTQPAEl1ocg
 
+__PACKAGE__->belongs_to(
+  "biblio",
+  "Koha::Schema::Result::Biblio",
+  { biblionumber => "biblionumber" }
+);
+
+__PACKAGE__->belongs_to(
+  "deleted_biblio",
+  "Koha::Schema::Result::Deletedbiblio",
+  { biblionumber => "biblionumber" }
+);
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 1;

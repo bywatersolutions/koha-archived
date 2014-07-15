@@ -212,10 +212,15 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3JH0+3CuwwhPyebyt/z+uw
 
 __PACKAGE__->belongs_to(
-    "borrower",
-    "Koha::Schema::Result::Borrower",
-    { borrowernumber => "borrowernumber" },
-    { join_type => "LEFT", on_delete => "CASCADE", on_update => "CASCADE" },
+  "borrower",
+  "Koha::Schema::Result::Borrower",
+  { borrowernumber => "borrowernumber" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "CASCADE",
+  },
 );
 
 __PACKAGE__->belongs_to(

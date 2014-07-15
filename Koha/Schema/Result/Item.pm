@@ -410,21 +410,6 @@ __PACKAGE__->add_unique_constraint("itembarcodeidx", ["barcode"]);
 
 =head1 RELATIONS
 
-=head2 accountlines
-
-Type: has_many
-
-Related object: L<Koha::Schema::Result::Accountline>
-
-=cut
-
-__PACKAGE__->has_many(
-  "accountlines",
-  "Koha::Schema::Result::Accountline",
-  { "foreign.itemnumber" => "self.itemnumber" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 biblioitemnumber
 
 Type: belongs_to

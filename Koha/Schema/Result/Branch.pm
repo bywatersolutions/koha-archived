@@ -187,6 +187,36 @@ __PACKAGE__->set_primary_key("branchcode");
 
 =head1 RELATIONS
 
+=head2 account_credits
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::AccountCredit>
+
+=cut
+
+__PACKAGE__->has_many(
+  "account_credits",
+  "Koha::Schema::Result::AccountCredit",
+  { "foreign.branchcode" => "self.branchcode" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 account_debits
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::AccountDebit>
+
+=cut
+
+__PACKAGE__->has_many(
+  "account_debits",
+  "Koha::Schema::Result::AccountDebit",
+  { "foreign.branchcode" => "self.branchcode" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 aqbaskets
 
 Type: has_many
@@ -517,5 +547,5 @@ __PACKAGE__->many_to_many("categorycodes", "branchrelations", "categorycode");
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CGNPB/MkGLOihDThj43/4A
 
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
