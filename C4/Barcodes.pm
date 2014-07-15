@@ -28,6 +28,7 @@ use C4::Barcodes::hbyymmincr;
 use C4::Barcodes::annual;
 use C4::Barcodes::incremental;
 use C4::Barcodes::EAN13;
+use C4::Barcodes::prefix;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 use vars qw($debug $cgi_debug);	# from C4::Debug, of course
@@ -173,6 +174,7 @@ sub default_self {
 }
 
 our $types = {
+        prefix_incr => sub {C4::Barcodes::prefix->new_object(@_);     },
 	annual      => sub {C4::Barcodes::annual->new_object(@_);     },
 	incremental => sub {C4::Barcodes::incremental->new_object(@_);},
 	hbyymmincr  => sub {C4::Barcodes::hbyymmincr->new_object(@_); },

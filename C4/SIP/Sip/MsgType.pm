@@ -18,6 +18,7 @@ use C4::SIP::Sip::Checksum qw(verify_cksum);
 use Data::Dumper;
 use CGI qw ( -utf8 );
 use C4::Auth qw(&check_api_auth);
+use C4::Members; # qw(_prefix_cardnum)
 
 use UNIVERSAL::can;
 
@@ -509,7 +510,7 @@ sub handle_checkout {
 	@{$self->{fixed_fields}};
     $fields = $self->{fields};
 
-    $patron_id = $fields->{(FID_PATRON_ID)};
+    $patron_id = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $item_id   = $fields->{(FID_ITEM_ID)};
     my $fee_ack = $fields->{(FID_FEE_ACK)};
 
@@ -717,7 +718,7 @@ sub handle_block_patron {
     $fields = $self->{fields};
     $inst_id          = $fields->{(FID_INST_ID)};
     $blocked_card_msg = $fields->{(FID_BLOCKED_CARD_MSG)};
-    $patron_id        = $fields->{(FID_PATRON_ID)};
+    $patron_id        = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $terminal_pwd     = $fields->{(FID_TERMINAL_PWD)};
 
     # Terminal passwords are different from account login
@@ -934,7 +935,7 @@ sub handle_patron_info {
     my ($resp, $patron);
 
     $inst_id      = $fields->{(FID_INST_ID)};
-    $patron_id    = $fields->{(FID_PATRON_ID)};
+    $patron_id    = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $terminal_pwd = $fields->{(FID_TERMINAL_PWD)};
     $patron_pwd   = $fields->{(FID_PATRON_PWD)};
     $start        = $fields->{(FID_START_ITEM)};
@@ -1071,7 +1072,7 @@ sub handle_fee_paid {
 
     $fee_amt = $fields->{(FID_FEE_AMT)};
     $inst_id = $fields->{(FID_INST_ID)};
-    $patron_id = $fields->{(FID_PATRON_ID)};
+    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd = $fields->{(FID_PATRON_PWD)};
     $fee_id = $fields->{(FID_FEE_ID)};
     $trans_id = $fields->{(FID_TRANSACTION_ID)};
@@ -1218,7 +1219,7 @@ sub handle_patron_enable {
     my $resp = PATRON_ENABLE_RESP;
 
     ($trans_date) = @{$self->{fixed_fields}};
-    $patron_id = $fields->{(FID_PATRON_ID)};
+    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd = $fields->{(FID_PATRON_PWD)};
 
     syslog("LOG_DEBUG", "handle_patron_enable: patron_id: '%s', patron_pwd: '%s'",
@@ -1274,7 +1275,7 @@ sub handle_hold {
 
     $ils->check_inst_id($fields->{(FID_INST_ID)}, "handle_hold");
 
-    $patron_id   = $fields->{(FID_PATRON_ID)  };
+    $patron_id   = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $expiry_date = $fields->{(FID_EXPIRATION) } || '';
     $pickup_locn = $fields->{(FID_PICKUP_LOCN)} || '';
     $hold_type   = $fields->{(FID_HOLD_TYPE)  } || '2'; # Any copy of title
@@ -1347,7 +1348,7 @@ sub handle_renew {
 	       $server->{account}->{id});
     }
 
-    $patron_id  = $fields->{(FID_PATRON_ID)};
+    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd = $fields->{(FID_PATRON_PWD)};
     $item_id    = $fields->{(FID_ITEM_ID)};
     $title_id   = $fields->{(FID_TITLE_ID)};
@@ -1430,7 +1431,7 @@ sub handle_renew_all {
 
     ($trans_date) = @{$self->{fixed_fields}};
 
-    $patron_id    = $fields->{(FID_PATRON_ID)};
+    $patron_id    = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd   = $fields->{(FID_PATRON_PWD)};
     $terminal_pwd = $fields->{(FID_TERMINAL_PWD)};
     $fee_ack      = $fields->{(FID_FEE_ACK)};

@@ -50,6 +50,16 @@ Administration:
                   yes: Allow
                   no: "Don't allow"
             - staff and patrons to create and view saved lists of books.
+        -
+            - Use branch prefixes to ensure that item barcodes are
+            - pref: itembarcodelength
+              class: integer
+            - digits long
+        -
+            - Use branch prefixes to ensure that patron barcodes are
+            - pref: patronbarcodelength
+              class: integer
+            - digits long
     Login options:
         -
             - Automatically log out users after

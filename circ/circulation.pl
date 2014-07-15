@@ -168,7 +168,7 @@ if (C4::Context->preference("DisplayClearScreenButton")) {
 for my $barcode ( @$barcodes ) {
     $barcode =~ s/^\s*|\s*$//g; # remove leading/trailing whitespace
     $barcode = barcodedecode($barcode)
-        if( $barcode && C4::Context->preference('itemBarcodeInputFilter'));
+        if ( $barcode && ( C4::Context->preference('itemBarcodeInputFilter') || C4::Context->preference('itembarcodelength') ) );
 }
 
 my $stickyduedate  = $query->param('stickyduedate') || $session->param('stickyduedate');
