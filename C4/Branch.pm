@@ -202,8 +202,9 @@ sub ModBranch {
             (branchcode,branchname,branchaddress1,
             branchaddress2,branchaddress3,branchzip,branchcity,branchstate,
             branchcountry,branchphone,branchfax,branchemail,
-            branchurl,branchip,branchprinter,branchnotes,opac_info)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            branchurl,branchip,branchprinter,branchnotes,opac_info,
+            itembarcodeprefix,patronbarcodeprefix)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ";
         my $sth    = $dbh->prepare($query);
         $sth->execute(
@@ -215,7 +216,8 @@ sub ModBranch {
             $data->{'branchphone'},      $data->{'branchfax'},
             $data->{'branchemail'},      $data->{'branchurl'},
             $data->{'branchip'},         $data->{'branchprinter'},
-            $data->{'branchnotes'},      $data->{opac_info},
+            $data->{'branchnotes'},      $data->{'opac_info'},
+            $data->{'itembarcodeprefix'},$data->{'patronbarcodeprefix'},
         );
         return 1 if $dbh->err;
     } else {
@@ -225,7 +227,8 @@ sub ModBranch {
                 branchaddress2=?,branchaddress3=?,branchzip=?,
                 branchcity=?,branchstate=?,branchcountry=?,branchphone=?,
                 branchfax=?,branchemail=?,branchurl=?,branchip=?,
-                branchprinter=?,branchnotes=?,opac_info=?
+                branchprinter=?,branchnotes=?,opac_info=?,
+                itembarcodeprefix=?,patronbarcodeprefix=?
             WHERE branchcode=?
         ";
         my $sth    = $dbh->prepare($query);
@@ -238,7 +241,8 @@ sub ModBranch {
             $data->{'branchphone'},      $data->{'branchfax'},
             $data->{'branchemail'},      $data->{'branchurl'},
             $data->{'branchip'},         $data->{'branchprinter'},
-            $data->{'branchnotes'},      $data->{opac_info},
+            $data->{'branchnotes'},      $data->{'opac_info'},
+            $data->{'itembarcodeprefix'},$data->{'patronbarcodeprefix'},
             $data->{'branchcode'},
         );
     }
