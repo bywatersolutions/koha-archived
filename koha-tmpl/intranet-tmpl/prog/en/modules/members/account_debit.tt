@@ -1,0 +1,114 @@
+[% SET accounts_view = 1 %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Borrowers &rsaquo; Create manual invoice</title>
+[% INCLUDE 'doc-head-close.inc' %]
+<script type="text/javascript">
+//<![CDATA[
+$(document).ready(function(){
+    $('#maninvoice').preventDoubleFormSubmit();
+    $("fieldset.rows input").addClass("noEnterSubmit");
+
+    var type_fees = new Array();
+    type_fees['L'] = '';
+    type_fees['F'] = '';
+    type_fees['A'] = '';
+    type_fees['N'] = '';
+    type_fees['M'] = '';
+    [% FOREACH invoice_types_loo IN invoice_types_loop %]
+        type_fees['[% invoice_types_loo.authorised_value %]'] = "[% invoice_types_loo.lib %]";
+    [% END %]
+
+    $("#amount").bind('keyup blur', function() {
+        // Allow only numbers in amount received
+        $(this).val($(this).val().replace(/[^\d.]/g, ''));
+    });
+});
+//]]>
+</script>
+</head>
+
+<body>
+    [% INCLUDE 'header.inc' %]
+    [% INCLUDE 'patron-search.inc' %]
+
+    <div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/members/members-home.pl">Patrons</a>  &rsaquo; Manual invoice</div>
+
+    <div id="doc3" class="yui-t2">
+        <div id="bd">
+            <div id="yui-main">
+                <div class="yui-b">
+                    [% INCLUDE 'members-toolbar.inc' %]
+
+                    <div class="statictabs">
+                    <ul>
+                        <li><a href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]">Account</a></li>
+                        <li><a href="/cgi-bin/koha/members/account_payment.pl?borrowernumber=[% borrowernumber %]" >Pay fines</a></li>
+                        <li class="active"><a href="/cgi-bin/koha/members/account_debit.pl?borrowernumber=[% borrowernumber %]" >Create manual invoice</a></li>
+                        <li><a href="/cgi-bin/koha/members/account_credit.pl?borrowernumber=[% borrowernumber %]" >Create manual credit</a></li>
+                    </ul>
+                    <div class="tabs-container">
+
+                    <form action="/cgi-bin/koha/members/account_debit_do.pl" method="post" id="account_debit">
+                        <input type="hidden" name="borrowernumber" id="borrowernumber" value="[% borrowernumber %]" />
+
+                        <fieldset class="rows">
+                            <legend>Manual Invoice</legend>
+
+                            <ol>
+                                <li>
+                                    <label for="type">Type: </label>
+                                    <select name="type" id="type">
+                                        <option value="LOST">Lost item</option>
+                                        <option value="FINE">Fine</option>
+                                        <option value="ACCOUNT_MANAGEMENT_FEE">Account management fee</option>
+                                        <option value="NEW_CARD">New card</option>
+                                        <option value="SUNDRY">Sundry</option>
+
+                                        [% FOREACH invoice_types_loo IN invoice_types_loop %]
+                                            <option value="[% invoice_types_loo.authorised_value %]">[% invoice_types_loo.lib %]</option>
+                                        [% END %]
+                                    </select>
+                                </li>
+
+                                <!-- TODO: Write ajax barcode validator that appends the itemnumber for this form in a hidden input -->
+                                 <li>
+                                    <label for="barcode">Barcode: </label>
+                                    <input type="text" name="barcode" id="barcode" />
+                                </li>
+
+                                <li>
+                                    <label for="description">Description: </label>
+                                    <input type="text" name="description" id="description" size="50" />
+                                </li>
+
+                                <li>
+                                    <label for="notes">Notes: </label>
+                                    <input type="text" name="notes" size="50" id="notes" />
+                                </li>
+
+                                <li>
+                                    <label for="amount">Amount: </label>
+                                    <input type="text" name="amount" id="amount" /> Example: 5.00
+                                </li>
+
+                            </ol>
+                        </fieldset>
+
+                        <fieldset class="action">
+                            <input type="submit" name="add" value="Save" />
+                            <a class="cancel" href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]">Cancel</a>
+                        </fieldset>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="yui-b">
+  [% INCLUDE 'circ-menu.inc' %]
+</div>
+
+</div>
+[% INCLUDE 'intranet-bottom.inc' %]

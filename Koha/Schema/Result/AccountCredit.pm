@@ -168,4 +168,9 @@ __PACKAGE__->belongs_to(
   { borrowernumber => "borrowernumber" },
 );
 
+__PACKAGE__->belongs_to(
+    "branch",
+    "Koha::Schema::Result::Branch",
+    { branchcode => "branchcode" },
+);
 1;
