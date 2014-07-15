@@ -27,9 +27,12 @@ use List::MoreUtils qw( uniq );
 
 use C4::Circulation;
 use C4::Context;
-use C4::Accounts;
 use C4::Log; # logaction
 use C4::Debug;
+use Koha::Database;
+use Koha::DateUtils;
+use Koha::Accounts::OffsetTypes;
+use Koha::Accounts::DebitTypes;
 
 use vars qw($VERSION @ISA @EXPORT);
 
@@ -43,8 +46,6 @@ BEGIN {
         &CalcFine
         &Getoverdues
         &checkoverdues
-        &NumberNotifyId
-        &AmountNotify
         &UpdateFine
         &GetFine
         &get_chargeable_units
@@ -463,149 +464,145 @@ sub GetIssuesIteminfo {
 
 =head2 UpdateFine
 
-    &UpdateFine($itemnumber, $borrowernumber, $amount, $type, $description);
+    UpdateFine(
+        {
+            itemnumber     => $itemnumber,
+            borrowernumber => $borrowernumber,
+            amount         => $amount,
+            due            => $due,
+            issue_id       => $issue_id
+        }
+    );
 
-(Note: the following is mostly conjecture and guesswork.)
+Updates the fine owed on an overdue item.
 
-Updates the fine owed on an overdue book.
+C<$itemnumber> is the items's id.
 
-C<$itemnumber> is the book's item number.
+C<$borrowernumber> is the id of the patron who currently
+has the item on loan.
 
-C<$borrowernumber> is the borrower number of the patron who currently
-has the book on loan.
+C<$amount> is the total amount of the fine owed by the patron.
 
-C<$amount> is the current amount owed by the patron.
-
-C<$type> will be used in the description of the fine.
-
-C<$description> is a string that must be present in the description of
-the fine. I think this is expected to be a date in DD/MM/YYYY format.
-
-C<&UpdateFine> looks up the amount currently owed on the given item
-and sets it to C<$amount>, creating, if necessary, a new entry in the
-accountlines table of the Koha database.
+C<&UpdateFine> updates the amount owed for a given fine if an issue_id
+is passed to it. Otherwise, a new fine will be created.
 
 =cut
 
-#
-# Question: Why should the caller have to
-# specify both the item number and the borrower number? A book can't
-# be on loan to two different people, so the item number should be
-# sufficient.
-#
-# Possible Answer: You might update a fine for a damaged item, *after* it is returned.
-#
 sub UpdateFine {
-    my ( $itemnum, $borrowernumber, $amount, $type, $due ) = @_;
-	$debug and warn "UpdateFine($itemnum, $borrowernumber, $amount, " . ($type||'""') . ", $due) called";
-    my $dbh = C4::Context->dbh;
-    # FIXME - What exactly is this query supposed to do? It looks up an
-    # entry in accountlines that matches the given item and borrower
-    # numbers, where the description contains $due, and where the
-    # account type has one of several values, but what does this _mean_?
-    # Does it look up existing fines for this item?
-    # FIXME - What are these various account types? ("FU", "O", "F", "M")
-	#	"L"   is LOST item
-	#   "A"   is Account Management Fee
-	#   "N"   is New Card
-	#   "M"   is Sundry
-	#   "O"   is Overdue ??
-	#   "F"   is Fine ??
-	#   "FU"  is Fine UPDATE??
-	#	"Pay" is Payment
-	#   "REF" is Cash Refund
-    my $sth = $dbh->prepare(
-        "SELECT * FROM accountlines
-        WHERE borrowernumber=?
-        AND   accounttype IN ('FU','O','F','M')"
-    );
-    $sth->execute( $borrowernumber );
-    my $data;
-    my $total_amount_other = 0.00;
-    my $due_qr = qr/$due/;
-    # Cycle through the fines and
-    # - find line that relates to the requested $itemnum
-    # - accumulate fines for other items
-    # so we can update $itemnum fine taking in account fine caps
-    while (my $rec = $sth->fetchrow_hashref) {
-        if ($rec->{itemnumber} == $itemnum && $rec->{description} =~ /$due_qr/) {
-            if ($data) {
-                warn "Not a unique accountlines record for item $itemnum borrower $borrowernumber";
-            } else {
-                $data = $rec;
-                next;
-            }
-        }
-        $total_amount_other += $rec->{'amountoutstanding'};
-    }
+    my ($params) = @_;
 
-    if (my $maxfine = C4::Context->preference('MaxFine')) {
-        if ($total_amount_other + $amount > $maxfine) {
-            my $new_amount = $maxfine - $total_amount_other;
-            return if $new_amount <= 0.00;
-            warn "Reducing fine for item $itemnum borrower $borrowernumber from $amount to $new_amount - MaxFine reached";
+    my $itemnumber     = $params->{itemnumber};
+    my $borrowernumber = $params->{borrowernumber};
+    my $amount         = $params->{amount};
+    my $due            = $params->{due};
+    my $issue_id       = $params->{issue_id};
+
+    my $schema = Koha::Database->new()->schema;
+
+    my $borrower = $schema->resultset('Borrower')->find($borrowernumber);
+
+    if ( my $maxfine = C4::Context->preference('MaxFine') ) {
+        if ( $borrower->account_balance() + $amount > $maxfine ) {
+            my $new_amount = $maxfine - $borrower->account_balance();
+            warn "Reducing fine for item $itemnumber borrower $borrowernumber from $amount to $new_amount - MaxFine reached";
+            if ( $new_amount <= 0 ) {
+                warn "Fine reduced to a non-positive ammount. Fine not created.";
+                return;
+            }
             $amount = $new_amount;
         }
     }
 
-    if ( $data ) {
+    my $timestamp = get_timestamp();
 
-		# we're updating an existing fine.  Only modify if amount changed
-        # Note that in the current implementation, you cannot pay against an accruing fine
-        # (i.e. , of accounttype 'FU').  Doing so will break accrual.
-    	if ( $data->{'amount'} != $amount ) {
-            my $diff = $amount - $data->{'amount'};
-	    #3341: diff could be positive or negative!
-            my $out  = $data->{'amountoutstanding'} + $diff;
-            my $query = "
-                UPDATE accountlines
-				SET date=now(), amount=?, amountoutstanding=?,
-					lastincrement=?, accounttype='FU'
-	  			WHERE borrowernumber=?
-				AND   itemnumber=?
-				AND   accounttype IN ('FU','O')
-				AND   description LIKE ?
-				LIMIT 1 ";
-            my $sth2 = $dbh->prepare($query);
-			# FIXME: BOGUS query cannot ensure uniqueness w/ LIKE %x% !!!
-			# 		LIMIT 1 added to prevent multiple affected lines
-			# FIXME: accountlines table needs unique key!! Possibly a combo of borrowernumber and accountline.  
-			# 		But actually, we should just have a regular autoincrementing PK and forget accountline,
-			# 		including the bogus getnextaccountno function (doesn't prevent conflict on simultaneous ops).
-			# FIXME: Why only 2 account types here?
-			$debug and print STDERR "UpdateFine query: $query\n" .
-				"w/ args: $amount, $out, $diff, $data->{'borrowernumber'}, $data->{'itemnumber'}, \"\%$due\%\"\n";
-            $sth2->execute($amount, $out, $diff, $data->{'borrowernumber'}, $data->{'itemnumber'}, "%$due%");
-        } else {
-            #      print "no update needed $data->{'amount'}"
+    my $fine = $schema->resultset('AccountDebit')->single(
+        {
+            issue_id => $issue_id,
+            type     => Koha::Accounts::DebitTypes::Fine,
+            accruing => 1,
         }
-    } else {
-        if ( $amount ) { # Don't add new fines with an amount of 0
-            my $sth4 = $dbh->prepare(
-                "SELECT title FROM biblio LEFT JOIN items ON biblio.biblionumber=items.biblionumber WHERE items.itemnumber=?"
-            );
-            $sth4->execute($itemnum);
-            my $title = $sth4->fetchrow;
+    );
 
-            my $nextaccntno = C4::Accounts::getnextacctno($borrowernumber);
+    my $offset = 0;
+    my $credit;
+    if ($fine) {
+        if ( $fine->accruing() ) { # Don't update or recreate fines no longer accruing
+            if (
+                sprintf( "%.6f", $fine->amount_original() )
+                ne
+                sprintf( "%.6f", $amount ) )
+            {
+                my $difference = $amount - $fine->amount_original();
 
-            my $desc = ( $type ? "$type " : '' ) . "$title $due";    # FIXEDME, avoid whitespace prefix on empty $type
+                # Fine was reduced by a change in circulation rules or another reason
+                # we need to credit the account the difference and zero out the amount outstanding
+                if ( $difference < 0 ) {
+                    $fine->amount_outstanding( $fine->amount_outstanding() + $difference );
 
-            my $query = "INSERT INTO accountlines
-                         (borrowernumber,itemnumber,date,amount,description,accounttype,amountoutstanding,lastincrement,accountno)
-                         VALUES (?,?,now(),?,?,'FU',?,?,?)";
-            my $sth2 = $dbh->prepare($query);
-            $debug and print STDERR "UpdateFine query: $query\nw/ args: $borrowernumber, $itemnum, $amount, $desc, $amount, $amount, $nextaccntno\n";
-            $sth2->execute( $borrowernumber, $itemnum, $amount, $desc, $amount, $amount, $nextaccntno );
+                    $credit =
+                      Koha::Database->new()->schema->resultset('AccountCredit')
+                      ->create(
+                        {
+                            borrowernumber => $borrowernumber,
+                            type => Koha::Accounts::CreditTypes::FineReduction(),
+                            amount_remaining => abs($difference),
+                            created_on       => $timestamp,
+                        }
+                      );
+
+                } else {
+                    $fine->amount_outstanding( $amount );
+                }
+
+                $fine->amount_last_increment($difference);
+                $fine->amount_original( $fine->amount_original() + $difference );
+                $fine->updated_on($timestamp);
+                $fine->update();
+
+                $offset = 1;
+            }
         }
     }
-    # logging action
-    &logaction(
-        "FINES",
-        $type,
+    elsif ( $amount ) { # No fine to update, don't insert fines of $0.00
+        my $item = $schema->resultset('Item')->find($itemnumber);
+
+        $fine = $schema->resultset('AccountDebit')->create(
+            {
+                borrowernumber        => $borrowernumber,
+                itemnumber            => $itemnumber,
+                issue_id              => $issue_id,
+                type                  => Koha::Accounts::DebitTypes::Fine(),
+                accruing              => 1,
+                amount_original       => $amount,
+                amount_outstanding    => $amount,
+                amount_last_increment => $amount,
+                description           => $item->biblio()->title() . " / Due:$due",
+                created_on            => $timestamp,
+            }
+        );
+
+        $offset = 1;
+    } else { # No fine to update, amount is 0, just return
+        return;
+    }
+
+    $schema->resultset('AccountOffset')->create(
+        {
+            debit_id   => $fine->debit_id(),
+            credit_id  => $credit ? $credit->credit_id() : undef,
+            amount     => $fine->amount_last_increment(),
+            created_on => $timestamp,
+            type       => Koha::Accounts::OffsetTypes::Fine(),
+        }
+    ) if $offset;
+
+    $borrower->account_balance( $borrower->account_balance + $fine->amount_last_increment() );
+    $borrower->update();
+
+    logaction( "FINES", Koha::Accounts::DebitTypes::Fine(),
         $borrowernumber,
-        "due=".$due."  amount=".$amount." itemnumber=".$itemnum
-        ) if C4::Context->preference("FinesLog");
+        "due=" . $due . "  amount=" . $amount . " itemnumber=" . $itemnumber )
+      if C4::Context->preference("FinesLog");
 }
 
 =head2 BorType
@@ -667,56 +664,20 @@ sub GetFine {
     return 0;
 }
 
+
 =head2 NumberNotifyId
 
-    (@notify) = &NumberNotifyId($borrowernumber);
+    my $schema = Koha::Database->new()->schema;
 
-Returns amount for all file per borrowers
-C<@notify> array contains all file per borrowers
+    my $amount_outstanding = $schema->resultset('AccountDebit')->search(
+        {
+            itemnumber     => $itemnumber,
+            borrowernumber => $borrowernumber,
+            type           => Koha::Accounts::DebitTypes::Fine(),
+        },
+    )->get_column('amount_outstanding')->sum();
 
-C<$notify_id> contains the file number for the borrower number nad item number
-
-=cut
-
-sub NumberNotifyId{
-    my ($borrowernumber)=@_;
-    my $dbh = C4::Context->dbh;
-    my $query=qq|    SELECT distinct(notify_id)
-            FROM accountlines
-            WHERE borrowernumber=?|;
-    my @notify;
-    my $sth = $dbh->prepare($query);
-    $sth->execute($borrowernumber);
-    while ( my ($numberofnotify) = $sth->fetchrow ) {
-        push( @notify, $numberofnotify );
-    }
-    return (@notify);
-}
-
-=head2 AmountNotify
-
-    ($totalnotify) = &AmountNotify($notifyid);
-
-Returns amount for all file per borrowers
-C<$notifyid> is the file number
-
-C<$totalnotify> contains amount of a file
-
-C<$notify_id> contains the file number for the borrower number and item number
-
-=cut
-
-sub AmountNotify{
-    my ($notifyid,$borrowernumber)=@_;
-    my $dbh = C4::Context->dbh;
-    my $query=qq|    SELECT sum(amountoutstanding)
-            FROM accountlines
-            WHERE notify_id=? AND borrowernumber = ?|;
-    my $sth=$dbh->prepare($query);
-	$sth->execute($notifyid,$borrowernumber);
-	my $totalnotify=$sth->fetchrow;
-    $sth->finish;
-    return ($totalnotify);
+    return $amount_outstanding;
 }
 
 =head2 GetItems
@@ -772,27 +733,6 @@ sub GetBranchcodesWithOverdueRules {
     return @$branchcodes;
 }
 
-=head2 CheckItemNotify
-
-Sql request to check if the document has alreday been notified
-this function is not exported, only used with GetOverduesForBranch
-
-=cut
-
-sub CheckItemNotify {
-    my ($notify_id,$notify_level,$itemnumber) = @_;
-    my $dbh = C4::Context->dbh;
-    my $sth = $dbh->prepare("
-    SELECT COUNT(*)
-     FROM notifys
-    WHERE notify_id    = ?
-     AND  notify_level = ? 
-     AND  itemnumber   = ? ");
-    $sth->execute($notify_id,$notify_level,$itemnumber);
-    my $notified = $sth->fetchrow;
-    return ($notified);
-}
-
 =head2 GetOverduesForBranch
 
 Sql request for display all information for branchoverdues.pl
@@ -818,6 +758,7 @@ sub GetOverduesForBranch {
                biblio.title,
                biblio.author,
                biblio.biblionumber,
+               issues.issue_id,
                issues.date_due,
                issues.returndate,
                issues.branchcode,
@@ -828,25 +769,23 @@ sub GetOverduesForBranch {
                 items.location,
                 items.itemnumber,
             itemtypes.description,
-         accountlines.notify_id,
-         accountlines.notify_level,
-         accountlines.amountoutstanding
-    FROM  accountlines
-    LEFT JOIN issues      ON    issues.itemnumber     = accountlines.itemnumber
-                          AND   issues.borrowernumber = accountlines.borrowernumber
-    LEFT JOIN borrowers   ON borrowers.borrowernumber = accountlines.borrowernumber
+            account_debits.amount_outstanding
+    FROM  account_debits
+    LEFT JOIN issues      ON    issues.itemnumber     = account_debits.itemnumber
+                          AND   issues.borrowernumber = account_debits.borrowernumber
+    LEFT JOIN borrowers   ON borrowers.borrowernumber = account_debits.borrowernumber
     LEFT JOIN items       ON     items.itemnumber     = issues.itemnumber
     LEFT JOIN biblio      ON      biblio.biblionumber =  items.biblionumber
     LEFT JOIN biblioitems ON biblioitems.biblioitemnumber = items.biblioitemnumber
     LEFT JOIN itemtypes   ON itemtypes.itemtype       = $itype_link
     LEFT JOIN branches    ON  branches.branchcode     = issues.branchcode
-    WHERE (accountlines.amountoutstanding  != '0.000000')
-      AND (accountlines.accounttype         = 'FU'      )
+    WHERE (account_debits.amount_outstanding  != '0.000000')
+      AND (account_debits.type = 'FINE')
+      AND (account_debits.accruing = 1 )
       AND (issues.branchcode =  ?   )
       AND (issues.date_due  < NOW())
     ";
     my @getoverdues;
-    my $i = 0;
     my $sth;
     if ($location) {
         $sth = $dbh->prepare("$select AND items.location = ? ORDER BY borrowers.surname, borrowers.firstname");
@@ -856,12 +795,7 @@ sub GetOverduesForBranch {
         $sth->execute($branch);
     }
     while ( my $data = $sth->fetchrow_hashref ) {
-    #check if the document has already been notified
-        my $countnotify = CheckItemNotify($data->{'notify_id'}, $data->{'notify_level'}, $data->{'itemnumber'});
-        if ($countnotify eq '0') {
-            $getoverdues[$i] = $data;
-            $i++;
-        }
+        push( @getoverdues, $data );
     }
     return (@getoverdues);
 }

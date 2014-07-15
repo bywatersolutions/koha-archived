@@ -20,7 +20,10 @@ use strict;
 # You should have received a copy of the GNU General Public License
 # along with Koha; if not, see <http://www.gnu.org/licenses>.
 
-use C4::Accounts qw(recordpayment);
+use Koha::Accounts qw(AddCredit);
+use Koha::Accounts::CreditTypes;
+use Koha::Database;
+use C4::SIP::ILS;
 use parent qw(C4::SIP::ILS::Transaction);
 
 
@@ -44,10 +47,19 @@ sub new {
 sub pay {
     my $self           = shift;
     my $borrowernumber = shift;
-    my $amt            = shift;
+    my $amount         = shift;
     my $type           = shift;
-    warn("RECORD:$borrowernumber::$amt");
-    recordpayment( $borrowernumber, $amt,$type );
+
+    warn("RECORD:$borrowernumber::$amount");
+
+    AddCredit(
+        {
+            borrower => Koha::Database->new()->schema->resultset('Borrower')->find($borrowernumber),
+            amount => $amount,
+            notes  => "via SIP2. Type:$type",
+            type   => Koha::Accounts::CreditTypes::Payment,
+        }
+    );
 }
 
 #sub DESTROY {

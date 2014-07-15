@@ -20,13 +20,15 @@ use strict;
 use warnings;
 use 5.010;
 use DateTime;
+use DateTime::Format::DateParse;
+use DateTime::Format::MySQL;
 use C4::Context;
 
 use base 'Exporter';
 use version; our $VERSION = qv('1.0.0');
 
 our @EXPORT = (
-    qw( dt_from_string output_pref format_sqldatetime )
+    qw( dt_from_string output_pref format_sqldatetime get_timestamp )
 );
 
 =head1 DateUtils
@@ -271,6 +273,10 @@ sub format_sqldatetime {
         });
     }
     return q{};
+}
+
+sub get_timestamp {
+    return DateTime::Format::MySQL->format_datetime( dt_from_string() );
 }
 
 1;

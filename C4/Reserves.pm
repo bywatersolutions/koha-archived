@@ -28,7 +28,6 @@ use C4::Biblio;
 use C4::Members;
 use C4::Items;
 use C4::Circulation;
-use C4::Accounts;
 
 # for _koha_notify_reserve
 use C4::Members::Messaging;
@@ -179,19 +178,17 @@ sub AddReserve {
         $waitingdate = $resdate;
     }
 
-    #eval {
-    # updates take place here
     if ( $fee > 0 ) {
-        my $nextacctno = &getnextacctno( $borrowernumber );
-        my $query      = qq{
-        INSERT INTO accountlines
-            (borrowernumber,accountno,date,amount,description,accounttype,amountoutstanding)
-        VALUES
-            (?,?,now(),?,?,'Res',?)
-    };
-        my $usth = $dbh->prepare($query);
-        $usth->execute( $borrowernumber, $nextacctno, $fee,
-            "Reserve Charge - $title", $fee );
+        AddDebit(
+            {
+                borrowernumber => $borrowernumber,
+                itemnumber     => $checkitem,
+                amount         => $fee,
+                type           => Koha::Accounts::DebitTypes::Hold(),
+                description    => $title,
+                notes          => "Record ID: $biblionumber",
+            }
+        );
     }
 
     #if ($const eq 'a'){

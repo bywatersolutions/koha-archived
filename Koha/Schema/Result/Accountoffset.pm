@@ -1,12 +1,12 @@
 use utf8;
-package Koha::Schema::Result::Accountoffset;
+package Koha::Schema::Result::AccountOffset;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-Koha::Schema::Result::Accountoffset
+Koha::Schema::Result::AccountOffset
 
 =cut
 
@@ -15,40 +15,47 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<accountoffsets>
+=head1 TABLE: C<account_offsets>
 
 =cut
 
-__PACKAGE__->table("accountoffsets");
+__PACKAGE__->table("account_offsets");
 
 =head1 ACCESSORS
 
-=head2 borrowernumber
+=head2 offset_id
 
   data_type: 'integer'
-  default_value: 0
+  is_auto_increment: 1
+  is_nullable: 0
+
+=head2 debit_id
+
+  data_type: 'integer'
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
 
-=head2 accountno
+=head2 credit_id
 
-  data_type: 'smallint'
-  default_value: 0
-  is_nullable: 0
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 1
 
-=head2 offsetaccount
+=head2 type
 
-  data_type: 'smallint'
-  default_value: 0
-  is_nullable: 0
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 255
 
-=head2 offsetamount
+=head2 amount
 
   data_type: 'decimal'
-  is_nullable: 1
+  is_nullable: 0
   size: [28,6]
 
-=head2 timestamp
+A positive number here represents a payment, a negative is a increase in a fine.
+
+=head2 created_on
 
   data_type: 'timestamp'
   datetime_undef_if_invalid: 1
@@ -58,20 +65,17 @@ __PACKAGE__->table("accountoffsets");
 =cut
 
 __PACKAGE__->add_columns(
-  "borrowernumber",
-  {
-    data_type      => "integer",
-    default_value  => 0,
-    is_foreign_key => 1,
-    is_nullable    => 0,
-  },
-  "accountno",
-  { data_type => "smallint", default_value => 0, is_nullable => 0 },
-  "offsetaccount",
-  { data_type => "smallint", default_value => 0, is_nullable => 0 },
-  "offsetamount",
-  { data_type => "decimal", is_nullable => 1, size => [28, 6] },
-  "timestamp",
+  "offset_id",
+  { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
+  "debit_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
+  "credit_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
+  "type",
+  { data_type => "varchar", is_nullable => 1, size => 255 },
+  "amount",
+  { data_type => "decimal", is_nullable => 0, size => [28, 6] },
+  "created_on",
   {
     data_type => "timestamp",
     datetime_undef_if_invalid => 1,
@@ -80,26 +84,63 @@ __PACKAGE__->add_columns(
   },
 );
 
+=head1 PRIMARY KEY
+
+=over 4
+
+=item * L</offset_id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("offset_id");
+
 =head1 RELATIONS
 
-=head2 borrowernumber
+=head2 credit
 
 Type: belongs_to
 
-Related object: L<Koha::Schema::Result::Borrower>
+Related object: L<Koha::Schema::Result::AccountCredit>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "borrowernumber",
-  "Koha::Schema::Result::Borrower",
-  { borrowernumber => "borrowernumber" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  "credit",
+  "Koha::Schema::Result::AccountCredit",
+  { credit_id => "credit_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
+
+=head2 debit
+
+Type: belongs_to
+
+Related object: L<Koha::Schema::Result::AccountDebit>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "debit",
+  "Koha::Schema::Result::AccountDebit",
+  { debit_id => "debit_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07025 @ 2013-10-14 20:56:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OTfcUiJCPb5aU/gjqAb/bA
+# Created by DBIx::Class::Schema::Loader v0.07040 @ 2014-07-15 10:03:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CQJiVGoCnQEzkVu9ssgU/Q
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
