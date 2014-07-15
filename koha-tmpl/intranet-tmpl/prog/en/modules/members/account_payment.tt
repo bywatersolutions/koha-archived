@@ -1,0 +1,246 @@
+[% SET accounts_view = 1 %]
+[% USE Currency %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Patrons &rsaquo; Pay Fines for  [% borrower.firstname %] [% borrower.surname %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE 'browser-strings.inc' %]
+<script type= "text/javascript">
+//<![CDATA[
+$( document ).ready(function() {
+    $('#account-payment-form').preventDoubleFormSubmit();
+
+    // Convert codes to translated strings
+    $(".debit-type").each(function() {
+        $(this).html( STRINGS['DebitTypes'][ $(this).html() ] );
+    });
+
+    // Show amount recieved only if the "Receive different amount" checkbox is checked
+    $("#amount-received-p").hide();
+    $("#receive_different_amount").bind('click focus blur', function() {
+        if( $(this).is(':checked')) {
+            $("#amount-received-p").show();
+            $("#amount_received").focus();
+            $("#amount_received").keyup();
+        } else {
+            $("#amount-received-p").hide();
+            $("#amount_to_pay").keyup();
+        }
+    });
+
+    $("#amount_received").bind('keyup blur', function() {
+        // Allow only numbers in amount received
+        $(this).val($(this).val().replace(/[^\d.]/g, ''));
+
+        if ( $("#receive_different_amount").attr('checked') ) {
+            // Make sure the amount recieved is greater than the amount to pay if it is being used
+            amount_received = parseFloat( $("#amount_received").val() ) || 0;
+            amount_to_pay = parseFloat( $("#amount_to_pay").val() ) || 0;
+            if ( amount_received < amount_to_pay ) {
+                $("#process").attr('disabled','disabled');
+            } else {
+                $("#process").removeAttr('disabled');
+            }
+        }
+    });
+
+    // Allow only numbers in amount to pay
+    $("#amount_to_pay").bind('keyup blur', function() {
+        // Allow only numbers in amount received
+        $(this).val($(this).val().replace(/[^\d.]/g, ''));
+
+        // Disallow over-payments
+        if ( parseFloat( $(this).val() ) > parseFloat( $("#total_due").val() ) ) {
+            $("#process").attr('disabled','disabled');
+        } else {
+            $("#process").removeAttr('disabled');
+        }
+
+        $("#amount_received").keyup();
+    });
+
+    // Enable the "Select all/Clear all" links
+    $('#CheckAll').click(function() {
+        $("input[name='debit_id']" ).prop('checked', true).trigger("change");
+    });
+    $('#ClearAll').click(function() {
+        $("input[name='debit_id']" ).prop('checked', false).trigger("change");
+    });
+
+    // Update the "amount to pay" field whenever a fee checkbox is changed
+    // Note, this is just a payment suggestion and can be changed to any amount
+    $("input[name='debit_id']" ).change(function() {
+        var sum = 0;
+        $("input[name='debit_id']:checked" ).each(function(i,n){
+            sum += parseFloat( $( "#amount_outstanding_" + $(this).val() ).val() );
+        });
+        $('#amount_to_pay').val( sum.toFixed(2) );
+    });
+});
+
+function checkForm(){
+    // If using the "amount to receive" field, make sure the librarian is recieving at
+    // least enough to pay those fees.
+    if ( $('#amount_received').val() ) {
+        if ( parseFloat( $('#amount_received').val() ) < parseFloat( $('#amount_to_pay').val() ) ) {
+            alert( _("Cannot pay more than receieved!") );
+            return false;
+        }
+    }
+
+    return true;
+}
+//]]>
+</script>
+</head>
+<body id="pat_pay" class="pat">
+    [% INCLUDE 'header.inc' %]
+    [% INCLUDE 'patron-search.inc' %]
+
+    <div id="breadcrumbs">
+        <a href="/cgi-bin/koha/mainpage.pl">Home</a>
+        &rsaquo; <a href="/cgi-bin/koha/members/members-home.pl">Patrons</a>
+        &rsaquo; Pay fines for [% borrower.firstname %] [% borrower.surname %]
+    </div>
+
+    <div id="doc3" class="yui-t2">
+        <div id="bd">
+            <div id="yui-main">
+                <div class="yui-b">
+                    [% INCLUDE 'members-toolbar.inc' borrowernumber=borrower.borrowernumber %]
+
+                    <div class="statictabs">
+                        <ul>
+                            <li><a href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrower.borrowernumber %]">Account</a></li>
+                            <li class="active"><a href="/cgi-bin/koha/members/account_payment.pl?borrowernumber=[% borrower.borrowernumber %]" >Pay fines</a></li>
+                            <li><a href="/cgi-bin/koha/members/account_debit.pl?borrowernumber=[% borrower.borrowernumber %]" >Create manual invoice</a></li>
+                            <li><a href="/cgi-bin/koha/members/account_credit.pl?borrowernumber=[% borrower.borrowernumber %]" >Create manual credit</a></li>
+                        </ul>
+
+                        <div class="tabs-container">
+
+                        [% IF ( debits ) %]
+                            <form action="/cgi-bin/koha/members/account_payment_do.pl" method="post" id="account-payment-form" onsubmit="return checkForm()">
+
+                                <input type="hidden" name="borrowernumber" id="borrowernumber" value="[% borrower.borrowernumber %]" />
+
+                                <p>
+                                    <span class="checkall">
+                                        <a id="CheckAll" href="#">Select all</a>
+                                    </span>
+
+                                    |
+
+                                    <span class="clearall">
+                                        <a id="ClearAll" href="#">Clear all</a>
+                                    </span>
+                                </p>
+
+                                <table id="finest">
+                                    <thead>
+                                        <tr>
+                                            <th>&nbsp;</th>
+                                            <th>Description</th>
+                                            <th>Account type</th>
+                                            <th>Original amount</th>
+                                            <th>Amount outstanding</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        [% SET total_due = 0 %]
+                                        [% FOREACH d IN debits %]
+                                            [% SET total_due = total_due + d.amount_outstanding %]
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" checked="checked" name="debit_id" value="[% d.debit_id %]" />
+                                                </td>
+
+                                                <td>
+                                                    [% d.description %]
+
+                                                    [% IF d.notes %]
+                                                        ( <i>[% d.notes %]</i> )
+                                                    [% END %]
+                                                </td>
+
+                                                <td>
+                                                    <span class="debit-type">[% d.type %]</span>
+                                                </td>
+
+                                                <td class="debit">
+                                                    [% d.amount_original | $Currency %]
+                                                    <input type="hidden" id="amount_original_[% d.debit_id %]" value="[% Currency.format_without_symbol( d.amount_original ) %]" />
+                                                </td>
+
+                                                <td class="debit">
+                                                    [% d.amount_outstanding | $Currency %]
+                                                    <input type="hidden" id="amount_outstanding_[% d.debit_id %]" value="[% Currency.format_without_symbol( d.amount_outstanding ) %]" />
+                                                </td>
+                                            </tr>
+                                        [% END %]
+                                    </tbody>
+
+                                    <tfoot>
+                                        <tr>
+                                            <td class="total" colspan="4">Total Due:</td>
+                                            <td>[% total_due | $Currency %]</td>
+                                        </tr>
+                                    </tfoot>
+
+                                </table>
+
+                                <fieldset>
+                                    <p>
+                                        <label for="amount_to_pay">Amount to pay: [% Currency.symbol() %]</label>
+                                        <input type="text" name="amount_to_pay" id="amount_to_pay" value="[% Currency.format_without_symbol( total_due ) %]" />
+                                        <input type="hidden" name="total_due" id="total_due" value="[% total_due %]" />
+
+                                        <input type="checkbox" id="receive_different_amount" />
+                                        <label for="receive_different_amount"><i>Receive different amount</i></label>
+                                    </p>
+
+                                    <p id="amount-received-p">
+                                        <label for="amount_received">Amount recieved: [% Currency.symbol() %]</label>
+                                        <input type="text" name="amount_received" id="amount_received" />
+                                    </p>
+
+                                    <p>
+                                        <label for="type">Type:</label>
+                                        <select id="type" name="type">
+                                            <option value="PAYMENT">Payment</option>
+                                            <option value="WRITEOFF">Writeoff</option>
+                                            [% FOREACH c IN credit_types_loop %]
+                                                <option value="[% c.authorised_value %]">[% c.lib %]</option>
+                                            [% END %]
+                                        </select>
+                                    </p>
+
+                                    <p>
+                                        <label for="notes">Payment notes:</label>
+                                        <input type="textbox" name="notes" id="notes" />
+                                    <p>
+                                </fieldset>
+
+                                <fieldset class="action">
+                                    <input type="submit" id="process" value="Process" class="submit" />
+                                    <a class="cancel" href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrower.borrowernumber %]">Cancel</a>
+                                </fieldset>
+
+                            </form>
+
+                        [% ELSE %]
+                            <p>
+                                [% borrower.firstname %] [% borrower.surname %] has no outstanding fines.
+                            </p>
+                        [% END %]
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="yui-b">
+            [% INCLUDE 'circ-menu.tt' %]
+        </div>
+    </div>
+[% INCLUDE 'intranet-bottom.inc' %]
