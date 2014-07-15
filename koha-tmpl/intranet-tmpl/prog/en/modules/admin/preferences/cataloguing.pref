@@ -90,6 +90,7 @@ Cataloging:
             - Barcodes are
             - pref: autoBarcode
               choices:
+                  prefix_incr: generated with the branch prefix, followed by a zero-padded form of 1, 2, 3.
                   incremental: generated in the form 1, 2, 3.
                   annual: generated in the form &lt;year&gt;-0001, &lt;year&gt;-0002.
                   hbyymmincr: generated in the form &lt;branchcode&gt;yymm0001.

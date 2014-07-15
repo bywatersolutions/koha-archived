@@ -163,9 +163,10 @@ System Pref options.
 #
 sub barcodedecode {
     my ($barcode, $filter) = @_;
+
     my $branch = C4::Branch::mybranch();
     $filter = C4::Context->preference('itemBarcodeInputFilter') unless $filter;
-    $filter or return $barcode;     # ensure filter is defined, else return untouched barcode
+    return $barcode unless ( $filter || C4::Context->preference('itembarcodelength') ); # ensure filter is defined, else return untouched barcode
 	if ($filter eq 'whitespace') {
 		$barcode =~ s/\s//g;
 	} elsif ($filter eq 'cuecat') {
@@ -199,6 +200,11 @@ sub barcodedecode {
             warn "# [$barcode] not valid EAN-13/UPC-A\n";
         }
 	}
+        if(C4::Context->preference('itembarcodelength') && (length($barcode) < C4::Context->preference('itembarcodelength'))) {
+                my $prefix = GetBranchDetail(C4::Context->userenv->{'branch'})->{'itembarcodeprefix'} ;
+                my $padding = C4::Context->preference('itembarcodelength') - length($prefix) - length($barcode) ;
+                $barcode = $prefix . '0' x $padding . $barcode if($padding >= 0) ;
+        }
     return $barcode;    # return barcode, modified or not
 }
 
