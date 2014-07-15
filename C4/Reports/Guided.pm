@@ -101,7 +101,7 @@ sub get_table_areas {
     CAT  => [ 'items', 'biblioitems', 'biblio' ],
     PAT  => ['borrowers'],
     ACQ  => [ 'aqorders', 'biblio', 'items' ],
-    ACC  => [ 'borrowers', 'accountlines' ],
+    ACC  => [ 'borrowers', 'account_credits', 'account_debits' ],
     SER  => [ 'serial', 'serialitems', 'subscription', 'subscriptionhistory', 'subscriptionroutinglist', 'biblioitems', 'biblio', 'aqbooksellers' ],
     );
 }

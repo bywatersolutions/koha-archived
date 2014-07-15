@@ -28,7 +28,6 @@ use C4::Biblio;
 use C4::Members;
 use C4::Items;
 use C4::Circulation;
-use C4::Accounts;
 
 # for _koha_notify_reserve
 use C4::Members::Messaging;
@@ -202,7 +201,18 @@ sub AddReserve {
 
     # add a reserve fee if needed
     my $fee = GetReserveFee( $borrowernumber, $biblionumber );
-    ChargeReserveFee( $borrowernumber, $fee, $title );
+    if ( $fee > 0 ) {
+        AddDebit(
+            {
+                borrowernumber => $borrowernumber,
+                itemnumber     => $checkitem,
+                amount         => $fee,
+                type           => Koha::Accounts::DebitTypes::Hold(),
+                description    => $title,
+                notes          => "Record ID: $biblionumber",
+            }
+        );
+    }
 
     _FixPriority({ biblionumber => $biblionumber});
 

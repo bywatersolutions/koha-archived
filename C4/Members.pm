@@ -28,7 +28,6 @@ use Date::Calc qw/Today Add_Delta_YM check_date Date_to_Days/;
 use C4::Log; # logaction
 use C4::Overdues;
 use C4::Reserves;
-use C4::Accounts;
 use C4::Biblio;
 use C4::Letters;
 use C4::Members::Attributes qw(SearchIdMatchingAttribute UpdateBorrowerAttribute);
@@ -45,6 +44,7 @@ use Module::Load::Conditional qw( can_load );
 if ( ! can_load( modules => { 'Koha::NorwegianPatronDB' => undef } ) ) {
    warn "Unable to load Koha::NorwegianPatronDB";
 }
+use Koha::Accounts::DebitTypes;
 
 our ($VERSION,@ISA,@EXPORT,@EXPORT_OK,$debug);
 
@@ -84,8 +84,6 @@ BEGIN {
         &GetHideLostItemsPreference
 
         &IsMemberBlocked
-        &GetMemberAccountRecords
-        &GetBorNotifyAcctRecord
 
         &GetborCatFromCatType
         &GetBorrowercategory
@@ -227,9 +225,8 @@ sub GetMemberDetails {
     }
     my $borrower = $sth->fetchrow_hashref;
     return unless $borrower;
-    my ($amount) = GetMemberAccountRecords($borrower->{borrowernumber});
-    $borrower->{'amountoutstanding'} = $amount;
-    # FIXME - patronflags calls GetMemberAccountRecords... just have patronflags return $amount
+    $borrower->{amountoutstanding} = $borrower->{account_balance};
+    # FIXME - find all references to $borrower->{amountoutstanding}, replace with $borrower->{account_balance}
     my $flags = patronflags( $borrower);
     my $accessflagshash;
 
@@ -323,23 +320,20 @@ The "message" field that comes from the DB is OK.
 # FIXME rename this function.
 sub patronflags {
     my %flags;
-    my ( $patroninformation) = @_;
-    my $dbh=C4::Context->dbh;
-    my ($balance, $owing) = GetMemberAccountBalance( $patroninformation->{'borrowernumber'});
-    if ( $owing > 0 ) {
+    my ($patroninformation) = @_;
+    my $dbh = C4::Context->dbh;
+    if ( $patroninformation->{account_balance} > 0 ) {
         my %flaginfo;
         my $noissuescharge = C4::Context->preference("noissuescharge") || 5;
-        $flaginfo{'message'} = sprintf 'Patron owes %.02f', $owing;
-        $flaginfo{'amount'}  = sprintf "%.02f", $owing;
-        if ( $owing > $noissuescharge && !C4::Context->preference("AllowFineOverride") ) {
+        $flaginfo{'amount'}  = $patroninformation->{account_balance};
+        if (  $patroninformation->{account_balance} > $noissuescharge && !C4::Context->preference("AllowFineOverride") ) {
             $flaginfo{'noissues'} = 1;
         }
         $flags{'CHARGES'} = \%flaginfo;
     }
-    elsif ( $balance < 0 ) {
+    elsif ( $patroninformation->{account_balance} < 0 ) {
         my %flaginfo;
-        $flaginfo{'message'} = sprintf 'Patron has credit of %.02f', -$balance;
-        $flaginfo{'amount'}  = sprintf "%.02f", $balance;
+        $flaginfo{'amount'}  = $patroninformation->{account_balance};
         $flags{'CREDITS'} = \%flaginfo;
     }
     if (   $patroninformation->{'gonenoaddress'}
@@ -578,7 +572,7 @@ sub GetMemberIssuesAndFines {
     $sth->execute($borrowernumber);
     my $overdue_count = $sth->fetchrow_arrayref->[0];
 
-    $sth = $dbh->prepare("SELECT SUM(amountoutstanding) FROM accountlines WHERE borrowernumber = ?");
+    $sth = $dbh->prepare("SELECT account_balance FROM borrowers WHERE borrowernumber = ?");
     $sth->execute($borrowernumber);
     my $total_fines = $sth->fetchrow_arrayref->[0];
 
@@ -1141,57 +1135,14 @@ sub GetAllIssues {
 }
 
 
-=head2 GetMemberAccountRecords
-
-  ($total, $acctlines, $count) = &GetMemberAccountRecords($borrowernumber);
-
-Looks up accounting data for the patron with the given borrowernumber.
-
-C<&GetMemberAccountRecords> returns a three-element array. C<$acctlines> is a
-reference-to-array, where each element is a reference-to-hash; the
-keys are the fields of the C<accountlines> table in the Koha database.
-C<$count> is the number of elements in C<$acctlines>. C<$total> is the
-total amount outstanding for all of the account lines.
-
-=cut
-
-sub GetMemberAccountRecords {
-    my ($borrowernumber) = @_;
-    my $dbh = C4::Context->dbh;
-    my @acctlines;
-    my $numlines = 0;
-    my $strsth      = qq(
-                        SELECT * 
-                        FROM accountlines 
-                        WHERE borrowernumber=?);
-    $strsth.=" ORDER BY accountlines_id desc";
-    my $sth= $dbh->prepare( $strsth );
-    $sth->execute( $borrowernumber );
-
-    my $total = 0;
-    while ( my $data = $sth->fetchrow_hashref ) {
-        if ( $data->{itemnumber} ) {
-            my $biblio = GetBiblioFromItemNumber( $data->{itemnumber} );
-            $data->{biblionumber} = $biblio->{biblionumber};
-            $data->{title}        = $biblio->{title};
-        }
-        $acctlines[$numlines] = $data;
-        $numlines++;
-        $total += int(1000 * $data->{'amountoutstanding'}); # convert float to integer to avoid round-off errors
-    }
-    $total /= 1000;
-    return ( $total, \@acctlines,$numlines);
-}
-
 =head2 GetMemberAccountBalance
 
   ($total_balance, $non_issue_balance, $other_charges) = &GetMemberAccountBalance($borrowernumber);
 
 Calculates amount immediately owing by the patron - non-issue charges.
-Based on GetMemberAccountRecords.
 Charges exempt from non-issue are:
-* Res (reserves)
-* Rent (rental) if RentalsInNoissuesCharge syspref is set to false
+* HOLD fees (reserves)
+* RENTAL if RentalsInNoissuesCharge syspref is set to false
 * Manual invoices if ManInvInNoissuesCharge syspref is set to false
 
 =cut
@@ -1199,70 +1150,40 @@ Charges exempt from non-issue are:
 sub GetMemberAccountBalance {
     my ($borrowernumber) = @_;
 
-    my $ACCOUNT_TYPE_LENGTH = 5; # this is plain ridiculous...
+    my $borrower =
+      Koha::Database->new()->schema->resultset('Borrower')
+      ->find($borrowernumber);
 
     my @not_fines;
-    push @not_fines, 'Res' unless C4::Context->preference('HoldsInNoissuesCharge');
-    push @not_fines, 'Rent' unless C4::Context->preference('RentalsInNoissuesCharge');
+
+    push( @not_fines, Koha::Accounts::DebitTypes::Hold() );
+
+    push( @not_fines, Koha::Accounts::DebitTypes::Rental() )
+      unless C4::Context->preference('RentalsInNoissuesCharge');
+
     unless ( C4::Context->preference('ManInvInNoissuesCharge') ) {
-        my $dbh = C4::Context->dbh;
-        my $man_inv_types = $dbh->selectcol_arrayref(qq{SELECT authorised_value FROM authorised_values WHERE category = 'MANUAL_INV'});
-        push @not_fines, map substr($_, 0, $ACCOUNT_TYPE_LENGTH), @$man_inv_types;
-    }
-    my %not_fine = map {$_ => 1} @not_fines;
-
-    my ($total, $acctlines) = GetMemberAccountRecords($borrowernumber);
-    my $other_charges = 0;
-    foreach (@$acctlines) {
-        $other_charges += $_->{amountoutstanding} if $not_fine{ substr($_->{accounttype}, 0, $ACCOUNT_TYPE_LENGTH) };
+        my $dbh           = C4::Context->dbh;
+        my $man_inv_types = $dbh->selectcol_arrayref(q{
+            SELECT authorised_value FROM authorised_values WHERE category = 'MANUAL_INV'
+        });
+        push( @not_fines, @$man_inv_types );
     }
 
-    return ( $total, $total - $other_charges, $other_charges);
-}
-
-=head2 GetBorNotifyAcctRecord
-
-  ($total, $acctlines, $count) = &GetBorNotifyAcctRecord($params,$notifyid);
-
-Looks up accounting data for the patron with the given borrowernumber per file number.
-
-C<&GetBorNotifyAcctRecord> returns a three-element array. C<$acctlines> is a
-reference-to-array, where each element is a reference-to-hash; the
-keys are the fields of the C<accountlines> table in the Koha database.
-C<$count> is the number of elements in C<$acctlines>. C<$total> is the
-total amount outstanding for all of the account lines.
-
-=cut
-
-sub GetBorNotifyAcctRecord {
-    my ( $borrowernumber, $notifyid ) = @_;
-    my $dbh = C4::Context->dbh;
-    my @acctlines;
-    my $numlines = 0;
-    my $sth = $dbh->prepare(
-            "SELECT * 
-                FROM accountlines 
-                WHERE borrowernumber=? 
-                    AND notify_id=? 
-                    AND amountoutstanding != '0' 
-                ORDER BY notify_id,accounttype
-                ");
-
-    $sth->execute( $borrowernumber, $notifyid );
-    my $total = 0;
-    while ( my $data = $sth->fetchrow_hashref ) {
-        if ( $data->{itemnumber} ) {
-            my $biblio = GetBiblioFromItemNumber( $data->{itemnumber} );
-            $data->{biblionumber} = $biblio->{biblionumber};
-            $data->{title}        = $biblio->{title};
+    my $other_charges =
+      Koha::Database->new()->schema->resultset('AccountDebit')->search(
+        {
+            borrowernumber => $borrowernumber,
+            type           => { -in => \@not_fines }
         }
-        $acctlines[$numlines] = $data;
-        $numlines++;
-        $total += int(100 * $data->{'amountoutstanding'});
-    }
-    $total /= 100;
-    return ( $total, \@acctlines, $numlines );
+      )->get_column('amount_outstanding')->sum();
+
+    return (
+        $borrower->account_balance(),
+        $borrower->account_balance() - $other_charges,
+        $other_charges
+    );
 }
+
 
 =head2 checkuniquemember (OUEST-PROVENCE)
 
@@ -2505,22 +2426,21 @@ Add enrolment fee for a patron if needed.
 
 sub AddEnrolmentFeeIfNeeded {
     my ( $categorycode, $borrowernumber ) = @_;
-    # check for enrollment fee & add it if needed
-    my $dbh = C4::Context->dbh;
-    my $sth = $dbh->prepare(q{
-        SELECT enrolmentfee
-        FROM categories
-        WHERE categorycode=?
-    });
-    $sth->execute( $categorycode );
-    if ( $sth->err ) {
-        warn sprintf('Database returned the following error: %s', $sth->errstr);
-        return;
-    }
-    my ($enrolmentfee) = $sth->fetchrow;
-    if ($enrolmentfee && $enrolmentfee > 0) {
-        # insert fee in patron debts
-        C4::Accounts::manualinvoice( $borrowernumber, '', '', 'A', $enrolmentfee );
+
+    my $schema = Koha::Database->new()->schema();
+
+    my $category = $schema->resultset('Category')->find($categorycode);
+    my $fee      = $category->enrolmentfee();
+
+    if ( $fee && $fee > 0 ) {
+        AddDebit(
+            {
+                borrower =>
+                  $schema->resultset('Borrower')->find($borrowernumber),
+                type   => Koha::Accounts::DebitTypes::AccountManagementFee(),
+                amount => $fee,
+            }
+        );
     }
 }
 

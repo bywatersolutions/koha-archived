@@ -77,3 +77,5 @@ Kyle M Hall <kyle@bywatersolutions.com>
 Jonathan Druart <jonathan.druart@biblibre.com>
 
 =cut
+
+1;
