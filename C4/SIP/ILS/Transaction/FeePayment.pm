@@ -20,9 +20,11 @@ use strict;
 # with Koha; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use C4::Accounts qw(recordpayment);
+use Koha::Accounts qw(AddCredit);
+use Koha::Accounts::CreditTypes;
+use Koha::Database;
 use ILS;
-use parent qw(ILS::Transaction);
+use parent qw(SIP::ILS::Transaction);
 
 
 our $debug   = 0;
@@ -45,10 +47,19 @@ sub new {
 sub pay {
     my $self           = shift;
     my $borrowernumber = shift;
-    my $amt            = shift;
+    my $amount         = shift;
     my $type           = shift;
-    warn("RECORD:$borrowernumber::$amt");
-    recordpayment( $borrowernumber, $amt,$type );
+
+    warn("RECORD:$borrowernumber::$amount");
+
+    AddCredit(
+        {
+            borrower => Koha::Database->new()->schema->resultset('Borrower')->find($borrowernumber),
+            amount => $amount,
+            notes  => "via SIP2. Type:$type",
+            type   => Koha::Accounts::CreditTypes::Payment,
+        }
+    );
 }
 
 #sub DESTROY {
