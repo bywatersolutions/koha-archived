@@ -203,7 +203,8 @@ sub ModBranch {
             branchaddress2,branchaddress3,branchzip,branchcity,branchstate,
             branchcountry,branchphone,branchfax,branchemail,
             branchurl,branchip,branchprinter,branchnotes,opac_info,
-            branchreplyto, branchreturnpath)
+            branchreplyto, branchreturnpath,
+            itembarcodeprefix,patronbarcodeprefix)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ";
         my $sth    = $dbh->prepare($query);
@@ -217,7 +218,8 @@ sub ModBranch {
             $data->{'branchemail'},      $data->{'branchurl'},
             $data->{'branchip'},         $data->{'branchprinter'},
             $data->{'branchnotes'},      $data->{opac_info},
-            $data->{'branchreplyto'},    $data->{'branchreturnpath'}
+            $data->{'branchreplyto'},    $data->{'branchreturnpath'},
+            $data->{'itembarcodeprefix'},$data->{'patronbarcodeprefix'},
         );
         return 1 if $dbh->err;
     } else {
@@ -228,7 +230,8 @@ sub ModBranch {
                 branchcity=?,branchstate=?,branchcountry=?,branchphone=?,
                 branchfax=?,branchemail=?,branchurl=?,branchip=?,
                 branchprinter=?,branchnotes=?,opac_info=?,
-                branchreplyto=?, branchreturnpath=?
+                branchreplyto=?, branchreturnpath=?,
+                itembarcodeprefix=?,patronbarcodeprefix=?
             WHERE branchcode=?
         ";
         my $sth    = $dbh->prepare($query);
@@ -243,6 +246,7 @@ sub ModBranch {
             $data->{'branchip'},         $data->{'branchprinter'},
             $data->{'branchnotes'},      $data->{opac_info},
             $data->{'branchreplyto'},    $data->{'branchreturnpath'},
+            $data->{'itembarcodeprefix'},$data->{'patronbarcodeprefix'},
             $data->{'branchcode'},
         );
     }
