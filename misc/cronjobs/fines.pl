@@ -132,9 +132,13 @@ for my $overdue ( @{$overdues} ) {
     if ( $mode eq 'production' && !$is_holiday{$branchcode} ) {
         if ( $amount > 0 ) {
             UpdateFine(
-                $overdue->{itemnumber},
-                $overdue->{borrowernumber},
-                $amount, $type, output_pref($datedue)
+                {
+                    itemnumber     => $overdue->{itemnumber},
+                    borrowernumber => $overdue->{borrowernumber},
+                    amount         => $amount,
+                    due            => output_pref($datedue),
+                    issue_id       => $overdue->{issue_id}
+                }
             );
         }
     }
