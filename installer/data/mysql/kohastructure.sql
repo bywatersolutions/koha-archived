@@ -266,6 +266,7 @@ CREATE TABLE `borrowers` ( -- this table includes information about your patrons
   `altcontactphone` varchar(50) default NULL, -- the phone number for the alternate contact for the patron/borrower
   `smsalertnumber` varchar(50) default NULL, -- the mobile phone number where the patron/borrower would like to receive notices (if SNS turned on)
   `privacy` integer(11) DEFAULT '1' NOT NULL, -- patron/borrower's privacy settings related to their reading history
+  `account_balance` decimal(28,6) NOT NULL,
   UNIQUE KEY `cardnumber` (`cardnumber`),
   PRIMARY KEY `borrowernumber` (`borrowernumber`),
   KEY `categorycode` (`categorycode`),
@@ -2733,50 +2734,6 @@ CREATE TABLE `messages` ( -- circulation messages left via the patron's check ou
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
--- Table structure for table `accountlines`
---
-
-DROP TABLE IF EXISTS `accountlines`;
-CREATE TABLE `accountlines` (
-  `accountlines_id` int(11) NOT NULL AUTO_INCREMENT,
-  `borrowernumber` int(11) NOT NULL default 0,
-  `accountno` smallint(6) NOT NULL default 0,
-  `itemnumber` int(11) default NULL,
-  `date` date default NULL,
-  `amount` decimal(28,6) default NULL,
-  `description` mediumtext,
-  `dispute` mediumtext,
-  `accounttype` varchar(5) default NULL,
-  `amountoutstanding` decimal(28,6) default NULL,
-  `lastincrement` decimal(28,6) default NULL,
-  `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-  `notify_id` int(11) NOT NULL default 0,
-  `notify_level` int(2) NOT NULL default 0,
-  `note` text NULL default NULL,
-  `manager_id` int(11) NULL,
-  PRIMARY KEY (`accountlines_id`),
-  KEY `acctsborridx` (`borrowernumber`),
-  KEY `timeidx` (`timestamp`),
-  KEY `itemnumber` (`itemnumber`),
-  CONSTRAINT `accountlines_ibfk_1` FOREIGN KEY (`borrowernumber`) REFERENCES `borrowers` (`borrowernumber`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `accountlines_ibfk_2` FOREIGN KEY (`itemnumber`) REFERENCES `items` (`itemnumber`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
---
--- Table structure for table `accountoffsets`
---
-
-DROP TABLE IF EXISTS `accountoffsets`;
-CREATE TABLE `accountoffsets` (
-  `borrowernumber` int(11) NOT NULL default 0,
-  `accountno` smallint(6) NOT NULL default 0,
-  `offsetaccount` smallint(6) NOT NULL default 0,
-  `offsetamount` decimal(28,6) default NULL,
-  `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-  CONSTRAINT `accountoffsets_ibfk_1` FOREIGN KEY (`borrowernumber`) REFERENCES `borrowers` (`borrowernumber`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
---
 -- Table structure for table `action_logs`
 --
 
@@ -3524,6 +3481,95 @@ CREATE TABLE discharges (
   KEY borrower_discharges_ibfk1 (borrower),
   CONSTRAINT borrower_discharges_ibfk1 FOREIGN KEY (borrower) REFERENCES borrowers (borrowernumber) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- Table structure for table 'account_credits'
+--
+DROP TABLE IF EXISTS account_credits;
+CREATE TABLE IF account_credits (
+    credit_id int(11) NOT NULL AUTO_INCREMENT,     -- The unique id for this credit
+    borrowernumber int(11) NOT NULL,               -- The borrower this credit applies to
+    `type` varchar(255) NOT NULL,                  -- The type of credit this is ( defined by Koha::Accounts::CreditTypes )
+    amount_received decimal(28,6) DEFAULT NULL,    -- If this was a cash payment, the amount of money given
+    amount_paid decimal(28,6) NOT NULL,            -- The actual ammount paid, if less than amount_recieved, change was given back
+    amount_remaining decimal(28,6) NOT NULL,       -- The amount of this credit that has not been applied to outstanding debits
+    amount_voided decimal(28,6) NULL DEFAULT NULL, -- The amount of this credit was for before it was voided
+    notes text,                                    -- Misc notes for this credit
+    branchcode VARCHAR( 10 ) NULL DEFAULT NULL,    -- Branchcode where the credit was created ( if any )
+    manager_id int(11) DEFAULT NULL,               -- The borrowernumber of the user who created this credit ( if any )
+    created_on timestamp NULL DEFAULT NULL,        -- Timestamp for when this credit was created
+    updated_on timestamp NULL DEFAULT NULL,        -- Timestamp for when this credit was last modified
+    PRIMARY KEY (credit_id),
+    KEY borrowernumber (borrowernumber),
+    KEY branchcode (branchcode)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+--
+-- Constraints for table `account_credits`
+--
+ALTER TABLE `account_credits`
+  ADD CONSTRAINT account_credits_ibfk_1 FOREIGN KEY (borrowernumber) REFERENCES borrowers (borrowernumber) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT account_credits_ibfk_2 FOREIGN KEY (branchcode) REFERENCES branches (branchcode) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Table structure for table 'account_debits'
+--
+
+DROP TABLE IF EXISTS account_debits;
+CREATE TABLE account_debits (
+    debit_id int(11) NOT NULL AUTO_INCREMENT,           -- The unique id for this debit
+    borrowernumber int(11) NOT NULL DEFAULT '0',        -- The borrower this debit applies to
+    itemnumber int(11) DEFAULT NULL,                    -- The item related to this debit ( for fines, lost fees, etc )
+    issue_id int(11) DEFAULT NULL,                      -- The checkout this debit is related to ( again, for fines, lost fees, etc )
+    `type` varchar(255) NOT NULL,                       -- The type of debit this is ( defined by Koha::Accounts::DebitTypes )
+    accruing tinyint(1) NOT NULL DEFAULT '0',           -- Boolean flag, tells of if this is a fine that is still accruing
+    amount_original decimal(28,6) DEFAULT NULL,         -- The total amount of this debit
+    amount_outstanding decimal(28,6) DEFAULT NULL,      -- The amount still owed on this debit
+    amount_last_increment decimal(28,6) DEFAULT NULL,   -- The amount by which this debit last changed
+    description mediumtext,                             -- The description for this debit
+    notes text,                                         -- Misc notes for this debit
+    branchcode VARCHAR( 10 ) NULL DEFAULT NULL,         -- Branchcode where the debit was created ( if any )
+    manager_id int(11) DEFAULT NULL,                    -- The borrowernumber of the user who created this debit ( if any )
+    created_on timestamp NULL DEFAULT NULL,             -- Timestamp for when this credit was created
+    updated_on timestamp NULL DEFAULT NULL,             -- Timestamp for when this credit was last modified
+    PRIMARY KEY (debit_id),
+    KEY acctsborridx (borrowernumber),
+    KEY itemnumber (itemnumber),
+    KEY borrowernumber (borrowernumber),
+    KEY issue_id (issue_id),
+    KEY branchcode (branchcode)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+--
+-- Constraints for table `account_debits`
+--
+ALTER TABLE `account_debits`
+    ADD CONSTRAINT account_debits_ibfk_1 FOREIGN KEY (borrowernumber) REFERENCES borrowers (borrowernumber) ON DELETE CASCADE ON UPDATE CASCADE,
+    ADD CONSTRAINT account_debits_ibfk_2 FOREIGN KEY (branchcode) REFERENCES branches (branchcode) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Table structure for table 'account_offsets'
+--
+
+DROP TABLE IF EXISTS account_offsets;
+CREATE TABLE account_offsets (
+    offset_id int(11) NOT NULL AUTO_INCREMENT,                                              -- Unique id for this offset
+    debit_id int(11) DEFAULT NULL,                                                          -- Related debit
+    credit_id int(11) DEFAULT NULL,                                                         -- Related credit ( if any )
+    `type` varchar(255) DEFAULT NULL,                                                       -- The type of this offset ( defined by Koha::Accounts::OffsetTypes ), if any
+    amount decimal(28,6) NOT NULL,                                                          -- The amount of the offset, positive means patron owes more, negative means patron owes less
+    created_on timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,    -- Timestamp for when this offset was created
+    PRIMARY KEY (offset_id),
+    KEY fee_id (debit_id),
+    KEY payment_id (credit_id)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+--
+-- Constraints for table `account_offsets`
+--
+ALTER TABLE `account_offsets`
+    ADD CONSTRAINT account_offsets_ibfk_1 FOREIGN KEY (debit_id) REFERENCES account_debits (debit_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    ADD CONSTRAINT account_offsets_ibfk_2 FOREIGN KEY (credit_id) REFERENCES account_credits (credit_id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
