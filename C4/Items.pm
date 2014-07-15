@@ -294,6 +294,7 @@ sub AddItem {
     $sth->execute( $item->{'biblionumber'} );
     ($item->{'biblioitemnumber'}) = $sth->fetchrow;
 
+    _check_itembarcode($item) if (C4::Context->preference('itembarcodelength'));
     _set_defaults_for_add($item);
     _set_derived_columns_for_add($item);
     $item->{'more_subfields_xml'} = _get_unlinked_subfields_xml($unlinked_item_subfields);
@@ -397,6 +398,7 @@ sub AddItemBatchFromMarc {
             next ITEMFIELD;
         }
 
+        _check_itembarcode($item) if (C4::Context->preference('itembarcodelength'));
         _set_defaults_for_add($item);
         _set_derived_columns_for_add($item);
         my ( $itemnumber, $error ) = _koha_new_item( $item, $item->{barcode} );
@@ -3129,6 +3131,32 @@ sub PrepareItemrecordDisplay {
         'itemnumber'      => $itemnumber,
         'iteminformation' => \@loop_data
     };
+}
+
+=head2 _check_itembarcode
+
+=over 4
+
+&_check_itembarcode
+
+=back
+
+Modifies item barcode value to include prefix defined in branches.itembarcodeprefix
+if the length is less than the syspref itembarcodelength .
+
+=cut
+sub _check_itembarcode($) {
+    my $item = shift;
+    return(0) unless $item->{'barcode'}; # only modify if we've been passed a barcode.
+    # check item barcode prefix
+    # note this doesn't enforce barcodelength.
+    my $branch_prefix = C4::Branch::GetBranchDetail($item->{'homebranch'})->{'itembarcodeprefix'};
+    if(length($item->{'barcode'}) < C4::Context->preference('itembarcodelength')) {
+        my $padding = C4::Context->preference('itembarcodelength') - length($branch_prefix) - length($item->{'barcode'}) ;
+        $item->{'barcode'} = $branch_prefix .  '0' x $padding . $item->{'barcode'} if($padding >= 0) ;
+    } else {
+      #  $errors{'invalid_barcode'} = $item->{'barcode'};
+    }
 }
 
 1;
