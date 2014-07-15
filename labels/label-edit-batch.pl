@@ -27,6 +27,7 @@ use CGI;
 use C4::Auth qw(get_template_and_user);
 use C4::Output qw(output_html_with_http_headers);
 use C4::Items qw(GetItemnumberFromBarcode);
+use C4::Circulation qw(barcodedecode);
 use C4::Creators;
 use C4::Labels;
 
@@ -84,6 +85,7 @@ elsif ($op eq 'add') {
         my @barcodes = split /\n/, $barcode; # $barcode is effectively passed in as a <cr> separated list
         foreach my $number (@barcodes) {
             $number =~ s/\r$//; # strip any naughty return chars
+            $number = barcodedecode($number) if ( $number && C4::Context->preference('itembarcodelength') );
             if (my $item_number = GetItemnumberFromBarcode($number)) {  # we must test in case an invalid barcode is passed in; we effectively disgard them atm
                 push @item_numbers, $item_number;
             }
