@@ -1,10 +1,14 @@
 [% USE Koha %]
 [% USE KohaDates %]
+[% USE Currency %]
 
 [% INCLUDE 'doc-head-open.inc' %]
 <title>[% IF ( LibraryNameTitle ) %][% LibraryNameTitle %][% ELSE %]Koha online[% END %] catalog &rsaquo; Your fines and charges</title>
 [% INCLUDE 'doc-head-close.inc' %]
 [% BLOCK cssinclude %][% END %]
+
+[% INCLUDE 'browser-strings.inc' %]
+
 </head>
 <body id="opac-account" class="scrollto">
 [% INCLUDE 'bodytag.inc' bodyid='opac-account' bodyclass='scrollto' %]
@@ -13,7 +17,7 @@
 <div class="main">
     <ul class="breadcrumb">
         <li><a href="/cgi-bin/koha/opac-main.pl">Home</a> <span class="divider">&rsaquo;</span></li>
-        <li>[% FOREACH BORROWER_INF IN BORROWER_INFO %]<a href="/cgi-bin/koha/opac-user.pl">[% BORROWER_INF.firstname %] [% BORROWER_INF.surname %]</a>[% END %] <span class="divider">&rsaquo;</span></li>
+        <li><a href="/cgi-bin/koha/opac-user.pl">[% borrower.firstname %] [% borrower.surname %]</a> <span class="divider">&rsaquo;</span></li>
         <li><a href="#">Your fines and charges</a></li>
     </ul>
 
@@ -27,61 +31,57 @@
             <div class="span10">
                 <div id="useraccount" class="maincontent">
                     <h3>Fines and charges</h3>
+                    [% IF credits || debits %]
 
-                    [% IF ( ACCOUNT_LINES ) %]
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Fine amount</th>
-                                    <th>Amount outstanding</th>
-                                </tr>
-                            </thead>
+                        <p>
+                            <h3>Account balance: [% borrower.account_balance | $Currency %]</h3>
+                        </p>
 
-                            <tfoot>
-                            <tr>
-                                <th class="sum" colspan="3">Total due</th>
-                                <td class="sum">[% total %]</td>
-                            </tr>
-                            </tfoot>
+                        <div>
+                            <div id="account-debits">
+                                <a id="account-debits-switcher" href="#" onclick="return false">View payments</a>
+                                <table cellpadding="0" cellspacing="0" border="0" class="display" id="debits-table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="99">Fees</th>
+                                        </tr>
+                                        <tr>
+                                            <th></th>
+                                            <th>ID</th>
+                                            <th>Description</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Outstanding</th>
+                                            <th>Created on</th>
+                                            <th>Updated on</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
 
-                            <tbody>
-                                [% FOREACH ACCOUNT_LINE IN ACCOUNT_LINES %]
-                                    [% IF ( ACCOUNT_LINE.odd ) %]<tr class="highlight">[% ELSE %]<tr>[% END %]
-                                        <td>[% ACCOUNT_LINE.date | $KohaDates %]</td>
-                                        <td>
-                                            [% SWITCH ACCOUNT_LINE.accounttype %]
-                                            [% CASE 'Pay' %]Payment, thanks
-                                            [% CASE 'Pay00' %]Payment, thanks (cash via SIP2)
-                                            [% CASE 'Pay01' %]Payment, thanks (VISA via SIP2)
-                                            [% CASE 'Pay02' %]Payment, thanks (credit card via SIP2)
-                                            [% CASE 'N' %]New card
-                                            [% CASE 'F' %]Fine
-                                            [% CASE 'A' %]Account management fee
-                                            [% CASE 'M' %]Sundry
-                                            [% CASE 'L' %]Lost item
-                                            [% CASE 'W' %]Writeoff
-                                            [% CASE 'FU' %]Accruing fine
-                                            [% CASE 'Rent' %]Rental fee
-                                            [% CASE 'FOR' %]Forgiven
-                                            [% CASE 'LR' %]Lost item fee refund
-                                            [% CASE 'PAY' %]Payment
-                                            [% CASE 'WO' %]Writeoff
-                                            [% CASE 'C' %]Credit
-                                            [% CASE 'CR' %]Credit
-                                            [% CASE %][% ACCOUNT_LINE.accounttype %]
-                                          [%- END -%]
-                                          [%- IF ACCOUNT_LINE.description %], [% ACCOUNT_LINE.description %][% END %]
-                                          [% IF ACCOUNT_LINE.title %]([% ACCOUNT_LINE.title %])[% END %]
-                                        </td>
-                                        [% IF ( ACCOUNT_LINE.amountcredit ) %]<td class="credit">[% ELSE %]<td class="debit">[% END %][% ACCOUNT_LINE.amount %]</td>
-                                        [% IF ( ACCOUNT_LINE.amountoutstandingcredit ) %]<td class="credit">[% ELSE %]<td class="debit">[% END %][% ACCOUNT_LINE.amountoutstanding %]</td>
-                                    </tr>
-                                [% END %]
-                            </tbody>
-
-                        </table>
+                            <div id="account-credits">
+                                <a id="account-credits-switcher" href="#"  onclick="return false">View fees</a>
+                                <table cellpadding="0" cellspacing="0" border="0" class="display" id="credits-table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="99">Payments</th>
+                                        </tr>
+                                        <tr>
+                                            <th></th>
+                                            <th>ID</th>
+                                            <th>Notes</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Remaining</th>
+                                            <th>Created on</th>
+                                            <th>Updated on</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                     [% ELSE %]
                         <h4>You have no fines or charges</h4>
                     [% END %]
@@ -92,4 +92,305 @@
 </div> <!-- / .main -->
 
 [% INCLUDE 'opac-bottom.inc' %]
+
+[% INCLUDE 'datatables.inc' %]
+
+<script type="text/javascript">
+//<![CDATA[
+$(document).ready(function() {
+    $('#account-credits').hide();
+    $('#account-debits-switcher').click(function() {
+         $('#account-debits').slideUp();
+         $('#account-credits').slideDown();
+    });
+    $('#account-credits-switcher').click(function() {
+         $('#account-credits').slideUp();
+         $('#account-debits').slideDown();
+    });
+
+    var anOpen = [];
+    var sImageUrl = "[% interface %]/[% theme %]/images/";
+
+    var debitsTable = $('#debits-table').dataTable( {
+        "bProcessing": true,
+        "aoColumns": [
+            {
+                "mDataProp": null,
+                "sClass": "control center",
+                "sDefaultContent": '<img src="'+sImageUrl+'details_open.png'+'">'
+            },
+            { "mDataProp": "debit_id" },
+            { "mDataProp": "description" },
+            {
+                "mDataProp": "type",
+                "fnRender": function ( o, val ) {
+                    return STRINGS['DebitTypes'][val] || val;
+                },
+            },
+            { "mDataProp": "amount_original" },
+            { "mDataProp": "amount_outstanding" },
+            { "mDataProp": "created_on" },
+            { "mDataProp": "updated_on" }
+        ],
+        "aaData": [
+            [% FOREACH d IN debits %]
+                {
+                    [% PROCESS format_data data=d highlight='debit' %]
+
+                    // Data for related item if there is one linked
+                    "title": "[% d.item.biblio.title || d.deleted_item.biblio.title || d.deleted_item.deleted_biblio.title %]",
+                    "biblionumber": "[% d.item.biblio.biblionumber || d.deleted_item.biblio.biblionumber %]",
+                    "barcode": "[% d.item.barcode || d.deleted_item.barcode %]",
+                    "itemnumber": "[% d.item.itemnumber %]", //This way itemnumber will be undef if deleted
+
+
+                    // Data for related issue if there is one linked
+                    [% IF d.issue %]
+                        [% SET table = 'issue' %]
+                    [% ELSIF d.old_issue %]
+                        [% SET table = 'old_issue' %]
+                    [% END %]
+
+                    [% IF table %]
+                        "issue": {
+                            [% PROCESS format_data data=d.$table %]
+                        },
+                    [% END %]
+
+
+                    "account_offsets": [
+                        [% FOREACH ao IN d.account_offsets %]
+                            {
+                                [% PROCESS format_data data=ao highlight='offset'%]
+
+                                "credit": {
+                                    [% PROCESS format_data data=ao.credit highlight='credit' %]
+                                }
+                            },
+                        [% END %]
+                    ]
+
+                },
+            [% END %]
+        ]
+    } );
+
+    $('#debits-table td.control').live( 'click', function () {
+        var nTr = this.parentNode;
+        var i = $.inArray( nTr, anOpen );
+
+        if ( i === -1 ) {
+            $('img', this).attr( 'src', sImageUrl+"details_close.png" );
+            var nDetailsRow = debitsTable.fnOpen( nTr, fnFormatDebitDetails(debitsTable, nTr), 'details' );
+            $('div.innerDetails', nDetailsRow).slideDown();
+            anOpen.push( nTr );
+        }
+        else {
+            $('img', this).attr( 'src', sImageUrl+"details_open.png" );
+            $('div.innerDetails', $(nTr).next()[0]).slideUp( function () {
+                debitsTable.fnClose( nTr );
+                anOpen.splice( i, 1 );
+            } );
+        }
+    } );
+
+    var creditsTable = $('#credits-table').dataTable( {
+        "bProcessing": true,
+        "aoColumns": [
+            {
+                "mDataProp": null,
+                "sClass": "control center",
+                "sDefaultContent": '<img src="'+sImageUrl+'details_open.png'+'">'
+            },
+            { "mDataProp": "credit_id" },
+            { "mDataProp": "notes" },
+            { "mDataProp": "type" },
+            { "mDataProp": "amount_paid" },
+            { "mDataProp": "amount_remaining" },
+            { "mDataProp": "created_on" },
+            { "mDataProp": "updated_on" }
+        ],
+        "aaData": [
+            [% FOREACH c IN credits %]
+                {
+                    [% PROCESS format_data data=c highlight='credit' %]
+
+                    "account_offsets": [
+                        [% FOREACH ao IN c.account_offsets %]
+                            {
+                                [% PROCESS format_data data=ao highlight='offset' %]
+
+                                "debit": {
+                                    [% PROCESS format_data data=ao.debit highlight='debit' %]
+                                }
+                            },
+                        [% END %]
+                    ]
+
+                },
+            [% END %]
+        ]
+    } );
+
+    $('#credits-table td.control').live( 'click', function () {
+        var nTr = this.parentNode;
+        var i = $.inArray( nTr, anOpen );
+
+        if ( i === -1 ) {
+            $('img', this).attr( 'src', sImageUrl+"details_close.png" );
+            var nDetailsRow = creditsTable.fnOpen( nTr, fnFormatCreditDetails(creditsTable, nTr), 'details' );
+            $('div.innerDetails', nDetailsRow).slideDown();
+            anOpen.push( nTr );
+        }
+        else {
+            $('img', this).attr( 'src', sImageUrl+"details_open.png" );
+            $('div.innerDetails', $(nTr).next()[0]).slideUp( function () {
+                creditsTable.fnClose( nTr );
+                anOpen.splice( i, 1 );
+            } );
+        }
+    } );
+
+} );
+
+function fnFormatDebitDetails( debitsTable, nTr ) {
+    var oData = debitsTable.fnGetData( nTr );
+
+    var sOut = "<div class='innerDetails' style='display:none;'>";
+
+    var account_offsets = oData.account_offsets;
+
+    sOut += "<ul>";
+    if ( oData.title ) {
+        sOut += "<li>" + _("Title: ");
+        if ( oData.biblionumber ) {
+            sOut += "<a href='/cgi-bin/koha/opac-detail.pl?biblionumber=" + oData.biblionumber + "'>";
+        }
+
+        sOut += oData.title;
+
+        if ( oData.biblionumber ) {
+            sOut += "</a>";
+        }
+
+        sOut += "</li>";
+    }
+
+    if ( oData.barcode ) {
+        sOut += "<li>" + _("Barcode: ") + oData.barcode + "</li>";
+    }
+
+    if ( oData.notes ) {
+        sOut += "<li>" + _("Notes: ") + oData.notes + "</li>";
+    }
+
+    sOut += "</ul>";
+
+    if ( account_offsets.length ) {
+        sOut +=
+            "<div class='innerDetails'>" +
+                "<table cellpadding='5' cellspacing='0' border='0' style='margin:10px;'>" +
+                    "<thead>" +
+                        "<tr><th colspan='99'>" + _("Payments applied") + "</th></tr>" +
+                        "<tr>" +
+                            "<th>" + _("ID") + "</th>" +
+                            "<th>" + _("Created on") + "</th>" +
+                            "<th>" + _("Payment amount") + "</th>" +
+                            "<th>" + _("Applied amount") + "</th>" +
+                            "<th>" + _("Type") + "</th>" +
+                            "<th>" + _("Notes") + "</th>" +
+                        "</tr>" +
+                    "</thead>" +
+                    "<tbody>";
+
+        for ( var i = 0; i < account_offsets.length; i++ ) {
+            ao = account_offsets[i];
+            sOut +=
+            "<tr>" +
+                "<td>" + ao.credit_id + "</td>" +
+                "<td>" + ao.created_on + "</td>" +
+                "<td>" + ao.credit.amount_paid + "</td>" +
+                "<td>" + ao.amount + "</td>" +
+                "<td>" + ao.credit.type + "</td>" +
+                "<td>" + ao.credit.notes + "</td>" +
+            "</tr>";
+        }
+
+        sOut +=
+            "</tbody>"+
+            "</table>";
+    }
+
+    sOut +=
+        "</div>";
+
+    return sOut;
+}
+
+function fnFormatCreditDetails( creditsTable, nTr ) {
+    var oData = creditsTable.fnGetData( nTr );
+
+    var sOut = "<div class='innerDetails' style='display:none;'>";
+
+    var account_offsets = oData.account_offsets;
+
+    if ( account_offsets.length ) {
+        sOut +=
+                "<table cellpadding='5' cellspacing='0' border='0' style='margin:10px;'>" +
+                    "<thead>" +
+                        "<tr><th colspan='99'>" + _("Fees paid") + "</th></tr>" +
+                        "<tr>" +
+                            "<th>" + _("ID") + "</th>" +
+                            "<th>" + _("Description") + "</th>" +
+                            "<th>" + _("Type") + "</th>" +
+                            "<th>" + _("Amount") + "</th>" +
+                            "<th>" + _("Remaining") + "</th>" +
+                            "<th>" + _("Created on") + "</th>" +
+                            "<th>" + _("Updated on") + "</th>" +
+                            "<th>" + _("Notes") + "</th>" +
+                        "</tr>" +
+                    "</thead>" +
+                    "<tbody>";
+
+        for ( var i = 0; i < account_offsets.length; i++ ) {
+            ao = account_offsets[i];
+            sOut +=
+            "<tr>" +
+                "<td>" + ao.debit.debit_id + "</td>" +
+                "<td>" + ao.debit.description + "</td>" +
+                "<td>" + ao.debit.type + "</td>" +
+                "<td>" + ao.debit.amount_original + "</td>" +
+                "<td>" + ao.debit.amount_outstanding + "</td>" +
+                "<td>" + ao.debit.created_on + "</td>" +
+                "<td>" + ao.debit.updated_on + "</td>" +
+                "<td>" + ao.debit.notes + "</td>" +
+            "</tr>";
+        }
+
+        sOut +=
+            "</tbody>"+
+            "</table>";
+    }
+
+    sOut +=
+        "</div>";
+
+    return sOut;
+}
+
+//]]>
+</script>
+
 [% BLOCK jsinclude %][% END %]
+
+[% BLOCK format_data %]
+    [% FOREACH key IN data.result_source.columns %]
+        [% IF key.match('^amount') %]
+            "[% key %]": "[% data.$key FILTER $Currency %]",
+        [% ELSIF key.match('_on$') %]
+            "[% key %]": "[% data.$key | $KohaDates %]",
+        [% ELSE %]
+            "[% key %]": "[% data.$key %]",
+        [% END %]
+    [% END %]
+[% END %]
