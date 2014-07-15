@@ -2,6 +2,7 @@
 [% USE Branches %]
 [% USE KohaDates %]
 [% USE ColumnsSettings %]
+[% USE Currency %]
 [% IF Koha.Preference('ExportRemoveFields') OR Koha.Preference('ExportWithCsvProfile') %]
    [% SET exports_enabled = 1 %]
 [% END %]
@@ -755,16 +756,16 @@ No patron matched <span class="ex">[% message %]</span>
 
         	[% IF ( charges ) %]
 			    <li>
-            <span class="circ-hlt">Fees &amp; Charges:</span> Patron has  <a href="/cgi-bin/koha/members/boraccount.pl?borrowernumber=[% borrowernumber %]">Outstanding fees &amp; charges[% IF ( chargesamount ) %] of [% chargesamount %][% END %]</a>.
+            <span class="circ-hlt">Fees &amp; Charges:</span> Patron has  <a href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]">Outstanding fees &amp; charges[% IF ( chargesamount ) %] of [% chargesamount | $Currency %][% END %]</a>.
                 [% IF ( charges_is_blocker ) %]
                     Checkouts are <span class="circ-hlt">BLOCKED</span> because fine balance is <span class="circ-hlt">OVER THE LIMIT</span>.
                 [% END %]
-            <a href="/cgi-bin/koha/members/pay.pl?borrowernumber=[% borrowernumber %]">Make payment</a></li>
+            <a href="/cgi-bin/koha/members/account_payment.pl?borrowernumber=[% borrowernumber %]">Make payment</a></li>
 			[% END %]
 
         	[% IF ( credits ) %]
 			<li>
-                <span class="circ-hlt">Credits:</span> Patron has a credit[% IF ( creditsamount ) %] of [% creditsamount %][% END %]
+                <span class="circ-hlt">Credits:</span> Patron has a credit[% IF ( creditsamount ) %] of [% creditsamount | $Currency %][% END %]
             </li>
 			[% END %]
 
