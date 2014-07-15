@@ -27,7 +27,6 @@ use C4::Auth;
 use C4::Koha;
 use C4::Context;
 use C4::Biblio;
-use C4::Accounts;
 use C4::Circulation;
 use C4::Items;
 use C4::Members;

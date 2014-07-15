@@ -227,23 +227,24 @@ else {
 my $branchdetail = GetBranchDetail( $data->{'branchcode'});
 @{$data}{keys %$branchdetail} = values %$branchdetail; # merge in all branch columns
 
-my ( $total, $accts, $numaccts) = GetMemberAccountRecords( $borrowernumber );
 my $lib1 = &GetSortDetails( "Bsort1", $data->{'sort1'} );
 my $lib2 = &GetSortDetails( "Bsort2", $data->{'sort2'} );
 $template->param( lib1 => $lib1 ) if ($lib1);
 $template->param( lib2 => $lib2 ) if ($lib2);
 
 # If printing a page, send the account informations to the template
-if ($print eq "page") {
-    foreach my $accountline (@$accts) {
-        $accountline->{amount} = sprintf '%.2f', $accountline->{amount};
-        $accountline->{amountoutstanding} = sprintf '%.2f', $accountline->{amountoutstanding};
+if ( $print eq "page" ) {
+    my $schema = Koha::Database->new()->schema();
 
-        if ($accountline->{accounttype} ne 'F' && $accountline->{accounttype} ne 'FU'){
-            $accountline->{printtitle} = 1;
-        }
-    }
-    $template->param( accounts => $accts );
+    my @account_debits = $schema->resultset('AccountDebit')
+      ->search( { borrowernumber => $borrowernumber } );
+    my @account_credits = $schema->resultset('AccountCredit')
+      ->search( { borrowernumber => $borrowernumber } );
+
+    $template->param(
+        account_debits  => \@account_debits,
+        account_credits => \@account_credits,
+    );
 }
 
 # Show OPAC privacy preference is system preference is set
@@ -351,8 +352,8 @@ $template->param(
     branch          => $branch,
     todaysdate      => C4::Dates->today(),
     totalprice      => sprintf("%.2f", $totalprice),
-    totaldue        => sprintf("%.2f", $total),
-    totaldue_raw    => $total,
+    totaldue        => sprintf("%.2f", $data->{account_balance}),
+    totaldue_raw    => $data->{account_balance},
     overdues_exist  => $overdues_exist,
     StaffMember     => ($category_type eq 'S'),
     is_child        => ($category_type eq 'C'),
