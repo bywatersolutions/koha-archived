@@ -24,6 +24,9 @@ use C4::Output;
 use C4::Members;
 use C4::Koha qw( getitemtypeinfo );
 use C4::Circulation qw( GetIssuingCharges );
+use Koha::Database;
+
+my $schema = Koha::Database->new()->schema();
 
 my $input          = CGI->new;
 my $borrowernumber = $input->param('borrowernumber');
@@ -41,31 +44,16 @@ my ( $template, $loggedinuser, $cookie ) = get_template_and_user(
 
 my $data = GetMember( 'borrowernumber' => $borrowernumber );
 
-my ( $total, $accts, $numaccts ) = GetMemberAccountRecords($borrowernumber);
-foreach my $accountline (@$accts) {
-    $accountline->{amount} = sprintf( '%.2f', $accountline->{amount} )
-        if ( $accountline->{amount} ) ;
-    $accountline->{amountoutstanding} = sprintf( '%.2f', $accountline->{amountoutstanding} )
-        if ( $accountline->{amountoutstanding} );
-
-    if (   $accountline->{accounttype} ne 'F'
-        && $accountline->{accounttype} ne 'FU' )
-    {
-        $accountline->{printtitle} = 1;
-    }
-}
-
 our $totalprice = 0;
-my $total_format = '';
-$total_format = sprintf( "%.2f", $total ) if ($total);
 
 $template->param(
     %$data,
 
     borrowernumber => $borrowernumber,
 
-    accounts => $accts,
-    totaldue => $total_format,
+    account_balance => $data->{account_balance},
+    account_debits => $schema->resultset('AccountDebit')->search({ borrowernumber => $borrowernumber }),
+    account_credits => $schema->resultset('AccountDebit')->search({ borrowernumber => $borrowernumber }),
 
     issues     => build_issue_data( GetPendingIssues($borrowernumber) ),
     totalprice => $totalprice,

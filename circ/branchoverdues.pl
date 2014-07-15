@@ -49,9 +49,8 @@ use Data::Dumper;
  	level 3 : only methode is possible  : - Considered Lost
 
  	the documents displayed on this interface, are checked on three points
- 	- 1) the document must be on accountlines (Type 'FU')
+    - 1) the document must be overdue with fines
  	- 2) item issues is not returned
-	- 3) this item as not been already notify
 
   FIXME: who is the author?
   FIXME: No privisions (i.e. "actions") for handling notices are implemented.
