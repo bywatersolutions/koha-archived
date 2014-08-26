@@ -398,7 +398,9 @@ sub CreateEDIOrder {
     foreach my $item (@results) {
         $linecount++;
         my $price;
-        my $title     = string35escape( escape( $item->{title} ) );
+        my $record   = GetMarcBiblio($item->{biblionumber});
+        my $subtitle = GetRecordValue('subtitle', $record ) || qw{};
+        my $title     = string35escape( escape( $item->{title} . q{ } . $subtitle ) );
         my $author    = string35escape( escape( $item->{author} ) );
         my $publisher = string35escape( escape( $item->{publishercode} ) );
         $price = sprintf '%.2f', $item->{listprice};
