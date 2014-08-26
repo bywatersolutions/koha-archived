@@ -301,7 +301,7 @@ sub GetBasketAsCSV {
 
     my @rows;
     foreach my $order (@orders) {
-        my $bd = GetBiblioData( $order->{'biblionumber'} );
+        my $bd       = GetBiblioData( $order->{'biblionumber'} );
         my $row = {
             contractname => $contract->{'contractname'},
             ordernumber => $order->{'ordernumber'},
