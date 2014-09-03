@@ -258,6 +258,7 @@ __END_SRU_PUBLICSERVER__
  <biblioservershadow>1</biblioservershadow>
  <authorityserver>authorities</authorityserver>
  <authorityservershadow>1</authorityservershadow>
+ <edi_orders_dir>__EDI_ORDERS_DIR__</edi_orders_dir>
  <pluginsdir>__PLUGINS_DIR__</pluginsdir>
  <enable_plugins>0</enable_plugins>
  <upload_path>__UPLOAD_PATH__</upload_path>
