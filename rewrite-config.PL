@@ -43,7 +43,7 @@ guesses worked out by the script.
 The following configuration keywords are available:
 
 PREFIX,
-BASE_DIR, CGI_DIR, LOG_DIR, PLUGINS_DIR, INSTALL_BASE,
+BASE_DIR, CGI_DIR, LOG_DIR, PLUGINS_DIR, EDI_ORDERS_DIR INSTALL_BASE,
 DB_TYPE, DB_HOST, DB_PORT, DB_NAME, DB_PASS, DB_USER, WEBMASTER_EMAIL, WEBSERVER_DOMAIN,
 WEBSERVER_HOST, WEBSERVER_IP, WEBSERVER_PORT, WEBSERVER_PORT_LIBRARIAN, ZEBRA_PASS, ZEBRA_USER
 
@@ -83,6 +83,7 @@ $prefix = $ENV{'INSTALL_BASE'} || "/usr";
   "__KOHA_INSTALLED_VERSION__" => "no_version_found",
   "__LOG_DIR__" => "/var/log",
   "__PLUGINS_DIR__" => "/var/lib/koha/plugins",
+  "__EDI_ORDERS_DIR__" => "/var/lib/koha/edi_orders",
   "__DB_TYPE__" => "mysql",
   "__DB_NAME__" => "koha",
   "__DB_HOST__" => $myhost,

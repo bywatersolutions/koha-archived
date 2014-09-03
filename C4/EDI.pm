@@ -329,12 +329,12 @@ sub CreateEDIOrder {
     my $month        = sprintf '%02d', $datetime[4] + 1;
     my $linecount    = 0;
     my $segments     = 0;
-    my $filename     = "ediorder_$basketno.CEP";
     my $exchange     = int( rand(99999999999999) );
     my $ref          = int( rand(99999999999999) );
     my $san          = GetVendorSAN($booksellerid);
     my $message_type = GetMessageType($basketno);
-    my $output_file  = C4::Context->config('intranetdir');
+    my $filename     = "ediorder_$basketno.CEP";
+    my $output_file  = C4::Context->config("edi_orders_dir") . "/$filename";
 
 ## $booksellerid is the primary key for booksellers and is arbitrary
 ## We need to send the real supplier id which we aren't storing in the db
@@ -351,8 +351,6 @@ sub CreateEDIOrder {
     else {
         $default_currency = 'GBP';
     }
-
-    $output_file .= "/misc/edi_files/$filename";
 
     open my $fh, '>', $output_file
       or croak "Unable to create $output_file : $!";
@@ -647,8 +645,7 @@ sub SendEDIOrder {
     my $result;
 
     # check edi order file exists
-    my $edi_files = C4::Context->config('intranetdir');
-    $edi_files .= '/misc/edi_files/';
+    my $edi_files = C4::Context->config("edi_orders_dir") . '/';
     if ( -e "${edi_files}ediorder_$basketno.CEP" ) {
         my $dbh = C4::Context->dbh;
         my $sth;
@@ -741,8 +738,7 @@ sub SendEDIOrder {
 
 sub FTPError {
     my $error    = shift;
-    my $log_file = C4::Context->config('intranetdir');
-    $log_file .= '/misc/edi_files/edi_ftp_error.log';
+    my $log_file = C4::Context->config('logdir') . '/edi_ftp_error.log';
     open my $log_fh, '>>', $log_file
       or croak "Could not open $log_file: $!";
     my ( $sec, $min, $hour, $mday, $mon, $year ) = localtime(time);
@@ -784,9 +780,10 @@ sub ParseEDIQuote {
     my $ParseEDIQuoteItem;
 
     my $edi  = Business::Edifact::Interchange->new;
-    my $path = C4::Context->config('intranetdir');
-    $path .= '/misc/edi_files/';
-    $edi->parse_file("$path$filename");
+
+    my $path .= C4::Context->config("edi_orders_dir") . '/';
+    $edi->parse_file( $path . $filename );
+
     my $messages = $edi->messages();
     my $msg_cnt  = @{$messages};
 
