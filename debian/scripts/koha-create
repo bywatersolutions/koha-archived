@@ -108,6 +108,7 @@ generate_config_file() {
         -e "s/__UNIXUSER__/$username/g" \
         -e "s/__UNIXGROUP__/$username/g" \
         -e "s/__PLUGINS_DIR__/\/var\/lib\/koha\/$name\/plugins/g" \
+        -e "s/__EDI_ORDERS_DIR__/\/var\/lib\/koha\/$name\/edi_orders/g" \
         -e "s/__MEMCACHED_NAMESPACE__/$MEMCACHED_NAMESPACE/g" \
         -e "s/__MEMCACHED_SERVERS__/$MEMCACHED_SERVERS/g" \
         "/etc/koha/$1" > "$2"
