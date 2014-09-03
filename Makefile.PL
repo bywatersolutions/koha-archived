@@ -236,6 +236,10 @@ Directory for backup files produced by Koha.
 
 Directory for external Koha plugins.
 
+=item EDI_ORDERS_DIR
+
+Directory for generated EDI order files.
+
 =item PAZPAR2_CONF_DIR
 
 Directory for PazPar2 configuration files.
@@ -323,6 +327,7 @@ my $target_map = {
   './skel/var/lib/koha/zebradb/biblios/tmp'  => { target => 'ZEBRA_DATA_DIR', trimdir => 6 },
   './skel/var/lock/koha/zebradb/rebuild' => { target => 'ZEBRA_LOCK_DIR', trimdir => 6 },
   './skel/var/lib/koha/plugins' => { target => 'PLUGINS_DIR', trimdir => 6 },
+  './skel/var/lib/koha/edi_orders' => { target => 'PLUGINS_DIR', trimdir => 6 },
   './sms'                       => 'INTRANET_CGI_DIR',
   './suggestion'                => 'INTRANET_CGI_DIR',
   './svc'                       => 'INTRANET_CGI_DIR',
@@ -1227,6 +1232,7 @@ sub get_target_directories {
         $dirmap{'LOG_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'log');
         $dirmap{'BACKUP_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'spool');
         $dirmap{'PLUGINS_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'koha', 'plugins');
+        $dirmap{'EDI_ORDERS_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'koha', 'edi_orders');
         $dirmap{'ZEBRA_DATA_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'zebradb');
         $dirmap{'ZEBRA_RUN_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'run', 'zebradb');
     } elsif ($mode eq 'dev') {
@@ -1260,6 +1266,7 @@ sub get_target_directories {
         $dirmap{'LOG_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'log');
         $dirmap{'BACKUP_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'spool');
         $dirmap{'PLUGINS_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'plugins');
+        $dirmap{'EDI_ORDERS_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'edi_orders');
         $dirmap{'ZEBRA_DATA_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'zebradb');
         $dirmap{'ZEBRA_RUN_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'run', 'zebradb');
     } else {
@@ -1283,6 +1290,7 @@ sub get_target_directories {
         $dirmap{'LOG_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'log', $package);
         $dirmap{'BACKUP_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'spool', $package);
         $dirmap{'PLUGINS_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'lib', $package, 'plugins');
+        $dirmap{'EDI_ORDERS_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'lib', $package, 'edi_orders');
         $dirmap{'ZEBRA_DATA_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'lib', $package, 'zebradb');
         $dirmap{'ZEBRA_RUN_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'run', $package, 'zebradb');
     }
@@ -1529,7 +1537,7 @@ make_upgrade_backup ::
 \t\$(NOECHO) umask 022; \$(MOD_BACKUP) \\
 /;
     foreach my $key (qw/KOHA_CONF_DIR INTRANET_TMPL_DIR INTRANET_WWW_DIR OPAC_TMPL_DIR OPAC_WWW_DIR
-                     PAZPAR2_CONF_DIR ZEBRA_CONF_DIR PLUGINS_DIR/) {
+                     PAZPAR2_CONF_DIR ZEBRA_CONF_DIR PLUGINS_DIR EDI_ORDERS_DIR/) {
     	$upgrade .= "\t\t\$(KOHA_INST_$key) \$(KOHA_DEST_$key) \\\n"
             unless exists $skip_directories->{$key} or
                    not exists $target_directories->{$key};
