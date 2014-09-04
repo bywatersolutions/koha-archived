@@ -514,8 +514,13 @@ sub UpdateFine {
 
     my $timestamp = get_timestamp();
 
-    my $fine =
-      $schema->resultset('AccountDebit')->single( { issue_id => $issue_id, type => Koha::Accounts::DebitTypes::Fine } );
+    my $fine = $schema->resultset('AccountDebit')->single(
+        {
+            issue_id => $issue_id,
+            type     => Koha::Accounts::DebitTypes::Fine,
+            accruing => 1,
+        }
+    );
 
     my $offset = 0;
     if ($fine) {

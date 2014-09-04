@@ -1899,7 +1899,7 @@ sub AddReturn {
 
     # fix up the overdues in accounts...
     if ($borrowernumber) {
-        _FixOverduesOnReturn(
+        _FinalizeFine(
             {
                 exempt_fine => $exemptfine,
                 dropbox     => $dropbox,
@@ -2122,22 +2122,24 @@ sub _debar_user_on_return {
     return;
 }
 
-=head2 _FixOverduesOnReturn
+=head2 _FinalizeFine
 
-   &_FixOverduesOnReturn($brn,$itm, $exemptfine, $dropboxmode);
-
-C<$brn> borrowernumber
-
-C<$itm> itemnumber
+   _FinalizeFine({
+        exempt_fine => $exempt_fine,
+        dropbox     => $dropbox,
+        issue       => $issue,
+   });
 
 C<$exemptfine> BOOL -- remove overdue charge associated with this issue. 
 C<$dropboxmode> BOOL -- remove lastincrement on overdue charge associated with this issue.
+C<$issue> -- DBIx::Class::Row for the issue
 
-Internal function, called only by AddReturn
+This subrouting closes out the accuruing of a fine, and reduces if it exemptfine or
+dropbox flags are passed in.
 
 =cut
 
-sub _FixOverduesOnReturn {
+sub _FinalizeFine {
     my ( $params ) = @_;
 
     my $exemptfine = $params->{exempt_fine};
@@ -2147,9 +2149,13 @@ sub _FixOverduesOnReturn {
     my $dbh = C4::Context->dbh;
 
     my $schema = Koha::Database->new()->schema;
-    my $fine =
-      $schema->resultset('AccountDebit')
-      ->single( { issue_id => $issue->issue_id(), type => Koha::Accounts::DebitTypes::Fine() } );
+    my $fine = $schema->resultset('AccountDebit')->single(
+        {
+            issue_id => $issue->issue_id(),
+            type     => Koha::Accounts::DebitTypes::Fine(),
+            accruing => 1,
+        }
+    );
 
     return unless ( $fine );
 
@@ -2637,14 +2643,11 @@ sub AddRenewal {
     my $dbh = C4::Context->dbh;
 
     # Find the issues record for this book
-    my $sth =
-      $dbh->prepare("SELECT * FROM issues WHERE itemnumber = ?");
-    $sth->execute( $itemnumber );
-    my $issuedata = $sth->fetchrow_hashref;
+    my $issue = Koha::Database->new()->schema->resultset('Issue')->single({ itemnumber => $itemnumber });
 
-    return unless ( $issuedata );
+    return unless ( $issue );
 
-    $borrowernumber ||= $issuedata->{borrowernumber};
+    $borrowernumber ||= $issue->get_column('borrowernumber');
 
     if ( defined $datedue && ref $datedue ne 'DateTime' ) {
         carp 'Invalid date passed to AddRenewal.';
@@ -2660,23 +2663,24 @@ sub AddRenewal {
         my $itemtype = (C4::Context->preference('item-level_itypes')) ? $biblio->{'itype'} : $biblio->{'itemtype'};
 
         $datedue = (C4::Context->preference('RenewalPeriodBase') eq 'date_due') ?
-                                        dt_from_string( $issuedata->{date_due} ) :
+                                        dt_from_string( $issue->get_column('date_due') ) :
                                         DateTime->now( time_zone => C4::Context->tz());
-        $datedue =  CalcDateDue($datedue, $itemtype, $issuedata->{'branchcode'}, $borrower, 'is a renewal');
+        $datedue =  CalcDateDue($datedue, $itemtype, $issue->get_column('branchcode'), $borrower, 'is a renewal');
     }
 
     # Update the issues record to have the new due date, and a new count
     # of how many times it has been renewed.
-    my $renews = $issuedata->{'renewals'} + 1;
-    $sth = $dbh->prepare("UPDATE issues SET date_due = ?, renewals = ?, lastreneweddate = ?
-                            WHERE borrowernumber=? 
-                            AND itemnumber=?"
+    $issue->update(
+        {
+            date_due        => $datedue->strftime('%Y-%m-%d %H:%M'),
+            renewals        => $issue->renewals() + 1,
+            lastreneweddate => $lastreneweddate,
+        }
     );
 
-    $sth->execute( $datedue->strftime('%Y-%m-%d %H:%M'), $renews, $lastreneweddate, $borrowernumber, $itemnumber );
 
     # Update the renewal count on the item, and tell zebra to reindex
-    $renews = $biblio->{'renewals'} + 1;
+    my $renews = $biblio->{'renewals'} + 1;
     ModItem({ renewals => $renews, onloan => $datedue->strftime('%Y-%m-%d %H:%M')}, $biblio->{'biblionumber'}, $itemnumber);
 
     # Charge a new rental fee, if applicable?
@@ -2732,6 +2736,9 @@ sub AddRenewal {
 
     # Log the renewal
     UpdateStats( $branch, 'renew', $charge, '', $itemnumber, $item->{itype}, $borrowernumber, undef, $item->{'ccode'});
+
+    _FinalizeFine( { issue => $issue } );
+
 	return $datedue;
 }
 
@@ -3464,7 +3471,7 @@ sub LostItem{
     # If a borrower lost the item, add a replacement cost to the their record
     if ( $borrower ){
         if (C4::Context->preference('WhenLostForgiveFine')){
-            _FixOverduesOnReturn(
+            _FinalizeFine(
                 {
                     exempt_fine => 1,
                     dropbox     => 0,
