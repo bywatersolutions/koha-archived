@@ -63,7 +63,7 @@ __PACKAGE__->belongs_to(
     is_deferrable => 1,
     join_type     => "LEFT",
     on_delete     => "CASCADE",
-    on_update     => "CASCADE",
+    on_update     => "RESTRICT",
   },
 );
 
@@ -83,13 +83,13 @@ __PACKAGE__->belongs_to(
     is_deferrable => 1,
     join_type     => "LEFT",
     on_delete     => "CASCADE",
-    on_update     => "CASCADE",
+    on_update     => "RESTRICT",
   },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07025 @ 2013-10-14 20:56:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:k6hCbzMVZ1VRsubvdrZMYQ
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-09-08 12:56:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:vZfe76sLdPsRKNsVQvhsOw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

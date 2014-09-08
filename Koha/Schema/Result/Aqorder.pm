@@ -220,12 +220,6 @@ __PACKAGE__->table("aqorders");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 subscriptionid
-
-  data_type: 'integer'
-  is_foreign_key: 1
-  is_nullable: 1
-
 =head2 parent_ordernumber
 
   data_type: 'integer'
@@ -237,6 +231,12 @@ __PACKAGE__->table("aqorders");
   default_value: 'new'
   is_nullable: 1
   size: 16
+
+=head2 subscriptionid
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 1
 
 =cut
 
@@ -314,8 +314,6 @@ __PACKAGE__->add_columns(
   { data_type => "integer", default_value => 0, is_nullable => 1 },
   "claimed_date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
-  "subscriptionid",
-  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "parent_ordernumber",
   { data_type => "integer", is_nullable => 1 },
   "orderstatus",
@@ -325,6 +323,8 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => 16,
   },
+  "subscriptionid",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY
@@ -421,7 +421,7 @@ __PACKAGE__->belongs_to(
   {
     is_deferrable => 1,
     join_type     => "LEFT",
-    on_delete     => "CASCADE",
+    on_delete     => "SET NULL",
     on_update     => "CASCADE",
   },
 );
@@ -441,7 +441,7 @@ __PACKAGE__->belongs_to(
   {
     is_deferrable => 1,
     join_type     => "LEFT",
-    on_delete     => "CASCADE",
+    on_delete     => "SET NULL",
     on_update     => "CASCADE",
   },
 );
@@ -467,8 +467,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07025 @ 2014-04-19 15:25:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XGQHKw2/pml/kFe89vbvXw
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-09-08 12:56:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YWH43HrcI0NXTwnFvBnC7w
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

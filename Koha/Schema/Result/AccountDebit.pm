@@ -86,13 +86,6 @@ __PACKAGE__->table("account_debits");
   data_type: 'text'
   is_nullable: 1
 
-=head2 branchcode
-
-  data_type: 'varchar'
-  is_foreign_key: 1
-  is_nullable: 1
-  size: 10
-
 =head2 manager_id
 
   data_type: 'integer'
@@ -109,6 +102,12 @@ __PACKAGE__->table("account_debits");
   data_type: 'timestamp'
   datetime_undef_if_invalid: 1
   is_nullable: 1
+
+=head2 branchcode
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 10
 
 =cut
 
@@ -140,8 +139,6 @@ __PACKAGE__->add_columns(
   { data_type => "mediumtext", is_nullable => 1 },
   "notes",
   { data_type => "text", is_nullable => 1 },
-  "branchcode",
-  { data_type => "varchar", is_foreign_key => 1, is_nullable => 1, size => 10 },
   "manager_id",
   { data_type => "integer", is_nullable => 1 },
   "created_on",
@@ -156,6 +153,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "branchcode",
+  { data_type => "varchar", is_nullable => 1, size => 10 },
 );
 
 =head1 PRIMARY KEY
@@ -202,29 +201,9 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
-=head2 branchcode
 
-Type: belongs_to
-
-Related object: L<Koha::Schema::Result::Branch>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "branchcode",
-  "Koha::Schema::Result::Branch",
-  { branchcode => "branchcode" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "CASCADE",
-    on_update     => "CASCADE",
-  },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07040 @ 2014-07-15 10:03:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ns19xWix5RriwDPelPnhfw
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-09-08 12:56:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2HKoXdseburIvgW+7np9sg
 
 __PACKAGE__->belongs_to(
   "item",

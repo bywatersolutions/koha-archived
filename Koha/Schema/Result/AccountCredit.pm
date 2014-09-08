@@ -59,17 +59,16 @@ __PACKAGE__->table("account_credits");
   is_nullable: 0
   size: [28,6]
 
+=head2 amount_voided
+
+  data_type: 'decimal'
+  is_nullable: 1
+  size: [28,6]
+
 =head2 notes
 
   data_type: 'text'
   is_nullable: 1
-
-=head2 branchcode
-
-  data_type: 'varchar'
-  is_foreign_key: 1
-  is_nullable: 1
-  size: 10
 
 =head2 manager_id
 
@@ -88,6 +87,12 @@ __PACKAGE__->table("account_credits");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 branchcode
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 10
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -103,10 +108,10 @@ __PACKAGE__->add_columns(
   { data_type => "decimal", is_nullable => 0, size => [28, 6] },
   "amount_remaining",
   { data_type => "decimal", is_nullable => 0, size => [28, 6] },
+  "amount_voided",
+  { data_type => "decimal", is_nullable => 1, size => [28, 6] },
   "notes",
   { data_type => "text", is_nullable => 1 },
-  "branchcode",
-  { data_type => "varchar", is_foreign_key => 1, is_nullable => 1, size => 10 },
   "manager_id",
   { data_type => "integer", is_nullable => 1 },
   "created_on",
@@ -121,6 +126,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "branchcode",
+  { data_type => "varchar", is_nullable => 1, size => 10 },
 );
 
 =head1 PRIMARY KEY
@@ -167,29 +174,9 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
-=head2 branchcode
 
-Type: belongs_to
-
-Related object: L<Koha::Schema::Result::Branch>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "branchcode",
-  "Koha::Schema::Result::Branch",
-  { branchcode => "branchcode" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "CASCADE",
-    on_update     => "CASCADE",
-  },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07040 @ 2014-07-15 10:08:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lkoQZ4EQDlmD9vpZQ7k7mA
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-09-08 12:56:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SwZ2RvXvkXHfgXvPapkPag
 
 __PACKAGE__->belongs_to(
   "borrower",
