@@ -542,7 +542,7 @@ sub UpdateFine {
             }
         }
     }
-    else {
+    elsif ( $amount ) { # No fine to update, don't insert fines of $0.00
         my $item = $schema->resultset('Item')->find($itemnumber);
 
         $fine = $schema->resultset('AccountDebit')->create(
@@ -561,6 +561,8 @@ sub UpdateFine {
         );
 
         $offset = 1;
+    } else { # No fine to update, amount is 0, just return
+        return;
     }
 
     $schema->resultset('AccountOffset')->create(
