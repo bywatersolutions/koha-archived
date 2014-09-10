@@ -1799,7 +1799,17 @@ sub AddReturn {
         }
 
         if ($borrowernumber) {
-            if ( ( C4::Context->preference('CalculateFinesOnReturn') && $issue->{'overdue'} ) || $return_date ) {
+            if (
+                ( !$item->{itemlost} ) # skip lost items
+                && (
+                    (
+                        C4::Context->preference('CalculateFinesOnReturn')
+                        && $issue->{'overdue'}
+                    )
+                    || $return_date # force fine recalculation in case fine needs reduced
+                )
+              )
+            {
                 # we only need to calculate and change the fines if we want to do that on return
                 # Should be on for hourly loans
                 my $control = C4::Context->preference('CircControl');
