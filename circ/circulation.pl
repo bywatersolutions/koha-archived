@@ -362,9 +362,11 @@ if ($borrowernumber) {
 # BUILD HTML
 # show all reserves of this borrower, and the position of the reservation ....
 if ($borrowernumber) {
+    my $holds_rs = Koha::Database->new()->schema()->resultset('Reserve');
     $template->param(
-        holds_count => Koha::Database->new()->schema()->resultset('Reserve')
-          ->count( { borrowernumber => $borrowernumber } ) );
+        holds_count => $holds_rs->count( { borrowernumber => $borrowernumber } ),
+        WaitingHolds => $holds_rs->GetWaiting( { borrowernumber => $borrowernumber } )
+    );
 
     $template->param( adultborrower => 1 ) if ( $borrower->{'category_type'} eq 'A' );
 }
