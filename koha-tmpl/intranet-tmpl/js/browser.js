@@ -52,9 +52,9 @@ KOHA.browser = function (searchid, biblionumber) {
                     return ( elementOfArray.search(/^scs_\d/) != -1 ); //We are looking for specifically staff client searchCookies.
                 }
             );
-            if (scsCookieKeys.length >= 10) {
+            if (scsCookieKeys.length >= 5) {
                 scsCookieKeys.sort(); //Make sure they are in order, oldest first!
-                $.removeCookie( scsCookieKeys[0], { path: '/' } );
+                $.removeCookie( scsCookieKeys[0], { path: '/' } )
             }
             //EO Bug_11369
         }
