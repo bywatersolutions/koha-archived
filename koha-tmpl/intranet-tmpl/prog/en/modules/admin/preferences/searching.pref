@@ -149,6 +149,11 @@ Searching:
               class: integer
             - results per page in the staff client.
         -
+            - For records with many items, only check the hold and transit status for the first
+            - pref: MaxSearchResultsItemsPerRecordStatusCheck
+              class: integer
+            - items.
+        -
             - By default, sort search results in the OPAC by
             - pref: OPACdefaultSortField
               default: relevance
