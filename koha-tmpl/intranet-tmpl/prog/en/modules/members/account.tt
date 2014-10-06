@@ -21,14 +21,6 @@ $(document).ready(function() {
     [% END %]
 
     $('#account-credits').hide();
-    $('#account-debits-switcher').click(function() {
-         $('#account-debits').slideUp();
-         $('#account-credits').slideDown();
-    });
-    $('#account-credits-switcher').click(function() {
-         $('#account-credits').slideUp();
-         $('#account-debits').slideDown();
-    });
 
     var anOpen = [];
     var sImageUrl = "[% interface %]/[% theme %]/img/";
@@ -38,6 +30,25 @@ $(document).ready(function() {
         "oTableTools": {
             "sSwfPath": "[% interface %]/lib/jquery/plugins/TableTools/media/swf/copy_csv_xls_pdf.swf",
             "aButtons": [
+                {
+                    "sExtends": "text",
+                    "sButtonText": _("View payments"),
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        $('#account-debits').slideUp();
+                        $('#account-credits').slideDown();
+                    }
+                },
+                {
+                    "sExtends": "text",
+                    "sButtonText": [% IF show_all %] '<i class="icon-eye-close"></i> ' + _('Hide fees & payments with no balance') [% ELSE %] '<i class="icon-eye-open"></i> ' + _('Show all fees & payments') [% END %],
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        [% IF show_all %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=0";
+                        [% ELSE %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=1";
+                        [% END %]
+                    }
+                },
                 {
                     "sExtends": "print",
                     "sButtonText": "<i class='icon-print'></i> " + _("Print")
@@ -53,6 +64,9 @@ $(document).ready(function() {
                     ]
                 }
             ]
+        },
+        "oLanguage": {
+            "sEmptyTable": [% IF show_all %] _("Patron has no fees!") [% ELSE %] _("Patron has no outstanding fees!") [% END %] 
         },
         "bProcessing": true,
         "aoColumns": [
@@ -144,6 +158,25 @@ $(document).ready(function() {
             "sSwfPath": "[% interface %]/lib/jquery/plugins/TableTools/media/swf/copy_csv_xls_pdf.swf",
             "aButtons": [
                 {
+                    "sExtends": "text",
+                    "sButtonText": _("View fees"),
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        $('#account-credits').slideUp();
+                        $('#account-debits').slideDown();
+                    }
+                },
+                {
+                    "sExtends": "text",
+                    "sButtonText": [% IF show_all %] '<i class="icon-eye-close"></i> ' + _('Hide fees & payments with no balance') [% ELSE %] '<i class="icon-eye-open"></i> ' + _('Show all fees & payments') [% END %],
+                    "fnClick": function ( nButton, oConfig, oFlash ) {
+                        [% IF show_all %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=0";
+                        [% ELSE %]
+                            window.location = "/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]&show_all=1";
+                        [% END %]
+                    }
+                },
+                {
                     "sExtends": "print",
                     "sButtonText": "<i class='icon-print'></i> " + _("Print")
                 },
@@ -158,6 +191,9 @@ $(document).ready(function() {
                     ]
                 }
             ]
+        },
+        "oLanguage": {
+            "sEmptyTable": [% IF show_all %] _("Patron has no payments!") [% ELSE %] _("Patron has no payments with an unused balance!") [% END %] 
         },
         "bProcessing": true,
         "aoColumns": [
@@ -450,7 +486,6 @@ function accountVoid( type, id ) {
 
                     <div>
                         <div id="account-debits">
-                            <p><a id="account-debits-switcher" href="#" onclick="return false">View payments</a></p>
                             <table cellpadding="0" cellspacing="0" border="0" class="display" id="debits-table">
                                 <thead>
                                     <tr>
@@ -472,7 +507,6 @@ function accountVoid( type, id ) {
                         </div>
 
                         <div id="account-credits">
-                            <p><a id="account-credits-switcher" href="#"  onclick="return false">View fees</a></p>
                             <table cellpadding="0" cellspacing="0" border="0" class="display" id="credits-table">
                                 <thead>
                                     <tr>

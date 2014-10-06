@@ -43,19 +43,31 @@ my ( $template, $loggedinuser, $cookie ) = get_template_and_user(
     }
 );
 
+my $show_all = $cgi->param('show_all');
+
 my $borrowernumber = $cgi->param('borrowernumber');
 
 my $borrower = GetMember( 'borrowernumber' => $borrowernumber );
 
 my $schema =  Koha::Database->new()->schema();
 
+my %params;
+$params{-not} = { amount_outstanding => '0' } unless $show_all;
 my @debits = $schema->resultset('AccountDebit')->search(
-    { 'me.borrowernumber' => $borrowernumber },
+    {
+        'me.borrowernumber' => $borrowernumber,
+        %params,
+    },
     { prefetch            => { account_offsets => 'credit' } }
 );
 
+%params = ();
+$params{-not} = { amount_remaining => '0' } unless $show_all;
 my @credits = $schema->resultset('AccountCredit')->search(
-    { 'me.borrowernumber' => $borrowernumber },
+    {
+        'me.borrowernumber' => $borrowernumber,
+        %params,
+    },
     { prefetch            => { account_offsets => 'debit' } }
 );
 
@@ -67,6 +79,8 @@ $template->param(
     # IDs for automatic receipt printing
     debit_id  => $cgi->param('debit_id')  || undef,
     credit_id => $cgi->param('credit_id') || undef,
+
+    show_all => $show_all,
 );
 
 # Standard /members/ borrower details data
