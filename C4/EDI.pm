@@ -487,10 +487,8 @@ sub CreateEDIOrder {
             $linecount++;
             my $lqt = 1
               ; # quantity, separate GIR for each item, so quanitity is 1 of each
-            my $llo = substr($item->{homebranch}, 0, 5);
-	    #my $lfn = $item->{budget_code};
-            ## adding in the ccode into the LFN statement to see if that works - this will be a problem in the future for edi_invoicing
-            my $lfn = $item->{ccode};
+            my $llo = $item->{homebranch};
+            my $lfn = $item->{budget_code};
             my $lcl = $item->{itemcallnumber};
             my $lst = $item->{itype};
             my $lsq = $item->{location};
@@ -627,10 +625,7 @@ sub GetBranchCode {
     while ( @row = $sth->fetchrow_array() ) {
         $branchcode = $row[0];
     }
-    #return $branchcode;
-    ## Brendan editing this file to only send 5 character branchcode date-3-20-2014 direct email to melissa that brendan is hacking the fix for now.
-    return substr($branchcode, 0, 5);
-
+    return $branchcode;
 }
 
 =head2 SendEDIOrder
