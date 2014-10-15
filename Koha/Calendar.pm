@@ -36,7 +36,7 @@ sub _init {
             (open_hour = 0 AND open_minute = 0 AND close_hour = 0 AND close_minute = 0) AS closed
         FROM calendar_repeats
         WHERE branchcode = ? AND weekday IS NOT NULL
-    }, 'weekday', { Slice => {} }, $branch ); 
+    }, 'weekday', { Slice => {} }, $branch );
 
     my $day_month_hours = $dbh->selectall_arrayref( q{
         SELECT
@@ -173,7 +173,7 @@ sub addHours {
             my $day_len = $hours->{open_time} - $base_date;
 
             if ( DateTime::Duration->compare( $day_len, $hours_duration, $base_date ) > 0 ) {
-                if ( $self->{days_mode} eq 'Calendar' ) { 
+                if ( $self->{days_mode} eq 'Calendar' ) {
                     return $hours->{open_time};
                 }
 
@@ -202,7 +202,7 @@ sub addHours {
             my $day_len = $hours->{close_time} - $base_date;
 
             if ( DateTime::Duration->compare( $day_len, $hours_duration, $base_date ) < 0 ) {
-                if ( $self->{days_mode} eq 'Calendar' ) { 
+                if ( $self->{days_mode} eq 'Calendar' ) {
                     return $hours->{close_time};
                 }
 
@@ -420,7 +420,7 @@ sub hours_between {
     return $end_dt - $start_dt if ( $start_dt->ymd eq $end_dt->ymd );
 
     my $duration = DateTime::Duration->new;
-    
+
     $duration->add_duration( $start_hours->{close_time} - $start_dt ) if ( $start_dt < $start_hours->{close_time} );
 
     for (my $date = $start_dt->clone->truncate( to => 'day' )->add( days => 1 );

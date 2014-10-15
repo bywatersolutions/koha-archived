@@ -6,9 +6,7 @@
 [% INCLUDE 'doc-head-close.inc' %]
 [% INCLUDE 'calendar.inc' %]
 <link rel="stylesheet" type="text/css" href="[% themelang %]/css/datatables.css" />
-<script type="text/javascript" src="[% themelang %]/lib/jquery/plugins/jquery.dataTables.min.js"></script>
-[% INCLUDE 'datatables-strings.inc' %]
-<script type="text/javascript" src="[% themelang %]/js/datatables.js"></script>
+[% INCLUDE 'datatables.inc' %]
 <script language="JavaScript" type="text/javascript">
 //<![CDATA[
     var weekdays = new Array(_("Sundays"),_("Mondays"),_("Tuesdays"),_("Wednesdays"),_("Thursdays"),_("Fridays"),_("Saturdays"));
@@ -89,7 +87,7 @@
         $('#showWeekday:first').val(weekDay);
         $('#showTitle').val(event.title);
         $('#showEventType').val(event.eventType);
-        
+
         if (event.closed) {
             $('#showHoursTypeClosed')[0].checked = true;
         } else if (event.close_hour == 24) {
@@ -97,8 +95,8 @@
         } else {
             $('#showHoursTypeOpenSet')[0].checked = true;
             $('#showHoursTypeOpenSet').change();
-            $('#showOpenTime').val(event.open_hour + ':' + zeroPad(event.open_minute)); 
-            $('#showCloseTime').val(event.close_hour + ':' + zeroPad(event.close_minute)); 
+            $('#showOpenTime').val(event.open_hour + ':' + zeroPad(event.open_minute));
+            $('#showCloseTime').val(event.close_hour + ':' + zeroPad(event.close_minute));
         }
 
         $("#operationDelLabel").html(_("Delete this event."));
@@ -218,7 +216,7 @@
             defaultDate: new Date("[% keydate %]")
         });
         $(".hourssel input").change(function() {
-            $(".hoursentry", this.form).toggle(this.value == 'openSet'); 
+            $(".hoursentry", this.form).toggle(this.value == 'openSet');
         }).each( function() { this.checked = false } );
     });
 //]]>
@@ -264,7 +262,7 @@ li.hoursentry input {
 <div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/tools/tools-home.pl">Tools</a> &rsaquo; [% branchname %] Calendar</div>
 
 <div id="doc3" class="yui-t1">
-   
+
    <div id="bd">
     <div id="yui-main">
     <div class="yui-b">
@@ -281,7 +279,7 @@ li.hoursentry input {
                     [% END %]
                 [% END %]
             </select>
-    
+
     <!-- ******************************** FLAT PANELS ******************************************* -->
     <!-- *****           Makes all the flat panel to deal with events                     ***** -->
     <!-- **************************************************************************************** -->
@@ -300,8 +298,8 @@ li.hoursentry input {
             </li>
             <li>
                 <strong>From Date:</strong>
-                <span id="showDaynameOutput"></span>, 
-                
+                <span id="showDaynameOutput"></span>,
+
                                 [% IF ( dateformat == "us" ) %]<span id="showMonthOutput"></span>/<span id="showDayOutput"></span>/<span id="showYearOutput"></span>[% ELSIF ( dateformat == "metric" ) %]<span id="showDayOutput"></span>/<span id="showMonthOutput"></span>/<span id="showYearOutput"></span>[% ELSE %]<span id="showYearOutput"></span>/<span id="showMonthOutput"></span>/<span id="showDayOutput"></span>[% END %]
 
                 <input type="hidden" id="showWeekday" name="weekday" />
@@ -325,9 +323,9 @@ li.hoursentry input {
                 <input type="time" name="closeTime" id="showCloseTime" size="3" maxlength="5" value="23:59" pattern="(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9])" />
             </li>
             <li><label for="showTitle">Title: </label><input type="text" name="title" id="showTitle" size="35" /></li>
-            <!-- showTitle is necessary for exception radio button to work properly --> 
+            <!-- showTitle is necessary for exception radio button to work properly -->
                 <label for="showDescription">Description:</label>
-                <textarea rows="2" cols="40" id="showDescription" name="description"></textarea>    
+                <textarea rows="2" cols="40" id="showDescription" name="description"></textarea>
             </li>
             <li class="radio"><input type="radio" name="op" id="showOperationDel" value="delete" /> <label for="showOperationDel" id="showOperationDelLabel">Delete this event</label>
                 <a href="#" class="helptext">[?]</a>
@@ -355,7 +353,7 @@ li.hoursentry input {
     <!-- ***************************** Panel to deal with new events **********************  -->
     <div class="panel" id="newEvent">
          <form action="/cgi-bin/koha/tools/calendar.pl" method="post">
-            <input type="hidden" name="branchCodes" id="branchCodes" value="[% branchcodes %]" /> 
+            <input type="hidden" name="branchCodes" id="branchCodes" value="[% branchcodes %]" />
             <input type="hidden" name="op" value="save" />
             <fieldset class="brief">
             <h3>Add new event</h3>
@@ -368,7 +366,7 @@ li.hoursentry input {
             </li>
             <li>
                 <strong>From date:</strong>
-                <span id="newDaynameOutput"></span>, 
+                <span id="newDaynameOutput"></span>,
 
                          [% IF ( dateformat == "us" ) %]<span id="newMonthOutput"></span>/<span id="newDayOutput"></span>/<span id="newYearOutput"></span>[% ELSIF ( dateformat == "metric" ) %]<span id="newDayOutput"></span>/<span id="newMonthOutput"></span>/<span id="newYearOutput"></span>[% ELSE %]<span id="newYearOutput"></span>/<span id="newMonthOutput"></span>/<span id="newDayOutput"></span>[% END %]
 
@@ -508,9 +506,9 @@ li.hoursentry input {
 <script type="text/javascript">
   document.write(weekdays[ [% event.weekday %]]);
 </script>
-  </td> 
-  <td>[% event.title %]</td> 
-  <td>[% event.description %]</td> 
+  </td>
+  <td>[% event.title %]</td>
+  <td>[% event.description %]</td>
 <!-- >>>>>>> b5ccfa2... Bug 8133 - hourly loans doesn't know when library closed -->
   <td>
     [% IF event.closed %]
@@ -518,12 +516,12 @@ li.hoursentry input {
     [% ELSIF event.close_hour == 24 %]
     Open
     [% ELSE %]
-    [% event.open_hour %]:[% event.open_minute > 10 ? event.open_minute : ( '0' _ event.open_minute) %] - 
+    [% event.open_hour %]:[% event.open_minute > 10 ? event.open_minute : ( '0' _ event.open_minute) %] -
     [% event.close_hour %]:[% event.close_minute > 10 ? event.close_minute : ( '0' _ event.close_minute) %]
     [% END %]
   </td>
   </tr>
-  [% END %] 
+  [% END %]
 </tbody>
 </table>
 [% END %]
@@ -547,20 +545,20 @@ li.hoursentry input {
   [% FOREACH event IN yearly_events %]
   <tr>
   <td><span title="[% event.month_day_display %]">[% event.month_day_sort %]</span></td>
-  <td>[% event.title %]</td> 
-  <td>[% event.description %]</td> 
+  <td>[% event.title %]</td>
+  <td>[% event.description %]</td>
   <td>
     [% IF event.closed %]
     Closed
     [% ELSIF event.close_hour == 24 %]
     Open
     [% ELSE %]
-    [% event.open_hour %]:[% event.open_minute > 10 ? event.open_minute : ( '0' _ event.open_minute) %] - 
+    [% event.open_hour %]:[% event.open_minute > 10 ? event.open_minute : ( '0' _ event.open_minute) %] -
     [% event.close_hour %]:[% event.close_minute > 10 ? event.close_minute : ( '0' _ event.close_minute) %]
     [% END %]
   </td>
   </tr>
-  [% END %] 
+  [% END %]
 </tbody>
 </table>
 [% END %]
@@ -588,12 +586,12 @@ li.hoursentry input {
     [% ELSIF event.close_hour == 24 %]
     Open
     [% ELSE %]
-    [% event.open_hour %]:[% event.open_minute > 10 ? event.open_minute : ( '0' _ event.open_minute) %] - 
+    [% event.open_hour %]:[% event.open_minute > 10 ? event.open_minute : ( '0' _ event.open_minute) %] -
     [% event.close_hour %]:[% event.close_minute > 10 ? event.close_minute : ( '0' _ event.close_minute) %]
     [% END %]
   </td>
 </tr>
-  [% END %] 
+  [% END %]
 </tbody>
 </table>
 [% END %]

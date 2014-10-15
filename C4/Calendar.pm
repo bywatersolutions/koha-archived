@@ -90,7 +90,7 @@ sub GetWeeklyEvents {
             (open_hour = 0 AND open_minute = 0 AND close_hour = 0 AND close_minute = 0) AS closed
         FROM calendar_repeats
         WHERE branchcode = ? AND weekday IS NOT NULL
-    }, { Slice => {} }, $branchcode ); 
+    }, { Slice => {} }, $branchcode );
 }
 
 =head2 GetYearlyEvents
