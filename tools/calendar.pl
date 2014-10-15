@@ -4,7 +4,7 @@
 #
 # Koha is free software; you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
-# Foundation; either version 2 of the License, or (at your option) any later
+# Foundation; either version 3 of the License, or (at your option) any later
 # version.
 #
 # Koha is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -61,7 +61,7 @@ my $onlymine=(C4::Context->preference('IndependentBranches') &&
               C4::Context->userenv &&
               C4::Context->userenv->{flags} % 2 !=1  &&
               C4::Context->userenv->{branch}?1:0);
-if ( $onlymine ) { 
+if ( $onlymine ) {
     $branch = C4::Context->userenv->{'branch'};
 }
 my $branchname = GetBranchName($branch);
