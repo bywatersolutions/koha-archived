@@ -130,12 +130,14 @@ att 1059    Number-CAS-registry
 att 1060    Number-document
 att 1061    Number-local-accounting
 att 1062    Number-local-acquisition
+att 1062    Accession-number
 att 1063    Number-local-call-copy-specific
 att 1064    Number-of-reference
 att 1065    Number-norm
 att 1066    Number-volume
 att 1067    Place-conference
 att 1068    Reference
+att 1068    bibliographic-reference
 att 1069    Referenced-journal
 att 1070    Section-code
 att 1071    Section-heading
@@ -150,6 +152,7 @@ att 1079    Subject-topical
 att 1080    Subject-uncontrolled
 att 1081    Terminology-chemical
 att 1082    Title-translated
+att 1082    Alternate-graphic-representation
 att 1083    Year-of-beginning
 att 1084    Year-of-ending
 att 1085    Subject-AGROVOC
@@ -191,7 +194,7 @@ att 1207    Instruments-total-number
 att 1208    Instruments-distint-number
 att 1209    Identifier-URN
 att 1210    Sears-Subject-Heading
-att 1211    OCLC-Number
+att 1211    Other-control-number
 att 1212    Composition
 att 1213    Intellectual-level
 att 1214    EAN
@@ -219,6 +222,7 @@ att 9009    cn-prefix
 att 9010    cn-suffix
 att 9011    Suppress
 att 9012    Identifier-other
+att 9021    awards
 
 # Items Index
 att 8001    withdrawn
