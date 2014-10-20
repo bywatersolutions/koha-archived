@@ -65,6 +65,7 @@ melm 022$a      ISSN:w,Identifier-standard:w
 melm 022        Identifier-standard
 melm 023        Identifier-standard
 melm 024$a      Identifier-other
+melm 024$e      Identifier-other
 melm 024        Identifier-standard
 melm 025        Identifier-standard
 melm 027        Report-number,Identifier-standard
@@ -130,7 +131,9 @@ melm 247        Title,Title:p,Title-former,Title-other-variant,Related-periodica
 melm 260$a      pl:w,pl:p
 melm 260$b      Publisher:w,Publisher:p
 melm 260$c      copydate,copydate:s
+melm 260$e      pl
 melm 260        pl
+melm 264$a      pl
 melm 300        Extent:w,Extent:p
 melm 400$a      Name-and-title
 melm 400$t      Author-title,Name-and-title,Title,Title-series
@@ -159,6 +162,8 @@ melm 502        Material-type
 melm 505$r      Author
 melm 505$t      Title
 melm 505        Note:w,Note:p
+melm 510$a      bibliographic_reference:w
+melm 510$c      bibliographic_reference:w
 melm 510        Indexed-by
 melm 520        Abstract:w,Abstract:p
 melm 521$a      lex:w,lex:p,lex:n
@@ -166,6 +171,7 @@ melm 526$c      arl,arl:n
 melm 526$d      arp,arp:n
 #melm 533$d     pubdate,pubdate:s
 #melm 541$d     Date-of-acquisition,Date-of-acquisition:s
+melm 541$e      Accession_number:w
 melm 590        Note:w,Note:p
 
 melm 600$a      Name-and-title,Name,Personal-name,Subject-name-personal,Subject,Subject:p
@@ -237,12 +243,23 @@ melm 740        Title,Title:p,Title-other-variant
 melm 751$a      Name-geographic
 melm 751$9      Koha-Auth-Number
 melm 751        Name-geographic
+melm 752$a      pl:w
+melm 752$b      pl:w
+melm 752$c      pl:w
+melm 752$d      pl:w
+melm 752$e      pl:w
+melm 752$f      pl:w
+melm 752$g      pl:w
+melm 752$h      pl:w
 melm 770$w      Record-control-number
 melm 772$w      Record-control-number
 melm 773$a      Host-item
+melm 773$k     Title:w
 melm 773$9	Host-Item-Number
 melm 773$t      Host-item
 melm 773$w      Record-control-number
+melm 773$x      ISSN:w
+melm 773$z      ISBN:w
 melm 774$w      Record-control-number
 melm 775$w      Record-control-number
 melm 776$w      Record-control-number
@@ -275,6 +292,18 @@ melm 830$w      Record-control-number
 melm 830$9      Koha-Auth-Number
 melm 830        Title,Title-series:w,Title-series:p
 melm 840        Title,Title-series:w,Title-series:p
+melm 852$h      Local-classification:w
+melm 880$a      Alternate_graphic_representation:w
+melm 880$b      Alternate_graphic_representation:w
+melm 880$c      Alternate_graphic_representation:w
+melm 880$h      Alternate_graphic_representation:w
+melm 880$l      Alternate_graphic_representation:w
+melm 880$n      Alternate_graphic_representation:w
+melm 880$p      Alternate_graphic_representation:w
+melm 880$q      Alternate_graphic_representation:w
+melm 880$t      Alternate_graphic_representation:w
+melm 880$v      Alternate_graphic_representation:w
+
 
 ###############################
 # Koha Local-Use Biblio Indexes
