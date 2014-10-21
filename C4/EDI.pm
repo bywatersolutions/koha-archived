@@ -22,6 +22,7 @@ use warnings;
 use C4::Context;
 use C4::Acquisition;
 use C4::Budgets qw( GetCurrency );
+use C4::Bookseller qw( GetBookSellerFromId );
 use Net::FTP;
 use Business::Edifact::Interchange;
 use C4::Biblio;
@@ -234,12 +235,17 @@ Returns FTP account details for a given vendor
 =cut
 
 sub GetEDIAccountDetails {
-    my ($id) = @_;
+    my ($id, $provider ) = @_;
     my $dbh = C4::Context->dbh;
     my $sth;
     if ($id) {
         $sth = $dbh->prepare('select * from vendor_edi_accounts where id=?');
         $sth->execute($id);
+        return $sth->fetchrow_hashref;
+    }
+    if ($provider) {
+        $sth = $dbh->prepare('select * from vendor_edi_accounts where provider=?');
+        $sth->execute($provider);
         return $sth->fetchrow_hashref;
     }
     return;
@@ -332,15 +338,31 @@ sub CreateEDIOrder {
     my $filename     = "ediorder_$basketno.CEP";
     my $exchange     = int( rand(99999999999999) );
     my $ref          = int( rand(99999999999999) );
-    my $san          = GetVendorSAN($booksellerid);
     my $message_type = GetMessageType($basketno);
+    my $bookseller   = GetBookSellerFromId( $booksellerid );
     my $output_file  = C4::Context->config('intranetdir');
+    my $edi_account  = GetEDIAccountDetails( undef, $booksellerid );
+    my $san          = $edi_account->{san};
+    my ( $san_primary, $san_suffix ) = split( / /, $san );
 
 ## $booksellerid is the primary key for booksellers and is arbitrary
 ## We need to send the real supplier id which we aren't storing in the db
 ## At this time. Hard coding for now. For B&T it's 1556150
 ## -- Kyle
-    my $supplier_id = '1556150';
+
+    my $supplier_id;
+    if ( $bookseller->{name} =~ /^Baker & Taylor/) {
+        $supplier_id = '1556150';
+    }
+    if ( $bookseller->{name} =~ /^Midwest Tape/) {
+        $supplier_id = '1556150';
+    }
+    if ( $bookseller->{name} =~ /^Brodart/) {
+        # For Brodart, libary's SAN must be in where vendor's san usually is
+        # and Brodart's SAN must be where Library SAN usually is
+        $supplier_id = $san_primary;
+        $san_primary = C4::Context->preference('EDIfactEAN');
+    }
 
     # Currencies must be the 3 upper case alpha codes
     # Koha soes not currently enforce this
@@ -360,7 +382,6 @@ sub CreateEDIOrder {
     print $fh q{UNA:+.? '};    # print opening header
     $segments++;
 
-    my ( $san_primary, $san_suffix ) = split( / /, $san );
     print $fh q{UNB+UNOC:2+}
       . $san_primary
       . ":14+$supplier_id:31B+$shortyear$date:$hourmin+"
