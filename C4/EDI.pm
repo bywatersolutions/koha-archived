@@ -22,6 +22,7 @@ use warnings;
 use C4::Context;
 use C4::Acquisition;
 use C4::Budgets qw( GetCurrency );
+use C4::Bookseller qw( GetBookSellerFromId );
 use Net::FTP;
 use Business::Edifact::Interchange;
 use C4::Biblio;
@@ -336,16 +337,27 @@ sub CreateEDIOrder {
     my $segments     = 0;
     my $exchange     = int( rand(99999999999999) );
     my $ref          = int( rand(99999999999999) );
-    my $san          = GetVendorSAN($booksellerid);
     my $message_type = GetMessageType($basketno);
     my $filename     = "ediorder_$basketno.CEP";
     my $output_file  = C4::Context->config("edi_orders_dir") . "/$filename";
     my $vendor_edi   = GetEDIAccountDetails( undef, $booksellerid );
-
-    # $booksellerid is the primary key for booksellers and is arbitrary
-    # For B&T it's 1556150
-    # -- Kyle
     my $supplier_id = $vendor_edi->{library_san};
+
+    my $san          = $vendor_edi->{san};
+    my ( $san_primary, $san_suffix ) = split( / /, $san );
+
+    my $options = eval { YAML::Load( $vendor_edi->{options} . "\n\n" ); };
+
+    # HMCPL bookseller ids
+    # B&T: 1556150
+    # Midwest Tape: 1556150
+    # Brodart: 56781234
+
+    if ( $options->{swap_sans} ) {
+        # For Brodart, libary's SAN must be in where vendor's san usually is
+        # and Brodart's SAN must be where Library SAN usually is
+        ( $supplier_id, $san_primary ) = ( $san_primary, $supplier_id );
+    }
 
     # Currencies must be the 3 upper case alpha codes
     # Koha soes not currently enforce this
@@ -363,7 +375,6 @@ sub CreateEDIOrder {
     print $fh q{UNA:+.? '};    # print opening header
     $segments++;
 
-    my ( $san_primary, $san_suffix ) = split( / /, $san );
     print $fh q{UNB+UNOC:2+}
       . $san_primary
       . ":14+$supplier_id:31B+$shortyear$date:$hourmin+"
