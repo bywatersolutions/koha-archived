@@ -33,7 +33,11 @@
 
             <tr>
                 <th colspan="99">
-                    [% borrower.branch.branchname | $EncodeUTF8 %]
+                    [% IF credit %]
+                        [% account.branch.branchname | $EncodeUTF8 %]
+                    [% ELSE %]
+                        [% borrower.branch.branchname | $EncodeUTF8 %]
+                    [% END %]
                 </th>
             </tr>
 
