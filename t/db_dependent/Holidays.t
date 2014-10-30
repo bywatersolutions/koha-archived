@@ -6,8 +6,8 @@ use DateTime::TimeZone;
 
 use C4::Context;
 use C4::Calendar;
-use C4::Branch;
-use Test::More tests => 6;
+
+use Test::More tests => 5;
 
 BEGIN { use_ok('Koha::Calendar'); }
 
@@ -15,6 +15,16 @@ my $dbh = C4::Context->dbh();
 # Start transaction
 $dbh->{AutoCommit} = 0;
 $dbh->{RaiseError} = 1;
+
+my $sundays = { open_hour    => 0,
+                    open_minute  => 0,
+                    close_hour   => 0,
+                    close_minute => 0,
+                    title        => 'Closed on Sundays',
+                    description  => 'This is an example holiday used for testing' };
+
+# Make Sunday a closed day
+ModRepeatingEvent( 'MPL', 0, undef, undef, $sundays );
 
 my $branchcode = 'MPL';
 
