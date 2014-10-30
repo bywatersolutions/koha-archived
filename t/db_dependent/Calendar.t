@@ -3,6 +3,14 @@ use Modern::Perl;
 use Test::More tests => 18;
 
 use C4::Calendar;
+use C4::Context;
+
+my $dbh = C4::Context->dbh();
+$dbh->{AutoCommit} = 0;
+$dbh->{RaiseError} = 1;
+
+$dbh->do("DELETE FROM calendar_events");
+$dbh->do("DELETE FROM calendar_repeats");
 
 my $new_holiday = { open_hour    => 0,
                     open_minute  => 0,
