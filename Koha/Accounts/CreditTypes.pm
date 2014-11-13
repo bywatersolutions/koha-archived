@@ -56,6 +56,7 @@ sub IsValid {
           || $string eq Koha::Accounts::CreditTypes::WriteOff()
           || $string eq Koha::Accounts::CreditTypes::Found()
           || $string eq Koha::Accounts::CreditTypes::Credit()
+          || $string eq Koha::Accounts::CreditTypes::FineReduction()
           || $string eq Koha::Accounts::CreditTypes::Forgiven() );
 
     unless ($is_valid) {
