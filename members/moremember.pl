@@ -355,8 +355,6 @@ $template->param(
     totalprice      => sprintf("%.2f", $totalprice),
     totaldue        => sprintf("%.2f", $data->{account_balance}),
     totaldue_raw    => $data->{account_balance},
-    issueloop       => @issuedata,
-    relissueloop    => @relissuedata,
     overdues_exist  => $overdues_exist,
     StaffMember     => ($category_type eq 'S'),
     is_child        => ($category_type eq 'C'),
