@@ -2134,9 +2134,8 @@ sub searchResults {
             # right to the next item.
             if ( $IndependentBranchesRecordsAndItems ) {
                 if ( none { $_ eq $item->{homebranch} } @allowed_branches ) {
-                    splice(@fields, $index, 1);
-                    $items_count--;
-                    next;
+                    push @hiddenitems, $item->{itemnumber};
+                    $hideatopac_count++;
                 }
             }
 
