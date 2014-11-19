@@ -36,7 +36,7 @@ use C4::Overdues;
 use C4::Debug;
 use Koha::DateUtils;
 use Date::Calc qw/Today Date_to_Days/;
-# use Data::Dumper;
+use Data::Dumper;
 
 my $MAXIMUM_NUMBER_OF_RESERVES = C4::Context->preference("maxreserves");
 
@@ -51,6 +51,8 @@ my ( $template, $borrowernumber, $cookie ) = get_template_and_user(
         debug           => 1,
     }
 );
+warn "BORROWERNUMBER: $borrowernumber";
+warn "PARAMS: " . Data::Dumper::Dumper( $query->Vars );
 
 my ($show_holds_count, $show_priority);
 for ( C4::Context->preference("OPACShowHoldQueueDetails") ) {
@@ -275,6 +277,7 @@ if ( $query->param('place_reserve') ) {
 
         # Here we actually do the reserveration. Stage 3.
         if ($canreserve) {
+warn "AddReserve( $branch, $borrowernumber, $biblioNum, 'a', [$biblioNum], $rank, $startdate, $expiration_date, $notes, $biblioData->{title}, $itemNum, $found )";
             AddReserve(
                 $branch,      $borrowernumber,
                 $biblioNum,   'a',
