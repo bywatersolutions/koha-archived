@@ -344,7 +344,9 @@ if ($barcode) {
             }
         }
         unless($confirm_required) {
-            AddIssue( $borrower, $barcode, $datedue, $cancelreserve );
+            my $issue = AddIssue( $borrower, $barcode, $datedue, $cancelreserve );
+            $template->param( issue => $issue );
+            $session->clear('auto_renew');
             $inprocess = 1;
         }
     }

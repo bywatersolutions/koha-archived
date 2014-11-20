@@ -1178,7 +1178,10 @@ AddIssue does the following things :
 sub AddIssue {
     my ( $borrower, $barcode, $datedue, $cancelreserve, $issuedate, $sipmode) = @_;
     my $dbh = C4::Context->dbh;
-	my $barcodecheck=CheckValidBarcode($barcode);
+    my $barcodecheck=CheckValidBarcode($barcode);
+
+    my $issue;
+
     if ($datedue && ref $datedue ne 'DateTime') {
         $datedue = dt_from_string($datedue);
     }
@@ -1243,25 +1246,23 @@ sub AddIssue {
             }
 
         # Record in the database the fact that the book was issued.
-        my $sth =
-          $dbh->prepare(
-                "INSERT INTO issues
-                    (borrowernumber, itemnumber,issuedate, date_due, branchcode)
-                VALUES (?,?,?,?,?)"
-          );
         unless ($datedue) {
             my $itype = ( C4::Context->preference('item-level_itypes') ) ? $biblio->{'itype'} : $biblio->{'itemtype'};
             $datedue = CalcDateDue( $issuedate, $itype, $branch, $borrower );
 
         }
         $datedue->truncate( to => 'minute');
-        $sth->execute(
-            $borrower->{'borrowernumber'},      # borrowernumber
-            $item->{'itemnumber'},              # itemnumber
-            $issuedate->strftime('%Y-%m-%d %H:%M:%S'), # issuedate
-            $datedue->strftime('%Y-%m-%d %H:%M:%S'),   # date_due
-            C4::Context->userenv->{'branch'},   # branchcode
+
+        $issue = Koha::Database->new()->schema()->resultset('Issue')->create(
+            {
+                borrowernumber  => $borrower->{'borrowernumber'},
+                itemnumber      => $item->{'itemnumber'},
+                issuedate       => $issuedate->strftime('%Y-%m-%d %H:%M:%S'),
+                date_due        => $datedue->strftime('%Y-%m-%d %H:%M:%S'),
+                branchcode      => C4::Context->userenv->{'branch'},
+            }
         );
+
         if ( C4::Context->preference('ReturnToShelvingCart') ) { ## ReturnToShelvingCart is on, anything issued should be taken off the cart.
           CartToShelf( $item->{'itemnumber'} );
         }
@@ -1327,7 +1328,7 @@ sub AddIssue {
     logaction("CIRCULATION", "ISSUE", $borrower->{'borrowernumber'}, $biblio->{'itemnumber'})
         if C4::Context->preference("IssueLog");
   }
-  return ($datedue);	# not necessarily the same as when it came in!
+  return $issue;
 }
 
 =head2 GetLoanLength
