@@ -162,8 +162,8 @@ melm 502        Material-type
 melm 505$r      Author
 melm 505$t      Title
 melm 505        Note:w,Note:p
-melm 510$a      bibliographic_reference:w
-melm 510$c      bibliographic_reference:w
+melm 510$a      bibliographic-reference:w
+melm 510$c      bibliographic-reference:w
 melm 510        Indexed-by
 melm 520        Abstract:w,Abstract:p
 melm 521$a      lex:w,lex:p,lex:n
@@ -171,7 +171,7 @@ melm 526$c      arl,arl:n
 melm 526$d      arp,arp:n
 #melm 533$d     pubdate,pubdate:s
 #melm 541$d     Date-of-acquisition,Date-of-acquisition:s
-melm 541$e      Accession_number:w
+melm 541$e      Accession-number:w
 melm 590        Note:w,Note:p
 
 melm 600$a      Name-and-title,Name,Personal-name,Subject-name-personal,Subject,Subject:p
@@ -293,16 +293,16 @@ melm 830$9      Koha-Auth-Number
 melm 830        Title,Title-series:w,Title-series:p
 melm 840        Title,Title-series:w,Title-series:p
 melm 852$h      Local-classification:w
-melm 880$a      Alternate_graphic_representation:w
-melm 880$b      Alternate_graphic_representation:w
-melm 880$c      Alternate_graphic_representation:w
-melm 880$h      Alternate_graphic_representation:w
-melm 880$l      Alternate_graphic_representation:w
-melm 880$n      Alternate_graphic_representation:w
-melm 880$p      Alternate_graphic_representation:w
-melm 880$q      Alternate_graphic_representation:w
-melm 880$t      Alternate_graphic_representation:w
-melm 880$v      Alternate_graphic_representation:w
+melm 880$a      Alternate-graphic-representation:w
+melm 880$b      Alternate-graphic-representation:w
+melm 880$c      Alternate-graphic-representation:w
+melm 880$h      Alternate-graphic-representation:w
+melm 880$l      Alternate-graphic-representation:w
+melm 880$n      Alternate-graphic-representation:w
+melm 880$p      Alternate-graphic-representation:w
+melm 880$q      Alternate-graphic-representation:w
+melm 880$t      Alternate-graphic-representation:w
+melm 880$v      Alternate-graphic-representation:w
 
 
 ###############################

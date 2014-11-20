@@ -130,14 +130,14 @@ att 1059    Number-CAS-registry
 att 1060    Number-document
 att 1061    Number-local-accounting
 att 1062    Number-local-acquisition
-att 1062    Accession_number
+att 1062    Accession-number
 att 1063    Number-local-call-copy-specific
 att 1064    Number-of-reference
 att 1065    Number-norm
 att 1066    Number-volume
 att 1067    Place-conference
 att 1068    Reference
-att 1068    bibliographic_reference
+att 1068    bibliographic-reference
 att 1069    Referenced-journal
 att 1070    Section-code
 att 1071    Section-heading
@@ -152,7 +152,7 @@ att 1079    Subject-topical
 att 1080    Subject-uncontrolled
 att 1081    Terminology-chemical
 att 1082    Title-translated
-att 1082    Alternate_graphic_representation
+att 1082    Alternate-graphic-representation
 att 1083    Year-of-beginning
 att 1084    Year-of-ending
 att 1085    Subject-AGROVOC

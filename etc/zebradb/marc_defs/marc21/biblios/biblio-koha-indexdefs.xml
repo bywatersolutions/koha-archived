@@ -133,6 +133,15 @@
   <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="023">
     <target_index>Identifier-standard:w</target_index>
   </index_data_field>
+  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="024" subfields="a">
+    <target_index>Identifier-other:w</target_index>
+  </index_subfields>
+  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="024" subfields="d">
+    <target_index>Identifier-other:w</target_index>
+  </index_subfields>
+  <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="024">
+    <target_index>Identifier-other:w</target_index>
+  </index_data_field>
   <!--record.abs line 67: melm 024$a      Identifier-other-->
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="024" subfields="a">
     <target_index>Identifier-other:w</target_index>
@@ -564,11 +573,14 @@
     <target_index>Note:p</target_index>
   </index_data_field>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="510" subfields="a">
-    <target_index>bibliographic_reference:w</target_index>
+    <target_index>bibliographic-reference:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="510" subfields="c">
-    <target_index>bibliographic_reference:w</target_index>
+    <target_index>bibliographic-reference:w</target_index>
   </index_subfields>
+  <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="510">
+    <target_index>bibliographic-reference:w</target_index>
+  </index_data_field>
   <!--record.abs line 162: melm 510        Indexed-by-->
   <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="510">
     <target_index>Indexed-by:w</target_index>
@@ -595,7 +607,7 @@
     <target_index>arp:n</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="541" subfields="e">
-    <target_index>Accession_number:w</target_index>
+    <target_index>Accession-number:w</target_index>
   </index_subfields>
   <!--record.abs line 169: melm 590        Note:w,Note:p-->
   <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="590">
@@ -1150,34 +1162,34 @@
     <target_index>Local-classification:s</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="a">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="b">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="c">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="h">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="l">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="n">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="p">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="q">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="t">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="v">
-    <target_index>Alternate_graphic_representation:w</target_index>
+    <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
   <!--record.abs line 281: melm 999$c      Local-Number:n,Local-Number:w,Local-Number:s-->
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="999" subfields="c">

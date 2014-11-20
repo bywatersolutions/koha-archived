@@ -964,7 +964,7 @@ sub getIndexes{
                     'Abstract',
                     'acqdate',
                     'allrecords',
-                    'Alternate_graphic_representation',
+                    'Alternate-graphic-representation',
                     'an',
                     'Any',
                     'at',
@@ -981,7 +981,7 @@ sub getIndexes{
                     'authtype',
                     'bc',
 		    'Bib-level',
-                    'bibliographic_reference'
+                    'bibliographic-reference',
                     'biblionumber',
                     'bio',
                     'biography',
@@ -1119,7 +1119,7 @@ sub getIndexes{
 
                     # items indexes
                     'acqsource',
-                    'Accession_number',
+                    'Accession-number',
                     'barcode',
                     'bc',
                     'branch',
