@@ -275,7 +275,7 @@ $(document).ready(function() {
                         if ( oObj.can_renew ) {
                             // Do nothing
                         } else if ( oObj.can_renew_error == "on_reserve" ) {
-                            content += "<span class='renewals-disabled'>"
+                            content += "<span class='renewals-disabled-no-override'>"
                                     + "<a href='/cgi-bin/koha/reserve/request.pl?biblionumber=" + oObj.biblionumber + "'>" + ON_HOLD + "</a>"
                                     + "</span>";
 
@@ -318,14 +318,22 @@ $(document).ready(function() {
                             span_class = "renewals-allowed";
                         }
 
-                        content += "<span class='" + span_class + "' style='" + span_style + "'>"
-                                +  "<input type='checkbox' class='renew' id='renew_" + oObj.itemnumber + "' name='renew' value='" + oObj.itemnumber +"'/>"
-                                +  "</span>";
+                        var can_force_renew = ( oObj.can_renew_error != "on_reserve" );
+                        var can_renew = ( oObj.renewals_remaining > 0  && !oObj.can_renew_error );
+                        if ( 1 ) {
+                            if ( can_renew || can_force_renew ) {
+                                content += "<span class='" + span_class + "' style='" + span_style + "'>"
+                                        +  "<input type='checkbox' ";
+                                if ( oObj.date_due_overdue && can_renew ) {
+                                    content += "checked='checked' ";
+                                }
+                                content += "class='renew' id='renew_" + oObj.itemnumber + "' name='renew' value='" + oObj.itemnumber +"'/>"
+                                        +  "</span>";
 
-                        if ( oObj.renewals_remaining ) {
-                            content += "<span class='renewals'>("
-                                    + RENEWALS_REMAINING.format( oObj.renewals_remaining, oObj.renewals_allowed )
-                                    + ")</span>";
+                                content += "<span class='renewals'>("
+                                        + RENEWALS_REMAINING.format( oObj.renewals_remaining, oObj.renewals_allowed )
+                                        + ")</span>";
+                            }
                         }
 
                         content += "</span>";
