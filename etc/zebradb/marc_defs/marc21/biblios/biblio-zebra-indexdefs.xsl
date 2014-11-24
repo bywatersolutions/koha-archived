@@ -2448,6 +2448,19 @@ definition file (probably something like {biblio,authority}-koha-indexdefs.xml) 
       <xslo:value-of select="normalize-space($raw_heading)"/>
     </z:index>
   </xslo:template>
+  <xslo:template mode="index_data_field" match="marc:datafield[@tag='691']">
+    <z:index name="Subject:w Subject:p">
+      <xslo:variable name="raw_heading">
+        <xslo:for-each select="marc:subfield">
+          <xslo:if test="position() &gt; 1">
+            <xslo:value-of select="substring(' ', 1, 1)"/>
+          </xslo:if>
+          <xslo:value-of select="."/>
+        </xslo:for-each>
+      </xslo:variable>
+      <xslo:value-of select="normalize-space($raw_heading)"/>
+    </z:index>
+  </xslo:template>
   <xslo:template mode="index_data_field" match="marc:datafield[@tag='700']">
     <z:index name="Author:w Author:p Author-name-personal:w Name:w Editor:w Personal-name:w">
       <xslo:variable name="raw_heading">

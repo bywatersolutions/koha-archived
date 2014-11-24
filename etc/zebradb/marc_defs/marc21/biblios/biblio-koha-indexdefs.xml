@@ -828,6 +828,11 @@
     <target_index>Subject:w</target_index>
     <target_index>Subject:p</target_index>
   </index_data_field>
+  <!-- Adding all 691 fields to 'Subject' index, per http://ticket.bywatersolutions.com/Ticket/Display.html?id=21321 -->
+  <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="691">
+    <target_index>Subject:w</target_index>
+    <target_index>Subject:p</target_index>
+  </index_data_field>
   <!--record.abs line 213: melm 700$9      Cross-Reference,Koha-Auth-Number-->
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="700" subfields="9">
     <target_index>Cross-Reference:w</target_index>
