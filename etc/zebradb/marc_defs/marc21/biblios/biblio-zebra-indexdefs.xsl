@@ -1186,15 +1186,6 @@ definition file (probably something like {biblio,authority}-koha-indexdefs.xml) 
       </xslo:if>
     </xslo:for-each>
   </xslo:template>
-  <xslo:template mode="index_subfields" match="marc:datafield[@tag='852']">
-    <xslo:for-each select="marc:subfield">
-      <xslo:if test="contains('h', @code)">
-        <z:index name="Local-classification:w Local-classification:p Local-classification:s">
-          <xslo:value-of select="."/>
-        </z:index>
-      </xslo:if>
-    </xslo:for-each>
-  </xslo:template>
   <xslo:template mode="index_subfields" match="marc:datafield[@tag='880']">
     <xslo:for-each select="marc:subfield">
       <xslo:if test="contains('a', @code)">

@@ -292,7 +292,6 @@ melm 830$w      Record-control-number
 melm 830$9      Koha-Auth-Number
 melm 830        Title,Title-series:w,Title-series:p
 melm 840        Title,Title-series:w,Title-series:p
-melm 852$h      Local-classification:w
 melm 880$a      Alternate-graphic-representation:w
 melm 880$b      Alternate-graphic-representation:w
 melm 880$c      Alternate-graphic-representation:w

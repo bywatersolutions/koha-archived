@@ -1161,11 +1161,6 @@
     <target_index>Title-series:w</target_index>
     <target_index>Title-series:p</target_index>
   </index_data_field>
-  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="852" subfields="h">
-    <target_index>Local-classification:w</target_index>
-    <target_index>Local-classification:p</target_index>
-    <target_index>Local-classification:s</target_index>
-  </index_subfields>
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="880" subfields="a">
     <target_index>Alternate-graphic-representation:w</target_index>
   </index_subfields>
