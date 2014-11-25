@@ -1706,7 +1706,7 @@ sub SearchOrders {
         $query .= q{ AND (quantity > quantityreceived OR quantityreceived is NULL)};
     }
     if ( $ordered ) {
-        $query .= q{ AND aqorders.orderstatus IN ( "ordered", "partial" )};
+        $query .= q{ AND aqorders.orderstatus IN ( "ordered", "partial", "new" )};
     }
 
     my $userenv = C4::Context->userenv;
