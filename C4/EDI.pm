@@ -234,12 +234,17 @@ Returns FTP account details for a given vendor
 =cut
 
 sub GetEDIAccountDetails {
-    my ($id) = @_;
+    my ($id, $provider) = @_;
     my $dbh = C4::Context->dbh;
     my $sth;
     if ($id) {
         $sth = $dbh->prepare('select * from vendor_edi_accounts where id=?');
         $sth->execute($id);
+        return $sth->fetchrow_hashref;
+    }
+    if ($provider) {
+        $sth = $dbh->prepare('select * from vendor_edi_accounts where provider=?');
+        $sth->execute($provider);
         return $sth->fetchrow_hashref;
     }
     return;
@@ -335,12 +340,12 @@ sub CreateEDIOrder {
     my $message_type = GetMessageType($basketno);
     my $filename     = "ediorder_$basketno.CEP";
     my $output_file  = C4::Context->config("edi_orders_dir") . "/$filename";
+    my $vendor_edi   = GetEDIAccountDetails( undef, $booksellerid );
 
-## $booksellerid is the primary key for booksellers and is arbitrary
-## We need to send the real supplier id which we aren't storing in the db
-## At this time. Hard coding for now. For B&T it's 1556150
-## -- Kyle
-    my $supplier_id = '1556150';
+    # $booksellerid is the primary key for booksellers and is arbitrary
+    # For B&T it's 1556150
+    # -- Kyle
+    my $supplier_id = $vendor_edi->{library_san};
 
     # Currencies must be the 3 upper case alpha codes
     # Koha soes not currently enforce this
