@@ -87,6 +87,14 @@ function cancelInstance()
                             <label for="san">Vendor SAN:</label>
                             <input type="text" id="san" name="san" size="40" value="[% san %]" />
                         </li>
+                        <li>
+                            <label for="library_san">Library SAN:</label>
+                            <input type="text" id="library_san" name="library_san" size="40" value="[% library_san %]" />
+                        </li>
+                        <li>
+                            <label for="options">Options:</label>
+                            <textarea id="options" name="options" rows="4" cols="40">[% options %]</textarea>
+                        </li>
                     </ol>
                 </fieldset>
                 <fieldset class="action">

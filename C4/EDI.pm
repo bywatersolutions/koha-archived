@@ -96,15 +96,15 @@ Inserts a new EDI vendor FTP account
 =cut
 
 sub CreateEDIDetails {
-    my ( $provider, $description, $host, $user, $pass, $in_dir, $san ) = @_;
+    my ( $provider, $description, $host, $user, $pass, $in_dir, $san, $library_san, $options ) = @_;
     my $dbh = C4::Context->dbh;
     my $sth;
     if ($provider) {
         $sth = $dbh->prepare(
-'insert into vendor_edi_accounts (description, host, username, password, provider, in_dir, san) values (?,?,?,?,?,?,?)'
+'insert into vendor_edi_accounts (description, host, username, password, provider, in_dir, san, library_san, options) values (?,?,?,?,?,?,?,?,?)'
         );
         $sth->execute( $description, $host, $user, $pass, $provider, $in_dir,
-            $san );
+            $san, $library_san, $options );
     }
     return;
 }
@@ -150,15 +150,15 @@ Update a vendor's FTP account
 =cut
 
 sub UpdateEDIDetails {
-    my ( $editid, $description, $host, $user, $pass, $provider, $in_dir, $san )
+    my ( $editid, $description, $host, $user, $pass, $provider, $in_dir, $san, $library_san, $options )
       = @_;
     my $dbh = C4::Context->dbh;
     if ($editid) {
         my $sth = $dbh->prepare(
-'update vendor_edi_accounts set description=?, host=?, username=?, password=?, provider=?, in_dir=?, san=? where id=?'
+'update vendor_edi_accounts set description=?, host=?, username=?, password=?, provider=?, in_dir=?, san=?, library_san=?, options=? where id=?'
         );
         $sth->execute( $description, $host, $user, $pass, $provider, $in_dir,
-            $san, $editid );
+            $san, $library_san, $options, $editid );
     }
     return;
 }
