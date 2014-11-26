@@ -59,7 +59,9 @@ if ( $op eq 'edit' ) {
         pass        => $edi_details->{password},
         provider    => $edi_details->{provider},
         in_dir      => $edi_details->{in_dir},
-        san         => $edi_details->{san}
+        san         => $edi_details->{san},
+        library_san => $edi_details->{library_san},
+        options     => $edi_details->{options},
     );
 }
 if ( $op eq 'del' ) {

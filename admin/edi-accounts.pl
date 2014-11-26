@@ -22,8 +22,7 @@ use warnings;
 use CGI;
 use C4::Auth;
 use C4::Output;
-use C4::EDI
-  qw( CreateEDIDetails UpdateEDIDetails GetEDIAccounts DeleteEDIDetails);
+use C4::EDI qw( CreateEDIDetails UpdateEDIDetails GetEDIAccounts DeleteEDIDetails);
 
 my $input = CGI->new();
 
@@ -49,19 +48,20 @@ if ( $op eq 'addsubmit' ) {
     CreateEDIDetails(
         $input->param('provider'), $input->param('description'),
         $input->param('host'),     $input->param('user'),
-        $input->param('pass'),     $input->param('path'),
-        $input->param('in_dir'),   $input->param('san')
+        $input->param('pass'),     $input->param('in_dir'),
+        $input->param('san'),      $input->param('library_san'),
+        $input->param('options'),
     );
     $template->param( opaddsubmit => 1 );
 }
 
 if ( $op eq 'editsubmit' ) {
     UpdateEDIDetails(
-        $input->param('editid'), $input->param('description'),
-        $input->param('host'),   $input->param('user'),
-        $input->param('pass'),   $input->param('provider'),
-        $input->param('path'),   $input->param('in_dir'),
-        $input->param('san')
+        $input->param('editid'),      $input->param('description'),
+        $input->param('host'),        $input->param('user'),
+        $input->param('pass'),        $input->param('provider'),
+        $input->param('in_dir'),      $input->param('san'),
+        $input->param('library_san'), $input->param('options'),
     );
     $template->param( opeditsubmit => 1 );
 }
