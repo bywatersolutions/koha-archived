@@ -277,7 +277,11 @@ if ( $query->param('place_reserve') ) {
 
         # Here we actually do the reserveration. Stage 3.
         if ($canreserve) {
-warn "AddReserve( $branch, $borrowernumber, $biblioNum, 'a', [$biblioNum], $rank, $startdate, $expiration_date, $notes, $biblioData->{title}, $itemNum, $found )";
+unless ( $borrowernumber ) {
+	warn "NO BORROWERNUMBER!";
+	warn "AddReserve( $branch, $borrowernumber, $biblioNum, 'a', [$biblioNum], $rank, $startdate, $expiration_date, $notes, $biblioData->{title}, $itemNum, $found )";
+	die('There was an error placing your hold! Please email nexpresshel@nekls.org and tell them about ticket 21424. Somehow, you are placing holds that don\'t get linked to your account!');
+}
             AddReserve(
                 $branch,      $borrowernumber,
                 $biblioNum,   'a',
