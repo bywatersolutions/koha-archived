@@ -1,4 +1,5 @@
 [% USE 'JavaScript' %]
+[% USE 'Koha' %]
 [% USE 'KohaDates' %]
 [% INCLUDE 'doc-head-open.inc' %]
 <title>Koha &rsaquo; Tools &rsaquo; [% branchname %] Calendar</title>
@@ -147,9 +148,9 @@
         if ( single_events[dateString] != null) {
             return [true, "event", "Single event: "+single_events[dateString].title];
         } else if ( yearly_events[dayMonth] != null ) {
-            return [true, "repeatableyearly", "Yearly event: "+yearly_events[dayMonth].title];
+            return [true, "repeatableyearly", "Event repeating yearly: "+yearly_events[dayMonth].title];
         } else if ( weekly_events[weekDay] != null ){
-            return [true, "repeatableweekly", "Weekly event: "+weekly_events[weekDay].title];
+            return [true, "repeatableweekly", "Event repeating weekly: "+weekly_events[weekDay].title];
         } else {
             return [true, "normalday", "Normal day"];
         }
@@ -182,11 +183,12 @@
         $("#branch").change(function(){
             changeBranch();
         });
-        $("#weekly-events,#single-events").dataTable($.extend(true, {}, dataTablesDefaults, {
-            "sDom": 't',
-            "bPaginate": false
-        }));
-        $("#yearly-events").dataTable($.extend(true, {}, dataTablesDefaults, {
+        // Replace week number with week name
+        $("#weekly-events>tbody>tr").each(function(){
+            var first_td_span = $(this).find('td').first().find('span');
+            first_td_span.html(weekdays[first_td_span.html()]);
+        });
+        $("#yearly-events,#weekly-events,#single-events").dataTable($.extend(true, {}, dataTablesDefaults, {
             "sDom": 't',
             "aoColumns": [
                 { "sType": "title-string" },null,null,null
@@ -459,23 +461,23 @@ li.hoursentry input {
 <div class="help">
 <h4>Hints</h4>
     <ul>
-        <li>Search in the calendar the day you want to set as event.</li>
-        <li>Click the date to add or edit a event.</li>
+        <li>Search for the day you want to set as an event in the calendar.</li>
+        <li>Click the date to add or edit an event.</li>
         <li>Enter a title and description for the event.</li>
         <li>Specify how the event should repeat.</li>
-        <li>Click Save to finish.</li>
+        <li>Click "Save" to finish.</li>
     </ul>
 <h4>Key</h4>
     <p>
         <span class="key normalday">Working day</span>
-        <span class="key event">Unique event</span>
+        <span class="key event">Single event</span>
         <span class="key repeatableweekly">Event repeating weekly</span>
         <span class="key repeatableyearly">Event repeating yearly</span>
     </p>
 </div>
 <div id="event-list">
 [% IF ( weekly_events ) %]
-<h3>Weekly - Repeatable Events</h3>
+<h3>Events repeating weekly</h3>
 <table id="weekly-events">
 <thead>
 <tr>
@@ -488,11 +490,12 @@ li.hoursentry input {
 <tbody>
   [% FOREACH event IN weekly_events %]
   <tr>
-  <td>
-<script type="text/javascript">
-  document.write(weekdays[ [% event.weekday %]]);
-</script>
-  </td>
+  [%# Make sure Sundays are sorted last, if Monday should be considered the first day of the week %]
+  [% IF Koha.Preference( 'CalendarFirstDayOfWeek' ) == 'Monday' && event.weekday == 0 %]
+      <td><span title="7">[% event.weekday %]</span></td>
+  [% ELSE %]
+      <td><span title="[% event.weekday %]">[% event.weekday %]</span></td>
+  [% END %]
   <td>[% event.title %]</td>
   <td>[% event.description %]</td>
   <td>
@@ -512,7 +515,7 @@ li.hoursentry input {
 [% END %]
 
 [% IF ( yearly_events ) %]
-<h3>Yearly - Repeatable Events</h3>
+<h3>Events repeating yearly</h3>
 <table id="yearly-events">
 <thead>
 <tr>
@@ -549,7 +552,7 @@ li.hoursentry input {
 [% END %]
 
 [% IF ( single_events ) %]
-<h3>Single Events</h3>
+<h3>Single events</h3>
 <table id="single-events">
 <thead>
 <tr>
