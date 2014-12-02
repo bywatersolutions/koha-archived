@@ -1,0 +1,74 @@
+[% USE Koha %]
+[% USE KohaDates %]
+
+[% INCLUDE 'doc-head-open.inc' %][% IF ( LibraryNameTitle ) %][% LibraryNameTitle %][% ELSE %]Koha online[% END %] catalog &rsaquo; Pay your fines and charges
+[% INCLUDE 'doc-head-close.inc' %]
+[% BLOCK cssinclude %][% END %]
+</head>
+<body id="opac-account" class="scrollto">
+[% INCLUDE 'masthead.inc' %]
+
+<div class="main">
+    <ul class="breadcrumb">
+        <li><a href="/cgi-bin/koha/opac-main.pl">Home</a> <span class="divider">&rsaquo;</span></li>
+        <li>[% FOREACH BORROWER_INF IN BORROWER_INFO %]<a href="/cgi-bin/koha/opac-user.pl">[% BORROWER_INF.firstname %] [% BORROWER_INF.surname %]</a>[% END %] <span class="divider">&rsaquo;</span></li>
+        <li><a href="#">Pay your fines and charges</a></li>
+    </ul>
+
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span2">
+                <div id="navigation">
+                    [% INCLUDE 'navigation.inc' IsPatronPage=1 %]
+                </div>
+            </div>
+            <div class="span10">
+                <div id="useraccount" class="maincontent">
+                    <h3>Payment recieved</h3>
+
+                    [% IF accountlines %]
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Description
+                                    </th>
+
+                                    <th>
+                                        Amount paid
+                                    </th>
+
+                                    <th>
+                                        Amount outstanding
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                [% FOREACH a IN accountlines %]
+                                    <tr>
+                                        <td>
+                                            [% a.description %]
+                                        </td>
+
+                                        <td>
+                                            [% a.amount | format('%.2f') %]
+                                        </td>
+
+                                        <td>
+                                            [% a.accountline.amountoutstanding || 0 | format('%.2f') %]
+                                        </td>
+                                [% END %]
+                            </tbody>
+                        </table>
+                    [% END %]
+
+                    <a class="btn" href="/cgi-bin/koha/opac-account.pl">Return to your fines</a>
+                </div> <!-- / #useraccount -->
+            </div> <!-- / .span10 -->
+        </div> <!-- / .row-fluid -->
+    </div> <!-- / .container-fluid -->
+</div> <!-- / .main -->
+
+[% INCLUDE 'opac-bottom.inc' %]
+[% BLOCK jsinclude %][% END %]
