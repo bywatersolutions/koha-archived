@@ -64,10 +64,12 @@ foreach my $row (@$accts) {
     $num++;
 }
 
-$template->param (
+$template->param(
     ACCOUNT_LINES => $accts,
-    total => sprintf( "%.2f", $total ),
-	accountview => 1
+    total         => sprintf( "%.2f", $total ),
+    accountview   => 1,
+    message       => $query->param('message') || q{},
+    message_value => $query->param('message_value') || q{},
 );
 
 output_html_with_http_headers $query, $cookie, $template->output, undef, { force_no_caching => 1 };
