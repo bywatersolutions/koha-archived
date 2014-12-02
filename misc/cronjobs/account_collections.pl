@@ -325,7 +325,7 @@ while ( my $r = $sth->fetchrow_hashref() ) {
             ( $r->{borrowernumber}, $last_updated_attribute_code, $ymd ) );
     }
 
-    if ( $report_type eq 'update' && $r->{computed_account_balance} ) {
+    if ( $report_type eq 'update' && $r->{computed_account_balance} == 0 ) {
         # If the patron is in collections, but now has a 0 balance
         # set the patron to no longer being in collections
 
