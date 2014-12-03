@@ -609,6 +609,14 @@
   <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="541" subfields="e">
     <target_index>Accession-number:w</target_index>
   </index_subfields>
+
+  <index_subfields xmlns="http://www.koha-community.org/schemas/index-defs" tag="586" subfields="a">
+    <target_index>awards:w</target_index>
+  </index_subfields>
+  <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="586">
+    <target_index>awards:w</target_index>
+  </index_data_field>
+
   <!--record.abs line 169: melm 590        Note:w,Note:p-->
   <index_data_field xmlns="http://www.koha-community.org/schemas/index-defs" tag="590">
     <target_index>Note:w</target_index>

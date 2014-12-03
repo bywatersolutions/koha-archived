@@ -979,6 +979,7 @@ sub getIndexes{
                     'Author-personal-bibliography',
                     'Authority-Number',
                     'authtype',
+                    'awards',
                     'bc',
 		    'Bib-level',
                     'bibliographic-reference',
