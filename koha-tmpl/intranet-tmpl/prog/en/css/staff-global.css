@@ -321,6 +321,13 @@ fieldset {
     border-radius:5px;
 }
 
+fieldset.lastchecked {
+    margin-bottom : 0;
+    border-bottom-width: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
 legend {
 	font-size : 123.1%;
 	font-weight : bold;
@@ -2759,4 +2766,61 @@ span.browse-button {
     display:block;
     font-size:0.8em;
     padding:0.5em;
+}
+
+#transport-types {
+    padding-top: 0.5px;
+}
+
+#i18nMenu .navbar-text .currentlanguage {
+    color : #000;
+    font-weight: bold;
+}
+
+#i18nMenu a.currentlanguage:link,
+#i18nMenu a.currentlanguage:visited {
+    font-weight: bold;
+}
+
+#i18nMenu a,
+#i18nMenu a:link,
+#i18nMenu a:visited {
+    color : #004d99;
+    font-weight: normal;
+}
+
+#i18nMenu a:hover,
+#i18nMenu a:active {
+    color : #538200;
+    font-weight: normal;
+}
+
+#i18nMenu a .sublanguage-selected {
+    color: #000;
+    font-weight: bold;
+}
+
+#i18nMenu .dropdown-menu a:hover,
+#i18nMenu .dropdown-menu a:focus {
+    color : #FFF;
+}
+
+#circ_circulation_issue .onsite_checkout-select label,
+.onsite_checkout-select label {
+    font-size : inherit;
+    font-weight: normal;
+}
+span.onsite_checkout {
+    color: #cc0000;
+}
+.onsite-checkout-only {
+    background-color : rgba(255, 242, 206, 0.5);
+    border-radius: 4px;
+    border : 1px solid #FFF2CE;
+}
+div.lastchecked {
+    padding : .2em 1em;
+    border: 2px solid #BCDB89;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
