@@ -31,7 +31,6 @@ use C4::Log; # logaction
 use C4::Debug;
 use Koha::Database;
 use Koha::DateUtils;
-use Koha::Accounts;
 use Koha::Accounts::OffsetTypes;
 use Koha::Accounts::DebitTypes;
 
@@ -523,7 +522,7 @@ sub UpdateFine {
         }
     );
 
-    my $credit;
+    my $offset = 0;
     if ($fine) {
         if ( $fine->accruing() ) { # Don't update or recreate fines no longer accruing
             if (
@@ -533,32 +532,13 @@ sub UpdateFine {
             {
                 my $difference = $amount - $fine->amount_original();
 
-                # Fine was reduced by a change in circulation rules or another reason
-                # we need to credit the account the difference and zero out the amount outstanding
-                if ( $difference < 0 ) {
-
-                    my $type = Koha::Accounts::CreditTypes::FineReduction();
-                    $credit = AddCredit(
-                        {
-                            debit_id   => $fine->debit_id(),
-                            borrower   => $borrower,
-                            amount     => abs($difference),
-                            created_on => $timestamp,
-                            type       => $type,
-                        }
-                    );
-
-                } else {
-                    $fine->amount_outstanding( $amount );
-                }
-
-                $fine->amount_last_increment($difference);
                 $fine->amount_original( $fine->amount_original() + $difference );
                 $fine->amount_outstanding( $fine->amount_outstanding() + $difference );
                 $fine->amount_last_increment($difference);
                 $fine->updated_on($timestamp);
                 $fine->update();
 
+                $offset = 1;
             }
         }
     }
@@ -580,20 +560,22 @@ sub UpdateFine {
             }
         );
 
-        $schema->resultset('AccountOffset')->create(
-            {
-                debit_id   => $fine->debit_id(),
-                credit_id  => $credit ? $credit->credit_id() : undef,
-                amount     => $fine->amount_last_increment(),
-                created_on => $timestamp,
-                type       => Koha::Accounts::OffsetTypes::Fine(),
-            }
-        );
+        $offset = 1;
     } else { # No fine to update, amount is 0, just return
         return;
     }
 
-    NormalizeBalances({ borrower => $borrower });
+    $schema->resultset('AccountOffset')->create(
+        {
+            debit_id   => $fine->debit_id(),
+            amount     => $fine->amount_last_increment(),
+            created_on => $timestamp,
+            type       => Koha::Accounts::OffsetTypes::Fine(),
+        }
+    ) if $offset;
+
+    $borrower->account_balance( $borrower->account_balance + $fine->amount_last_increment() );
+    $borrower->update();
 
     logaction( "FINES", Koha::Accounts::DebitTypes::Fine(),
         $borrowernumber,
