@@ -64,7 +64,8 @@ my $borrower = GetMember( borrowernumber => $borrowernumber );
 my @debits = Koha::Database->new()->schema->resultset('AccountDebit')->search(
     {
         'me.borrowernumber' => $borrowernumber,
-        amount_outstanding  => { '>' => 0 }
+        amount_outstanding  => { '>' => 0 },
+        accruing => 0,
     }
 );
 

@@ -230,7 +230,7 @@ function checkForm(){
 
                         [% ELSE %]
                             <p>
-                                [% borrower.firstname %] [% borrower.surname %] has no outstanding fines.
+                                [% borrower.firstname %] [% borrower.surname %] has no payable fines.
                             </p>
                         [% END %]
 
