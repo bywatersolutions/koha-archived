@@ -48,6 +48,7 @@ use Data::Dumper;
 use Koha::DateUtils;
 use Koha::Calendar;
 use Koha::Borrower::Debarments;
+use Koha::Database;
 use Carp;
 use Date::Calc qw(
   Today
