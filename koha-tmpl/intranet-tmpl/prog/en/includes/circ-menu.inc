@@ -67,7 +67,7 @@
         [% IF ( detailview ) %]<li class="active">[% ELSE %]<li>[% END %]<a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% borrowernumber %]">Details</a></li>
     [% END %]
     [% IF ( CAN_user_updatecharges ) %]
-        [% IF ( accounts_view ) %]<li class="active">[% ELSE %]<li>[% END %]<a href="/cgi-bin/koha/members/account.pl?borrowernumber=[% borrowernumber %]">Fines</a></li>
+        [% IF ( accounts_view ) %]<li class="active">[% ELSE %]<li>[% END %]<a href="/cgi-bin/koha/members/account_payment.pl?borrowernumber=[% borrowernumber %]">Fines</a></li>
     [% END %]
     [% IF ( RoutingSerials ) %][% IF ( routinglistview ) %]<li class="active">[% ELSE %]<li>[% END %]<a href="/cgi-bin/koha/members/routing-lists.pl?borrowernumber=[% borrowernumber %]">Routing lists</a></li>[% END %]
     <!-- Added check for borrowers permission as this is needed to access Cirulation History -->
