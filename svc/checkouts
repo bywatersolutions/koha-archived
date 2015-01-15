@@ -77,7 +77,7 @@ my $sql = '
         author,
 
         itemnumber,
-        barcode,
+        items.barcode,
         itemnotes,
         itemnotes_nonpublic,
         itemcallnumber,
