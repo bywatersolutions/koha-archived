@@ -39,7 +39,7 @@
 
                         <div>
                             <div id="account-debits">
-                                <a id="account-debits-switcher" href="#" onclick="return false">View payments</a>
+                                <p><a id="account-debits-switcher" class="btn" href="#" onclick="return false">View payments</a></p>
                                 <table cellpadding="0" cellspacing="0" border="0" class="display" id="debits-table">
                                     <thead>
                                         <tr>
@@ -61,7 +61,7 @@
                             </div>
 
                             <div id="account-credits">
-                                <a id="account-credits-switcher" href="#"  onclick="return false">View fees</a>
+                                <p><a id="account-credits-switcher" class="btn" href="#" onclick="return false">View fees</a></p>
                                 <table cellpadding="0" cellspacing="0" border="0" class="display" id="credits-table">
                                     <thead>
                                         <tr>
@@ -93,6 +93,8 @@
 
 [% INCLUDE 'opac-bottom.inc' %]
 
+[% BLOCK jsinclude %]
+
 [% INCLUDE 'datatables.inc' %]
 
 <script type="text/javascript">
@@ -111,7 +113,8 @@ $(document).ready(function() {
     var anOpen = [];
     var sImageUrl = "[% interface %]/[% theme %]/images/";
 
-    var debitsTable = $('#debits-table').dataTable( {
+    var debitsTable = $('#debits-table').dataTable($.extend(true, {}, dataTablesDefaults, {
+        "sDom": '<"top"lp>rt<"clear">',
         "bProcessing": true,
         "aoColumns": [
             {
@@ -123,7 +126,7 @@ $(document).ready(function() {
             { "mDataProp": "description" },
             {
                 "mDataProp": "type",
-                "fnRender": function ( o, val ) {
+                "render": function ( val ) {
                     return STRINGS['DebitTypes'][val] || val;
                 },
             },
@@ -173,7 +176,7 @@ $(document).ready(function() {
                 },
             [% END %]
         ]
-    } );
+    } ));
 
     $('#debits-table td.control').live( 'click', function () {
         var nTr = this.parentNode;
@@ -194,7 +197,8 @@ $(document).ready(function() {
         }
     } );
 
-    var creditsTable = $('#credits-table').dataTable( {
+    var creditsTable = $('#credits-table').dataTable($.extend(true, {}, dataTablesDefaults, {
+        "sDom": '<"top"lp>rt<"clear">',
         "bProcessing": true,
         "aoColumns": [
             {
@@ -204,7 +208,12 @@ $(document).ready(function() {
             },
             { "mDataProp": "credit_id" },
             { "mDataProp": "notes" },
-            { "mDataProp": "type" },
+            {
+                "mDataProp": "type",
+                "render": function ( val ) {
+                    return STRINGS['CreditTypes'][val] || val;
+                },
+            },
             { "mDataProp": "amount_paid" },
             { "mDataProp": "amount_remaining" },
             { "mDataProp": "created_on" },
@@ -230,7 +239,7 @@ $(document).ready(function() {
                 },
             [% END %]
         ]
-    } );
+    } ) );
 
     $('#credits-table td.control').live( 'click', function () {
         var nTr = this.parentNode;
@@ -311,7 +320,7 @@ function fnFormatDebitDetails( debitsTable, nTr ) {
                 "<td>" + ao.created_on + "</td>" +
                 "<td>" + ao.credit.amount_paid + "</td>" +
                 "<td>" + ao.amount + "</td>" +
-                "<td>" + ao.credit.type + "</td>" +
+                "<td>" + STRINGS["CreditTypes"][ao.credit.type] + "</td>" +
                 "<td>" + ao.credit.notes + "</td>" +
             "</tr>";
         }
@@ -358,7 +367,7 @@ function fnFormatCreditDetails( creditsTable, nTr ) {
             "<tr>" +
                 "<td>" + ao.debit.debit_id + "</td>" +
                 "<td>" + ao.debit.description + "</td>" +
-                "<td>" + ao.debit.type + "</td>" +
+                "<td>" + STRINGS["DebitTypes"][ao.debit.type] + "</td>" +
                 "<td>" + ao.debit.amount_original + "</td>" +
                 "<td>" + ao.debit.amount_outstanding + "</td>" +
                 "<td>" + ao.debit.created_on + "</td>" +
@@ -381,7 +390,7 @@ function fnFormatCreditDetails( creditsTable, nTr ) {
 //]]>
 </script>
 
-[% BLOCK jsinclude %][% END %]
+[% END %]
 
 [% BLOCK format_data %]
     [% FOREACH key IN data.result_source.columns %]
