@@ -2798,3 +2798,6 @@ div#cn_browser_table_wrapper > table#cn_browser_table {
    margin: auto;
    width:90%;
 }
+.hq-author {
+    font-weight: bold;
+}
