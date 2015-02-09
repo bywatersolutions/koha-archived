@@ -9777,6 +9777,23 @@ if ( CheckVersion($DBversion) ) {
     SetVersion($DBversion);
 }
 
+$DBversion = "3.18.04.004";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q{
+        CREATE TABLE `item_messages` (
+            `item_message_id` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `itemnumber` INT( 11 ) NOT NULL,
+            `type` VARCHAR( 80 ) NULL, -- ITEM_MESSAGE authorised value
+            `message` TEXT NOT NULL,
+            `created_on` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX (  `itemnumber` )
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+    });
+
+    print "Upgrade to $DBversion done (Bug 13733 - Give librarians the ability to add messages to an item)\n";
+    SetVersion ($DBversion);
+}
+
 =head1 FUNCTIONS
 
 =head2 TableExists($table)
