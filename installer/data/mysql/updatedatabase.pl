@@ -9966,7 +9966,6 @@ while ( my $file = readdir $dirh ) {
     }
 }
 
-
 =head1 FUNCTIONS
 
 =head2 TableExists($table)
