@@ -21,6 +21,7 @@ package C4::Circulation;
 
 use strict;
 #use warnings; FIXME - Bug 2505
+use Koha::Database;
 use DateTime;
 use C4::Context;
 use C4::Stats;
