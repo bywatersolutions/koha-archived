@@ -49,7 +49,7 @@ my $borrowernumber = $cgi->param('borrowernumber');
 
 my $borrower = GetMember( 'borrowernumber' => $borrowernumber );
 
-my $schema =  Koha::Database->new()->schema();
+my $schema = Koha::Database->new()->schema();
 
 my %params;
 $params{-not} = { amount_outstanding => '0' } unless $show_all;
@@ -58,7 +58,10 @@ my @debits = $schema->resultset('AccountDebit')->search(
         'me.borrowernumber' => $borrowernumber,
         %params,
     },
-    { prefetch            => { account_offsets => 'credit' } }
+    {
+        prefetch => { account_offsets => 'credit' },
+        order_by => { -desc           => 'me.created_on' }
+    }
 );
 
 %params = ();
@@ -68,7 +71,10 @@ my @credits = $schema->resultset('AccountCredit')->search(
         'me.borrowernumber' => $borrowernumber,
         %params,
     },
-    { prefetch            => { account_offsets => 'debit' } }
+    {
+        prefetch => { account_offsets => 'debit' },
+        order_by => { -desc           => 'me.created_on' }
+    }
 );
 
 $template->param(
