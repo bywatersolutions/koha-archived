@@ -33,7 +33,7 @@ use C4::Members;
 use C4::Auth qw/check_cookie_auth/;
 
 my $input   = new CGI;
-my $query   = $input->param('term');
+my $term    = $input->param('term');
 
 binmode STDOUT, ":encoding(UTF-8)";
 print $input->header(-type => 'text/plain', -charset => 'UTF-8');
@@ -43,30 +43,12 @@ if ($auth_status ne "ok") {
     exit 0;
 }
 
-my $dbh = C4::Context->dbh;
-my $sql = q(
-    SELECT borrowernumber, surname, firstname, cardnumber, address, city, zipcode, country
-    FROM borrowers
-    WHERE ( surname LIKE ?
-        OR firstname LIKE ?
-        OR cardnumber LIKE ? )
-);
-if (   C4::Context->preference("IndependentBranches")
-    && C4::Context->userenv
-    && !C4::Context->IsSuperLibrarian()
-    && C4::Context->userenv->{'branch'} )
-{
-    $sql .= " AND borrowers.branchcode ="
-      . $dbh->quote( C4::Context->userenv->{'branch'} );
-}
-
-$sql    .= q( ORDER BY surname, firstname LIMIT 10);
-my $sth = $dbh->prepare( $sql );
-$sth->execute("$query%", "$query%", "$query%");
+$term =~ s/,//g; #remove any commas from search string
+my ($results) = Search( $term, undef, [ 10 ] );
 
 print "[";
 my $i = 0;
-while ( my $rec = $sth->fetchrow_hashref ) {
+foreach my $rec ( @$results ) {
     if($i > 0){ print ","; }
     print "{\"borrowernumber\":\"" . $rec->{borrowernumber} . "\",\"" .
           "surname\":\"".$rec->{surname} . "\",\"" .
