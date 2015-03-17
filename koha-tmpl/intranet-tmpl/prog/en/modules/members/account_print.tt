@@ -24,9 +24,9 @@
             <tr>
                 <th colspan="99">
                     [% IF debit %]
-                        Invoice
+                        Invoice ([% debit.debit_id %])
                     [% ELSIF credit %]
-                        Payment receipt
+                        Payment receipt ([% credit.credit_id %])
                     [% END %]
                 </th>
             </tr>
