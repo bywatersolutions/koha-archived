@@ -9028,54 +9028,6 @@ if ( CheckVersion($DBversion) ) {
     SetVersion ($DBversion);
 }
 
-$DBversion = "XXX";
-if ( CheckVersion($DBversion) ) {
-    $dbh->do(q{
-        INSERT INTO  systempreferences (
-            variable ,
-            value ,
-            options ,
-            explanation ,
-            type
-        ) VALUES (
-            'UseDocumentDelivery',
-            '0',
-            NULL,
-            'If ON, give patron''s placing holds the option for document delivery.',
-            'YesNo'
-        )
-    });
-
-    $dbh->do(q{
-        ALTER TABLE reserves
-            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
-            CHANGE cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
-            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
-            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
-            ADD dd_title TEXT NULL ,
-            ADD dd_authors TEXT NULL ,
-            ADD dd_vol_issue_date TEXT NULL ,
-            ADD dd_pages TEXT NULL ,
-            ADD dd_chapters TEXT NULL
-    });
-
-    $dbh->do(q{
-        ALTER TABLE old_reserves
-            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
-            CHANGE  cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
-            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
-            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
-            ADD dd_title TEXT NULL ,
-            ADD dd_authors TEXT NULL ,
-            ADD dd_vol_issue_date TEXT NULL ,
-            ADD dd_pages TEXT NULL ,
-            ADD dd_chapters TEXT NULL
-    });
-
-    print "Upgrade to $DBversion done ()\n";
-    SetVersion($DBversion);
-}
-
 $DBversion = "3.17.00.046";
 if ( CheckVersion($DBversion) ) {
     $dbh->do(q{
@@ -9774,7 +9726,7 @@ if ( CheckVersion($DBversion) ) {
     SetVersion ($DBversion);
 }
 
-$DBversion = "3.19.00.012";
+$DBversion = "3.18.04.001";
 if(CheckVersion($DBversion)) {
     $dbh->do(q{
         ALTER TABLE biblioitems MODIFY COLUMN marcxml longtext
@@ -9788,9 +9740,57 @@ if(CheckVersion($DBversion)) {
     SetVersion ($DBversion);
 }
 
+$DBversion = "3.18.04.002";
+if ( CheckVersion($DBversion) ) {
+    $dbh->do(q{
+        INSERT INTO  systempreferences (
+            variable ,
+            value ,
+            options ,
+            explanation ,
+            type
+        ) VALUES (
+            'UseDocumentDelivery',
+            '0',
+            NULL,
+            'If ON, give patron''s placing holds the option for document delivery.',
+            'YesNo'
+        )
+    });
+
+    $dbh->do(q{
+        ALTER TABLE reserves
+            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
+            CHANGE cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
+            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
+            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
+            ADD dd_title TEXT NULL ,
+            ADD dd_authors TEXT NULL ,
+            ADD dd_vol_issue_date TEXT NULL ,
+            ADD dd_pages TEXT NULL ,
+            ADD dd_chapters TEXT NULL
+    });
+
+    $dbh->do(q{
+        ALTER TABLE old_reserves
+            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
+            CHANGE  cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
+            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
+            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
+            ADD dd_title TEXT NULL ,
+            ADD dd_authors TEXT NULL ,
+            ADD dd_vol_issue_date TEXT NULL ,
+            ADD dd_pages TEXT NULL ,
+            ADD dd_chapters TEXT NULL
+    });
+
+    print "Upgrade to $DBversion done ()\n";
+    SetVersion($DBversion);
+}
 
 
-$DBversion = "3.19.00.XXX";
+
+$DBversion = "3.18.04.003";
 if ( CheckVersion($DBversion) ) {
     $dbh->do(q|
         CREATE TABLE `additional_fields` (
