@@ -1231,6 +1231,7 @@ sub getIndexes{
                     'ti',
                     'Title',
                     'Title-cover',
+                    'Title-key',
                     'Title-series',
                     'Title-uniform',
                     'Title-uniform-heading',
