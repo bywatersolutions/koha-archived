@@ -170,4 +170,7 @@ while ( my $a = $sth->fetchrow_hashref() ) {
     }
 }
 
+$dbh->do("DROP TABLE accountoffsets");
+$dbh->do("DROP TABLE accountlines");
+
 print "Upgrade to $DBversion done ( Bug 6427 - Rewrite of the accounts system )\n";
