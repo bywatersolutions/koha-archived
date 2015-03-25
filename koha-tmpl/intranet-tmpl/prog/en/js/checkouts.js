@@ -173,11 +173,7 @@ $(document).ready(function() {
             "aoColumns": [
                 {
                     "mDataProp": function( oObj ) {
-                        if ( oObj.issued_today ) {
-                            return "1" + oObj.timestamp;
-                        } else {
-                            return "0" + oObj.date_due;
-                        }
+                        return oObj.sort_order;
                     }
                 },
                 {
@@ -408,7 +404,7 @@ $(document).ready(function() {
             {
                 iGroupingColumnIndex: 1,
                 iGroupingOrderByColumnIndex: 0,
-                sGroupingColumnSortDirection: "desc"
+                sGroupingColumnSortDirection: "asc"
             }
         );
 
