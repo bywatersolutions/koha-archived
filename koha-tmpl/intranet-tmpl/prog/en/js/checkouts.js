@@ -186,7 +186,7 @@ $(document).ready(function() {
                     "bVisible": false,
                 },
                 {
-                    "iDataSort": 1, // Sort on hidden unformatted date due column
+                    "iDataSort": 0, // Sort on hidden unformatted date due column
                     "mDataProp": function( oObj ) {
                         var due = oObj.date_due_formatted;
 
