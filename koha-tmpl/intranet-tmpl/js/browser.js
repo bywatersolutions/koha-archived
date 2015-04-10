@@ -51,7 +51,8 @@ KOHA.browser = function (searchid, biblionumber) {
                     return ( elementOfArray.search(/^scs_\d/) != -1 ); //We are looking for specifically staff client searchCookies.
                 }
             );
-            if (scsCookieKeys.length >= 10) {
+// BWS Change. Lowering from 10 to 6 in response to header field errors. RT 24960. 20150211.lrb
+            if (scsCookieKeys.length >= 6) {
                 scsCookieKeys.sort(); //Make sure they are in order, oldest first!
                 $.removeCookie( scsCookieKeys[0], { path: '/' } );
             }
