@@ -449,6 +449,7 @@ if ($op eq "additem") {
 
         # if barcode exists, don't create, but report The problem.
         unless ($exist_itemnumber) {
+=pod
             unless ($addedolditem->{'barcode'}) {
                use C4::Barcodes;
                my $barcodeobj = C4::Barcodes->new();
@@ -457,6 +458,7 @@ if ($op eq "additem") {
                my ($tagfield,$tagsubfield) = &GetMarcFromKohaField("items.barcode",$frameworkcode);
                $record->field($tagfield)->update($tagsubfield => "$nextbarcode") if ($nextbarcode);
             }
+=cut
 
             my ( $oldbiblionumber, $oldbibnum, $oldbibitemnum ) = AddItemFromMarc( $record, $biblionumber );
             set_item_default_location($oldbibitemnum);
