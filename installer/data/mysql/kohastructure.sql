@@ -3487,7 +3487,7 @@ CREATE TABLE discharges (
 -- Table structure for table 'account_credits'
 --
 DROP TABLE IF EXISTS account_credits;
-CREATE TABLE IF account_credits (
+CREATE TABLE account_credits (
     credit_id int(11) NOT NULL AUTO_INCREMENT,     -- The unique id for this credit
     borrowernumber int(11) NOT NULL,               -- The borrower this credit applies to
     `type` varchar(255) NOT NULL,                  -- The type of credit this is ( defined by Koha::Accounts::CreditTypes )
