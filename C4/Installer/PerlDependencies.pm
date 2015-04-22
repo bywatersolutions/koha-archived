@@ -797,6 +797,16 @@ our $PERL_DEPS = {
         required => 1,
         min_ver => '3.69', # same for Wheezy/Jessie
     },
+    'Net::SFTP::Foreign' => {
+        'usage'    => 'Edifact',
+        'required' => '0',
+        'min_ver'  => '1.73',
+    },
+    'Text::Unidecode' => {
+        'usage'    => 'Edifact',
+        'required' => '0',
+        'min_ver'  => '0.04',
+    },
 };
 
 1;
