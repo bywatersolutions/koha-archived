@@ -230,7 +230,7 @@ sub ModBranch {
                 branchcity=?,branchstate=?,branchcountry=?,branchphone=?,
                 branchfax=?,branchemail=?,branchurl=?,branchip=?,
                 branchprinter=?,branchnotes=?,opac_info=?,
-                branchreplyto=?, branchreturnpath=?
+                branchreplyto=?, branchreturnpath=?,
                 itembarcodeprefix=?,patronbarcodeprefix=?
             WHERE branchcode=?
         ";
