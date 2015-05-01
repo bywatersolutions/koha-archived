@@ -492,24 +492,18 @@ li.hoursentry input {
 <tbody>
   [% FOREACH event IN weekly_events %]
   <tr>
-<! -- <<<<<<< HEAD
   [%# Make sure Sundays are sorted last, if Monday should be considered the first day of the week %]
   [% IF Koha.Preference( 'CalendarFirstDayOfWeek' ) == 'Monday' && event.weekday == 0 %]
-      <td><span title="7">[% event.weekday %]</span></td>
+      <td><span title="7">
+          <script type="text/javascript">
+              document.write(weekdays[ [% event.weekday %]]);
+          </script>
+      </span></td>
   [% ELSE %]
       <td><span title="[% event.weekday %]">[% event.weekday %]</span></td>
   [% END %]
   <td>[% event.title %]</td>
   <td>[% event.description %]</td>
-======= -->
-  <td>
-<script type="text/javascript">
-  document.write(weekdays[ [% event.weekday %]]);
-</script>
-  </td>
-  <td>[% event.title %]</td>
-  <td>[% event.description %]</td>
-<!-- >>>>>>> b5ccfa2... Bug 8133 - hourly loans doesn't know when library closed -->
   <td>
     [% IF event.closed %]
     Closed

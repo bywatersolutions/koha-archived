@@ -24,7 +24,7 @@ use t::lib::TestBuilder;
 use C4::Context;
 use C4::Calendar;
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 BEGIN { use_ok('Koha::Calendar'); }
 
@@ -38,9 +38,9 @@ my $sundays = { open_hour    => 0,
                     description  => 'This is an example holiday used for testing' };
 
 # Make Sunday a closed day
-ModRepeatingEvent( 'MPL', 0, undef, undef, $sundays );
+ModRepeatingEvent( 'OAK', 0, undef, undef, $sundays );
 
-my $branchcode = 'MPL';
+my $branchcode = 'OAK';
 
 my $koha_calendar = Koha::Calendar->new( branchcode => $branchcode );
 
