@@ -1068,7 +1068,6 @@ sub CancelExpiredReserves {
     # Cancel reserves that have been waiting too long
     if ( C4::Context->preference("ExpireReservesMaxPickUpDelay") ) {
         my $max_pickup_delay = C4::Context->preference("ReservesMaxPickUpDelay");
-        my $charge = C4::Context->preference("ExpireReservesMaxPickUpDelayCharge");
         my $cancel_on_holidays = C4::Context->preference('ExpireReservesOnHolidays');
 
         my $today = dt_from_string();
@@ -1089,10 +1088,6 @@ sub CancelExpiredReserves {
             }
 
             if ( $do_cancel ) {
-                if ( $charge ) {
-                    manualinvoice($res->{'borrowernumber'}, $res->{'itemnumber'}, 'Hold waiting too long', 'F', $charge);
-                }
-
                 CancelReserve({ reserve_id => $res->{'reserve_id'} });
             }
         }
@@ -1138,6 +1133,30 @@ sub CancelReserve {
 
     my $reserve = GetReserve( $reserve_id );
     if ($reserve) {
+        # Charge for canceled reserves that have been waiting too long
+        if (   $reserve->{found} eq 'W'
+            && $reserve->{priority} == 0
+            && C4::Context->preference("ExpireReservesMaxPickUpDelay") )
+        {
+            my $max_pickup_delay = C4::Context->preference("ReservesMaxPickUpDelay");
+
+            my $now          = dt_from_string();
+            my $waitingdate  = dt_from_string( $reserve->{waitingdate} );
+            my $duration     = $waitingdate->delta_days($now);
+            my $days_waiting = $duration->in_units('days');
+            if ( $days_waiting > $max_pickup_delay ) {
+                my $charge = C4::Context->preference("ExpireReservesMaxPickUpDelayCharge");
+                if ($charge) {
+                    manualinvoice(
+                        $reserve->{'borrowernumber'},
+                        $reserve->{'itemnumber'},
+                        'Hold waiting too long',
+                        'F', $charge
+                    );
+                }
+            }
+        }
+
         my $query = "
             UPDATE reserves
             SET    cancellationdate = now(),
