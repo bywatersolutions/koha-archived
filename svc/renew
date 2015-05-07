@@ -28,6 +28,8 @@ use C4::Auth qw(check_cookie_auth);
 
 use Koha::DateUtils qw(output_pref dt_from_string);
 
+C4::Context->interface('intranet');
+
 my $input = new CGI;
 
 my ( $auth_status, $sessionID ) =

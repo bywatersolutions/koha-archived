@@ -50,6 +50,7 @@ use Koha::DateUtils;
 use Koha::Calendar;
 use Koha::Borrower::Debarments;
 use Koha::Database;
+use Koha::Logger;
 use Carp;
 use List::MoreUtils qw( uniq );
 use Date::Calc qw(
@@ -2803,6 +2804,9 @@ sub AddRenewal {
     my $datedue         = shift;
     my $lastreneweddate = shift || DateTime->now(time_zone => C4::Context->tz)->ymd();
 
+    my $logger = Koha::Logger->get();
+    $logger->trace( "PARAMS: " . Dumper( { borrowernumber => $borrowernumber, itemnumber => $itemnumber, branch => $branch, datedue => $datedue, lastreneweddate => $lastreneweddate } ) );
+
     my $item   = GetItem($itemnumber) or return;
     my $biblio = GetBiblioFromItemNumber($itemnumber) or return;
 
@@ -2908,7 +2912,9 @@ sub AddRenewal {
                 borrowernumber => $borrowernumber,
                 ccode => $item->{'ccode'}}
                 );
-	return $datedue;
+
+    $logger->trace("RETURNING $datedue");
+    return $datedue;
 }
 
 sub GetRenewCount {

@@ -747,6 +747,11 @@ our $PERL_DEPS = {
         'required' => '0',
         'min_ver'  => '5.61',
     },
+    'Log::Log4perl' => {
+        'usage'    => 'Core',
+        'required' => '1',
+        'min_ver'  => '1.29',
+    },
 };
 
 1;
