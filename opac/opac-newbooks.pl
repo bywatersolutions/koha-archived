@@ -17,7 +17,7 @@ my $input = CGI->new();
 
 my ( $template, $borrowernumber, $cookie ) = get_template_and_user(
     {
-        template_name   => "opac-bibdetails.tmpl",
+        template_name   => "opac-bibdetails.tt",
         type            => "opac",
         query           => $input,
         authnotrequired => 1,
