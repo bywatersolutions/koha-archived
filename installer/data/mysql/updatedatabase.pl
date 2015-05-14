@@ -9807,53 +9807,54 @@ if ( CheckVersion($DBversion) ) {
     SetVersion($DBversion);
 }
 
-$DBversion = "3.17.00.XXX";
-if ( CheckVersion($DBversion) ) {
-    $dbh->do(q{
-        INSERT INTO  systempreferences (
-            variable ,
-            value ,
-            options ,
-            explanation ,
-            type
-        ) VALUES (
-            'UseDocumentDelivery',
-            '0',
-            NULL,
-            'If ON, give patron''s placing holds the option for document delivery.',
-            'YesNo'
-        )
-    });
-
-    $dbh->do(q{
-        ALTER TABLE reserves
-            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
-            CHANGE cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
-            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
-            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
-            ADD dd_title TEXT NULL ,
-            ADD dd_authors TEXT NULL ,
-            ADD dd_vol_issue_date TEXT NULL ,
-            ADD dd_pages TEXT NULL ,
-            ADD dd_chapters TEXT NULL
-    });
-
-    $dbh->do(q{
-        ALTER TABLE old_reserves
-            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
-            CHANGE  cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
-            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
-            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
-            ADD dd_title TEXT NULL ,
-            ADD dd_authors TEXT NULL ,
-            ADD dd_vol_issue_date TEXT NULL ,
-            ADD dd_pages TEXT NULL ,
-            ADD dd_chapters TEXT NULL
-    });
-
-    print "Upgrade to $DBversion done ()\n";
-    SetVersion($DBversion);
-}
+# BWS change. Commenting out. Not needed for nyam upgrade. 20150514.lrb
+#$DBversion = "3.17.00.XXX";
+#if ( CheckVersion($DBversion) ) {
+#    $dbh->do(q{
+#        INSERT INTO  systempreferences (
+#            variable ,
+#            value ,
+#            options ,
+#            explanation ,
+#            type
+#        ) VALUES (
+#            'UseDocumentDelivery',
+#            '0',
+#            NULL,
+#            'If ON, give patron''s placing holds the option for document delivery.',
+#            'YesNo'
+#        )
+#    });
+#
+#    $dbh->do(q{
+#        ALTER TABLE reserves
+#            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
+#            CHANGE cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
+#            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
+#            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
+#            ADD dd_title TEXT NULL ,
+#            ADD dd_authors TEXT NULL ,
+#            ADD dd_vol_issue_date TEXT NULL ,
+#            ADD dd_pages TEXT NULL ,
+#            ADD dd_chapters TEXT NULL
+#    });
+#
+#    $dbh->do(q{
+#        ALTER TABLE old_reserves
+#            CHANGE reservedate reservedate DATETIME NULL DEFAULT NULL,
+#            CHANGE  cancellationdate  cancellationdate DATETIME NULL DEFAULT NULL,
+#            ADD cancellation_note TEXT NULL AFTER  cancellationdate,
+#            ADD type ENUM( 'hold', 'document_delivery' ) NOT NULL DEFAULT 'hold',
+#            ADD dd_title TEXT NULL ,
+#            ADD dd_authors TEXT NULL ,
+#            ADD dd_vol_issue_date TEXT NULL ,
+#            ADD dd_pages TEXT NULL ,
+#            ADD dd_chapters TEXT NULL
+#    });
+#
+#    print "Upgrade to $DBversion done ()\n";
+#    SetVersion($DBversion);
+#}
 
 # DEVELOPER PROCESS, search for anything to execute in the db_update directory
 # SEE bug 13068
