@@ -832,9 +832,7 @@ sub checkauth {
             }
 
             # If we are in a shibboleth session (shibboleth is enabled, a shibboleth match attribute is set and matches koha matchpoint)
-            if ( $shib and $shib_login and $shibSuccess and $type eq 'opac' ) {
-
-                # (Note: $type eq 'opac' condition should be removed when shibboleth authentication for intranet will be implemented)
+            if ( $shib and $shib_login and $shibSuccess ) {
                 logout_shib($query);
             }
         }
