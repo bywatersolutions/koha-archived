@@ -380,6 +380,8 @@ sub CreditDebit {
     croak("Required parameter 'debit' not passed in!")
       unless $debit;
 
+    return if $debit->accruing() && C4::Context->preference('DisallowPaymentsOnAccruingFines');
+
     my $amount_to_pay =
       ( $debit->amount_outstanding() > $credit->amount_remaining() )
       ? $credit->amount_remaining()

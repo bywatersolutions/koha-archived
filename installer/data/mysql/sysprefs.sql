@@ -112,6 +112,7 @@ INSERT INTO systempreferences ( `variable`, `value`, `options`, `explanation`, `
 ('defaultSortField','relevance','relevance|popularity|call_number|pubdate|acqdate|title|author','Specify the default field used for sorting','Choice'),
 ('defaultSortOrder','dsc','asc|dsc|az|za','Specify the default sort order','Choice'),
 ('delimiter',';',';|tabulation|,|/|\\|#||','Define the default separator character for exporting reports','Choice'),
+('DisallowPaymentsOnAccruingFines',  '1',  '',  'If enabled, accruing fines will be unpayable until they are no longer accruing',  'YesNo'),
 ('Display856uAsImage','OFF','OFF|Details|Results|Both','Display the URI in the 856u field as an image, the corresponding Staff Client XSLT option must be on','Choice'),
 ('DisplayClearScreenButton','0','','If set to ON, a clear screen button will appear on the circulation page.','YesNo'),
 ('displayFacetCount','0',NULL,NULL,'YesNo'),
