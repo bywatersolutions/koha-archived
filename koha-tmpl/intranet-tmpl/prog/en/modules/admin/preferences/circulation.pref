@@ -643,6 +643,12 @@ Circulation:
                   yes: Charge
                   no: "Don't Charge"
             - the replacement price when a patron loses an item.
+        -
+            - pref: DisallowPaymentsOnAccruingFines
+              choices:
+                  yes: "Don't"
+                  no: "Do"
+            - allow payments to be made for accruing fines.
     Self Checkout:
         -
             - "Include the following JavaScript on all pages in the web-based self checkout:"
