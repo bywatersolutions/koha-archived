@@ -61,12 +61,12 @@ my $borrowernumber = $cgi->param('borrowernumber');
 
 my $borrower = GetMember( borrowernumber => $borrowernumber );
 
-my @debits = Koha::Database->new()->schema->resultset('AccountDebit')->search(
-    {
-        'me.borrowernumber' => $borrowernumber,
-        amount_outstanding  => { '>' => 0 }
-    }
-);
+my $params;
+$params->{'me.borrowernumber'} = $borrowernumber;
+$params->{amount_outstanding} = { '>' => 0 };
+$params->{accruing} = 0 if C4::Context->preference('DisallowPaymentsOnAccruingFines');
+
+my @debits = Koha::Database->new()->schema->resultset('AccountDebit')->search($params);
 
 $template->param(
     debits   => \@debits,
