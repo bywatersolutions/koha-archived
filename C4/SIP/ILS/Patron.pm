@@ -33,6 +33,7 @@ sub new {
     my $type = ref($class) || $class;
     my $self;
     $kp = GetMember(cardnumber=>$patron_id) || GetMember(userid=>$patron_id);
+warn "KP: " . Data::Dumper::Dumper( $kp );
     $debug and warn "new Patron (GetMember): " . Dumper($kp);
     unless (defined $kp) {
         syslog("LOG_DEBUG", "new ILS::Patron(%s): no such patron", $patron_id);

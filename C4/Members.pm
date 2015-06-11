@@ -569,7 +569,6 @@ sub GetMember {
         #passing mysql's kohaadmin?? Makes no sense as a query
         return;
     }
-    my $dbh = C4::Context->dbh;
     my $select =
     q{SELECT borrowers.*, categories.category_type, categories.description
     FROM borrowers 
@@ -593,6 +592,9 @@ sub GetMember {
         }
     }
     $debug && warn $select, " ",values %information;
+warn "SQL: $select";
+warn "DATA: " . Data::Dumper::Dumper( map{$information{$_}} keys %information );
+    my $dbh = C4::Context->dbh;
     my $sth = $dbh->prepare("$select");
     $sth->execute(map{$information{$_}} keys %information);
     my $data = $sth->fetchall_arrayref({});
