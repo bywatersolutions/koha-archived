@@ -106,8 +106,7 @@ foreach ( $query->param ) {
 
     # decode barcode    ## Didn't we already decode them before passing them back last time??
     $barcode =~ s/^\s*|\s*$//g; # remove leading/trailing whitespace
-    $barcode = barcodedecode($barcode) if(C4::Context->preference('itemBarcodeInputFilter')
-                                          || C4::Context->preference('itembarcodelength'));
+    $barcode = barcodedecode($barcode) if(C4::Context->preference('itemBarcodeInputFilter'));
 
     ######################
     #Are these lines still useful ?
@@ -235,8 +234,7 @@ if ($canceltransfer){
 # actually return book and prepare item table.....
 if ($barcode) {
     $barcode =~ s/^\s*|\s*$//g; # remove leading/trailing whitespace
-    $barcode = barcodedecode($barcode) if (C4::Context->preference('itemBarcodeInputFilter')
-                                           || C4::Context->preference('itembarcodelength'));
+    $barcode = barcodedecode($barcode) if C4::Context->preference('itemBarcodeInputFilter');
     $itemnumber = GetItemnumberFromBarcode($barcode);
 
 #

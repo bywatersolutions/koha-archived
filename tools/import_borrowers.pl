@@ -41,7 +41,7 @@ use C4::Auth;
 use C4::Output;
 use C4::Dates qw(format_date_in_iso);
 use C4::Context;
-use C4::Branch qw/GetBranchesLoop GetBranchName GetBranches/;
+use C4::Branch qw/GetBranchesLoop GetBranchName/;
 use C4::Members;
 use C4::Members::Attributes qw(:all);
 use C4::Members::AttributeTypes;
@@ -316,13 +316,7 @@ if ( $uploadborrowers && length($uploadborrowers) > 0 ) {
             # FIXME: fixup_cardnumber says to lock table, but the web interface doesn't so this doesn't either.
             # At least this is closer to AddMember than in members/memberentry.pl
             if (!$borrower{'cardnumber'}) {
-              my $onlymine=(C4::Context->preference('IndependantBranches') &&
-              C4::Context->userenv &&
-              C4::Context->userenv->{flags} % 2 !=1  &&
-              C4::Context->userenv->{branch}?1:0);
-
-              my $branches=GetBranches($onlymine);
-              $borrower{'cardnumber'} = fixup_cardnumber(undef,$branches->{$borrower{'branchcode'}});
+                $borrower{'cardnumber'} = fixup_cardnumber(undef);
             }
             if ($borrowernumber = AddMember(%borrower)) {
 

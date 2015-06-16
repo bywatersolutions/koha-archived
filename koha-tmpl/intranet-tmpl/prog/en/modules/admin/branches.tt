@@ -143,12 +143,6 @@ tinyMCE.init({
         <li><label for="branchurl">URL: </label><input type="text" name="branchurl" id="branchurl"  size="80" value="[% branchurl |html %]" class="url" /></li>
         <li><label for="opac_info">OPAC info: </label><textarea name="opac_info" id="opac_info">[% opac_info |html %]</textarea></li>
         <li><label for="branchip">IP: </label><input type="text" name="branchip" id="branchip"  size="15" maxlength="15" value="[% branchip |html %]" /> <span class="hint">Can be entered as a single IP, or a subnet such as 192.168.1.*</span></li>
-        [% IF ( itembarcodelength ) %]
-           <li><label for="itembarcodeprefix">Item Barcode Prefix</label><input type="text" name="itembarcodeprefix" id="itembarcodeprefix" value="[% itembarcodeprefix |html %]" /></li>
-        [% END %]
-        [% IF ( patronbarcodelength ) %]
-           <li><label for="patronbarcodeprefix">Patron Barcode Prefix</label><input type="text" name="patronbarcodeprefix" id="patronbarcodeprefix" value="[% patronbarcodeprefix |html %]" /></li>
-        [% END %]
 		<!--
         <li><label for="branchprinter">Library Printer: </label>
             <select id="branchprinter" name="branchprinter">
