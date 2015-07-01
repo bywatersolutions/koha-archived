@@ -297,7 +297,7 @@ if ( $query->param('place_reserve') ) {
                     branchcode        => $branch,
                     borrowernumber    => $borrowernumber,
                     biblionumber      => $biblioNum,
-                    constrain         => 'a',
+                    constraint        => 'a',
                     biblioitems       => [$biblioNum],
                     priority          => $rank,
                     reservedate       => $startdate,
