@@ -891,7 +891,7 @@ sub handle_login {
 # and we're going to believe it.
 #
 sub summary_info {
-    my ( $ils, $patron, $summary, $start, $end ) = @_;
+    my ($ils, $patron, $summary, $start, $end, $server) = @_;
     my $resp = '';
     my $summary_type;
 
@@ -914,9 +914,9 @@ sub summary_info {
 
     syslog( "LOG_DEBUG", "Summary_info: index == '%d', field '%s'", $summary_type, $summary_map[$summary_type]->{fid} );
 
-    my $func     = $summary_map[$summary_type]->{func};
-    my $fid      = $summary_map[$summary_type]->{fid};
-    my $itemlist = &$func( $patron, $start, $end );
+    my $func = $summary_map[$summary_type]->{func};
+    my $fid  = $summary_map[$summary_type]->{fid};
+    my $itemlist = &$func($patron, $start, $end, $server);
 
     syslog( "LOG_DEBUG", "summary_info: list = (%s)", join( ", ", @{$itemlist} ) );
     foreach my $i ( @{$itemlist} ) {
@@ -988,7 +988,7 @@ sub handle_patron_info {
         #          fine_items
         #        recall_items
 
-        $resp .= summary_info( $ils, $patron, $summary, $start, $end );
+        $resp .= summary_info($ils, $patron, $summary, $start, $end, $server);
 
         $resp .= maybe_add( FID_HOME_ADDR,  $patron->address );
         $resp .= maybe_add( FID_EMAIL,      $patron->email_addr );
