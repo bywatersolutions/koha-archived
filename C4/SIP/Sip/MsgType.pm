@@ -890,7 +890,7 @@ sub handle_login {
 # and we're going to believe it.
 #
 sub summary_info {
-    my ($ils, $patron, $summary, $start, $end) = @_;
+    my ($ils, $patron, $summary, $start, $end, $server) = @_;
     my $resp = '';
     my $summary_type;
     #
@@ -898,11 +898,11 @@ sub summary_info {
     # message to the corresponding field and handler
     #
     my @summary_map = (
-        { func => $patron->can(   "hold_items"), fid => FID_HOLD_ITEMS             },
-        { func => $patron->can("overdue_items"), fid => FID_OVERDUE_ITEMS          },
-        { func => $patron->can("charged_items"), fid => FID_CHARGED_ITEMS          },
-        { func => $patron->can(   "fine_items"), fid => FID_FINE_ITEMS             },
-        { func => $patron->can( "recall_items"), fid => FID_RECALL_ITEMS           },
+        { func => $patron->can("hold_items"),    fid => FID_HOLD_ITEMS },
+        { func => $patron->can("overdue_items"), fid => FID_OVERDUE_ITEMS },
+        { func => $patron->can("charged_items"), fid => FID_CHARGED_ITEMS },
+        { func => $patron->can("fine_items"),    fid => FID_FINE_ITEMS },
+        { func => $patron->can("recall_items"),  fid => FID_RECALL_ITEMS },
         { func => $patron->can("unavail_holds"), fid => FID_UNAVAILABLE_HOLD_ITEMS },
     );
 
@@ -915,7 +915,7 @@ sub summary_info {
 
     my $func = $summary_map[$summary_type]->{func};
     my $fid  = $summary_map[$summary_type]->{fid};
-    my $itemlist = &$func($patron, $start, $end);
+    my $itemlist = &$func($patron, $start, $end, $server);
 
     syslog("LOG_DEBUG", "summary_info: list = (%s)", join(", ", @{$itemlist}));
     foreach my $i (@{$itemlist}) {
@@ -991,7 +991,7 @@ sub handle_patron_info {
         #          fine_items
         #        recall_items
 
-        $resp .= summary_info($ils, $patron, $summary, $start, $end);
+        $resp .= summary_info($ils, $patron, $summary, $start, $end, $server);
 
         $resp .= maybe_add(FID_HOME_ADDR,  $patron->address);
         $resp .= maybe_add(FID_EMAIL,      $patron->email_addr);
