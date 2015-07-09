@@ -76,8 +76,8 @@
                             <input type="hidden" name="MerchantCode" value="[% Koha.Preference('FisMerchantCode') %]" />
                             <input type="hidden" name="SettleCode" value="[% Koha.Preference('FisSettleCode') %]" />
                             <input type="hidden" name="PaymentMethod" value="CreditOrDebit" />
-                            <input type="hidden" name="ReturnUrl" value="http://[% Koha.Preference('OPACBaseURL') %]/cgi-bin/koha/opac-account-pay-fis-return.pl" />
-                            <input type="hidden" name="CancelUrl" value="http://[% Koha.Preference('OPACBaseURL') %]/cgi-bin/koha/opac-account.pl" />
+                            <input type="hidden" name="ReturnUrl" value="https://[% Koha.Preference('OPACBaseURL') %]/cgi-bin/koha/opac-account-pay-fis-return.pl" />
+                            <input type="hidden" name="CancelUrl" value="https://[% Koha.Preference('OPACBaseURL') %]/cgi-bin/koha/opac-account.pl" />
 
                             <input type="hidden" name="UserPart1" value="[% borrower.firstname %]" />
                             <input type="hidden" name="UserPart2" value="[% borrower.surname %]" />
