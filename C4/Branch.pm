@@ -205,7 +205,7 @@ sub ModBranch {
             branchurl,branchip,branchprinter,branchnotes,opac_info,
             branchreplyto, branchreturnpath,
             itembarcodeprefix,patronbarcodeprefix)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ";
         my $sth    = $dbh->prepare($query);
         $sth->execute(
