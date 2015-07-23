@@ -657,16 +657,45 @@
                 return true;
             });
 
+	    submit_request = 1;
+	    $('.toggle-document-delivery-options').each(function() {
+		if ( $(this).is(':checked') ) {
+		    var id = $(this).attr('id');
+
+		    var biblionumber = id.split('toggle-document-delivery-options-');
+		    biblionumber = biblionumber[1];
+
+		    if (
+			$('#dd_title-' + biblionumber).val() ||
+			$('#dd_authors-' + biblionumber).val() ||
+			$('#dd_vol_issue_date-' + biblionumber).val() ||
+			$('#dd_pages-' + biblionumber).val() ||
+			$('#dd_chapters-' + biblionumber).val()
+		    ) {
+			// Do nothing
+		    } else {
+			submit_request = 0;
+		    }
+		}
+	    });
+
+	    if (!submit_request) {
+		alert("You have requested an article. Please fill out at least on article request field");
+		 return false;
+	    }
+
             if (badBib) {
                 alert(MSG_NO_ITEM_SELECTED);
                 return false;
             }
+
 
             $("#selections").val(selections);
             $("#biblionumbers").val(biblionumbers);
 
             return true;
         });
+
 
         $(".toggle-document-delivery-options").on("change",function(e){
             var id = "#document-delivery-" + this.id.replace("toggle-document-delivery-options-","");
