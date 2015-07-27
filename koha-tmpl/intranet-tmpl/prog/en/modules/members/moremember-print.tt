@@ -70,6 +70,7 @@
 
 [% IF account_balance %]
     [% IF account_debits %]
+        [% SET total_due = 0 %]
         <table>
             <caption>Account fees</caption>
             <tr>
@@ -80,6 +81,7 @@
             </tr>
             [% FOREACH d IN account_debits %]
                 [% IF d.amount_outstanding > 0 %]
+                    [% total_due = total_due + d.amount_outstanding %]
                     <tr>
                         <td>[% d.description %]</td>
                         <td>[% d.created_on | $KohaDates %]</td>
@@ -91,7 +93,7 @@
             <tfoot>
                 <tr>
                     <td colspan="3">Total due</td>
-                    <td colspan="2">[% totaldue | $Currency %]</td>
+                    <td colspan="2">[% total_due | $Currency %]</td>
                 </tr>
             </tfoot>
         </table>
