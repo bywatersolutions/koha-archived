@@ -22,7 +22,7 @@ use warnings;
 use C4::Context;
 use C4::Acquisition;
 use C4::Budgets qw( GetCurrency );
-use C4::Bookseller qw( GetBookSellerFromId );
+use Koha::Acquisition::Bookseller;
 use Net::FTP;
 use Business::Edifact::Interchange;
 use C4::Biblio;
@@ -339,7 +339,7 @@ sub CreateEDIOrder {
     my $exchange     = int( rand(99999999999999) );
     my $ref          = int( rand(99999999999999) );
     my $message_type = GetMessageType($basketno);
-    my $bookseller   = GetBookSellerFromId( $booksellerid );
+    my $bookseller   = Koha::Acquisition::Bookseller->fetch( $booksellerid );
     my $output_file  = C4::Context->config('intranetdir');
     my $edi_account  = GetEDIAccountDetails( undef, $booksellerid );
     my $san          = $edi_account->{san};
