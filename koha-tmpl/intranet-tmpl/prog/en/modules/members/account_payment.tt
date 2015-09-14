@@ -240,7 +240,7 @@ function checkForm(){
         </div>
 
         <div class="yui-b">
-            [% INCLUDE 'circ-menu.tt' %]
+            [% INCLUDE 'circ-menu.inc' %]
         </div>
     </div>
 [% INCLUDE 'intranet-bottom.inc' %]
