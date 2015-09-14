@@ -31,7 +31,6 @@ use C4::Budgets;
 use C4::Branch;
 use C4::Contract;
 use C4::EDI qw( CreateEDIOrder SendEDIOrder CheckVendorFTPAccountExists);
-use C4::Bookseller qw( GetBookSellerFromId);
 use C4::Debug;
 use C4::Biblio;
 use C4::Members qw/GetMember/;  #needed for permissions checking for changing basketgroup of a basket
