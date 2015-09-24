@@ -339,7 +339,7 @@ sub CreateEDIOrder {
     my $exchange     = int( rand(99999999999999) );
     my $ref          = int( rand(99999999999999) );
     my $message_type = GetMessageType($basketno);
-    my $bookseller   = Koha::Acquisition::Bookseller->fetch( $booksellerid );
+    my $bookseller   = Koha::Acquisition::Bookseller->fetch( { id => $booksellerid } );
     my $output_file  = C4::Context->config('intranetdir');
     my $edi_account  = GetEDIAccountDetails( undef, $booksellerid );
     my $san          = $edi_account->{san};
