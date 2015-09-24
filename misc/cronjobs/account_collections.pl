@@ -266,21 +266,6 @@ $csv->print(
 
 while ( my $r = $sth->fetchrow_hashref() ) {
 
-    $csv->print(
-        $fh,
-        [
-            $r->{firstname},                    $r->{surname},
-            $r->{address1},                     $r->{address2},
-            $r->{city},                         $r->{state},
-            $r->{zipcode},                      $r->{phone},
-            $r->{borrowernumber},               $r->{cardnumber},
-            $r->{dateofbirth},                  $r->{categorycode},
-            $r->{computed_account_balance},      $r->{branchcode},
-            $r->{most_recent_unpaid_fine_date}, $r->{guarantor_firstname},
-            $r->{guarantor_surname},
-        ]
-    );
-
     if ( $report_type eq 'submission' ) {
 
         # Set patron as being in collections
@@ -290,6 +275,9 @@ while ( my $r = $sth->fetchrow_hashref() ) {
             ( $r->{borrowernumber}, $in_collections_attribute_code, '1' ) );
 
         if ($processing_fee) {
+            # Update the computed balance witht he processing fee so it's included in the collections submission
+            $r->{computed_account_balance} += $processing_fee;
+
             AddDebit(
                 {
                     borrower =>
@@ -332,6 +320,22 @@ while ( my $r = $sth->fetchrow_hashref() ) {
         $dbh->do( $delete_attribute_sql, undef,
             ( $r->{borrowernumber}, $in_collections_attribute_code ) );
     }
+
+    $csv->print(
+        $fh,
+        [
+            $r->{firstname},                    $r->{surname},
+            $r->{address1},                     $r->{address2},
+            $r->{city},                         $r->{state},
+            $r->{zipcode},                      $r->{phone},
+            $r->{borrowernumber},               $r->{cardnumber},
+            $r->{dateofbirth},                  $r->{categorycode},
+            $r->{computed_account_balance},      $r->{branchcode},
+            $r->{most_recent_unpaid_fine_date}, $r->{guarantor_firstname},
+            $r->{guarantor_surname},
+        ]
+    );
+
 }
 
 close $fh or die "$file: $!";
