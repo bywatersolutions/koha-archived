@@ -1,88 +1,139 @@
 <acsconfig xmlns="http://openncip.org/acs-config/1.0/">
 <!-- above address gets nothing, it's just a namespace -->
-  <error-detect enabled="true" />
+<error-detect enabled="true" />
 
 <!--
-  Set Net::Server::PreFork runtime parameters 
-  syslog_ident will identify SIP2 Koha server entries in syslog
-  For OpenSolaris, add: syslog_logsock=stream
+Set Net::Server::PreFork runtime parameters
+syslog_ident will identify SIP2 Koha server entries in syslog
+For OpenSolaris, add: syslog_logsock=stream
 -->
-  <server-params
-    min_servers='1'
-    min_spare_servers='0' 
-    log_file='Sys::Syslog'
-    syslog_ident='koha_sip'
-    syslog_facility='local6'
-  />
-  
-  <listeners>
+<server-params
+min_servers='10'
+min_spare_servers='2'
+max_servers='150'
+log_file='Sys::Syslog'
+syslog_ident='koha_sip'
+syslog_facility='local6'
+/>
+
+<listeners>
 <!-- vestigial HTTP, never implemented: just use the OPAC!
-	<service
-      port="0:8080/tcp"
-      transport="http"
-      protocol="NCIP/1.0" />
+<service
+port="0:8080/tcp"
+transport="http"
+protocol="NCIP/1.0" />
 -->
-    <service
-      port="8023/tcp"
-      transport="telnet"
-      protocol="SIP/2.00"
-      timeout="60" />
+<service
+port="8023/tcp"
+transport="telnet"
+protocol="SIP/2.00"
+timeout="60" />
 
-    <service
-      port="127.0.0.1:6001/tcp"
-      transport="RAW" 
-      protocol="SIP/2.00"
-      timeout="60" />
-  </listeners>
+<service
+port="23.253.104.41:6001/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
 
-  <accounts>
-      <login id="term1"  password="term1" delimiter="|" error-detect="enabled" institution="CPL" encoding="ascii" />
-      <login id="koha"   password="koha"  delimiter="|" error-detect="enabled" institution="kohalibrary" encoding="utf8" />
-      <login id="koha2"  password="koha" institution="kohalibrary2" terminator="CR" />
-      <login id="lpl-sc" password="1234" institution="LPL" />
-      <login id="lpl-sc-beacock" password="xyzzy"
-             delimiter="|" error-detect="enabled" institution="LPL"
-             send_patron_home_library_in_af="1" >
-          <screen_msg_regex find="Greetings from Koha." replace="Welcome to your library!" />
-          <screen_msg_regex find="Invalid patron barcode." replace="Barcode not found, are you sure this is your library card?" />
-      </login>
-  </accounts>
+<service
+port="23.253.104.41:6002/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+<service
+port="23.253.104.41:6006/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+<service
+port="23.253.104.41:6008/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+<service
+port="23.253.104.41:6009/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+<service
+port="23.253.104.41:6013/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+<service
+port="23.253.104.41:6014/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+<service
+port="23.253.104.41:6015/tcp"
+transport="RAW"
+protocol="SIP/2.00"
+timeout="60" />
+
+</listeners>
+<accounts>
+<login id="sipmai" password="sipchk" delimiter="|" error-detect="enabled" institution="MAIN" terminator="CR" />
+<login id="SIPPCR" password="SIPCHK" delimiter="|" error-detect="enabled" institution="MAIN" terminator="CR" />
+<login id="SIP360" password="SIPCHK" delimiter="|" error-detect="enabled" institution="MAIN" terminator="CR" />
+<login id="SIPMUR" password="SIPCHK" delimiter="|" error-detect="enabled" institution="MURPHY" terminator="CR" />
+<login id="SIPMON" password="SIPCHK" delimiter="|" error-detect="enabled" institution="MONROVIA" terminator="CR" />
+<login id="SIPHAZ" password="SIPCHK" delimiter="|" error-detect="enabled" institution="HAZELGREEN" terminator="CR" />
+<login id="SIPOVD" password="SIPCHK" delimiter="|" error-detect="enabled" institution="MAIN" terminator="CR" />
+<login id="sipmad" password="sipchk" delimiter="|" error-detect="enabled" institution="MADISON" terminator="CR" />
+<login id="sipbai" password="sipchk" delimiter="|" error-detect="enabled" institution="BAILEYCOVE" terminator="CR" />
+</accounts>
 
 <!--
-Institution tags are for enabled branches.  There needs to be one
+Institution tags are for enabled branches. There needs to be one
 institution stanza for each institution named in the accounts above.
 The implementation attribute is actually used to find the code to run,
 in our case "ILS".
 -->
 
 <institutions>
-    <institution id="MAIN" implementation="ILS" parms="">
-          <policy checkin="true" renewal="true" checkout="true"
-	  	  status_update="false" offline="false"
-		  timeout="100"
-	  	  retries="5" />
-    </institution>
-    <institution id="CPL" implementation="ILS" parms="">
-          <policy checkin="true" renewal="true" checkout="true"
-	  	  status_update="false" offline="false"
-		  timeout="25"
-	  	  retries="5" />
-    </institution>
-    <institution id="kohalibrary" implementation="ILS" parms="">
-          <policy checkin="true" renewal="false" checkout="true"
-	  	  status_update="false" offline="false"
-		  timeout="100"
-	  	  retries="5" />
-    </institution>
-    <institution id="kohalibrary2" implementation="ILS" parms="">
-          <policy checkin="true" renewal="false" checkout="true"
-		  timeout="100"
-	  	  retries="3" />
-    </institution>
-    <institution id="LPL" implementation="ILS">
-          <policy checkin="true" renewal="false" checkout="true"
-		  timeout="100"
-	  	  retries="5" />
-    </institution>
+<institution id="MAIN" implementation="ILS" parms="">
+<policy checkin="true" renewal="true" checkout="true"
+status_update="false" offline="false"
+timeout="100"
+retries="5" />
+</institution>
+<institution id="MADISON" implementation="ILS" parms="">
+<policy checkin="true" renewal="true" checkout="true"
+status_update="false" offline="false"
+timeout="100"
+retries="5" />
+</institution>
+<institution id="BAILEYCOVE" implementation="ILS" parms="">
+<policy checkin="true" renewal="true" checkout="true"
+status_update="false" offline="false"
+timeout="100"
+retries="5" />
+</institution>
+<institution id="MONROVIA" implementation="ILS" parms="">
+<policy checkin="true" renewal="true" checkout="true"
+status_update="false" offline="false"
+timeout="100"
+retries="5" />
+</institution>
+<institution id="MURPHY" implementation="ILS" parms="">
+<policy checkin="true" renewal="true" checkout="true"
+status_update="false" offline="false"
+timeout="100"
+retries="5" />
+</institution>
+<institution id="HAZELGREEN" implementation="ILS" parms="">
+<policy checkin="true" renewal="true" checkout="true"
+status_update="false" offline="false"
+timeout="100"
+retries="5" />
+
+</institution>
 </institutions>
 </acsconfig>
