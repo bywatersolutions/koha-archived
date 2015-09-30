@@ -62,6 +62,9 @@ my $query = new CGI;
 my $sessionID = $query->cookie("CGISESSID") ;
 my $session = get_session($sessionID);
 
+my $override_high_holds     = $query->param('override_high_holds');
+my $override_high_holds_tmp = $query->param('override_high_holds_tmp');
+
 # branch and printer are now defined by the userenv
 # but first we have to check if someone has tried to change them
 
@@ -332,8 +335,17 @@ if (@$barcodes) {
   for my $barcode ( @$barcodes ) {
     my $template_params = { barcode => $barcode };
     # always check for blockers on issuing
-    my ( $error, $question, $alerts ) =
-    CanBookBeIssued( $borrower, $barcode, $datedue , $inprocess, undef, { onsite_checkout => $onsite_checkout } );
+    my ( $error, $question, $alerts ) = CanBookBeIssued(
+        $borrower,
+        $barcode, $datedue,
+        $inprocess,
+        undef,
+        {
+            onsite_checkout     => $onsite_checkout,
+            override_high_holds => $override_high_holds || $override_high_holds_tmp || 0,
+        }
+    );
+
     my $blocker = $invalidduedate ? 1 : 0;
 
     $template_params->{alert} = $alerts;
@@ -634,6 +646,7 @@ $template->param(
     canned_bor_notes_loop     => $canned_notes,
     debarments                => GetDebarments({ borrowernumber => $borrowernumber }),
     todaysdate                => output_pref( { dt => dt_from_string()->set(hour => 23)->set(minute => 59), dateformat => 'sql' } ),
+    override_high_holds       => $override_high_holds,
 );
 
 output_html_with_http_headers $query, $cookie, $template->output;
