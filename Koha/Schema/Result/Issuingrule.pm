@@ -185,6 +185,13 @@ __PACKAGE__->table("issuingrules");
   is_nullable: 0
   size: 1
 
+=head2 article_requests
+
+  data_type: 'enum'
+  default_value: 'no'
+  extra: {list => ["no","yes","bib_only","item_only"]}
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -249,6 +256,13 @@ __PACKAGE__->add_columns(
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "opacitemholds",
   { data_type => "char", default_value => "N", is_nullable => 0, size => 1 },
+  "article_requests",
+  {
+    data_type => "enum",
+    default_value => "no",
+    extra => { list => ["no", "yes", "bib_only", "item_only"] },
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY

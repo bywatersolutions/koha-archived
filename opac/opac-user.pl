@@ -36,6 +36,7 @@ use C4::Letters;
 use C4::Branch; # GetBranches
 use Koha::DateUtils;
 use Koha::Borrower::Debarments qw(IsDebarred);
+use Koha::Borrowers;
 
 use constant ATTRIBUTE_SHOW_BARCODE => 'SHOW_BCODE';
 
@@ -389,6 +390,8 @@ if ( $borr->{'opacnote'} ) {
 }
 
 $template->param(
+    SuspendHoldsOpac => C4::Context->preference('SuspendHoldsOpac'),
+    borrower                 => Koha::Borrowers->find($borrowernumber),
     bor_messages_loop        => GetMessages( $borrowernumber, 'B', 'NONE' ),
     waiting_count            => $wcount,
     patronupdate             => $patronupdate,
