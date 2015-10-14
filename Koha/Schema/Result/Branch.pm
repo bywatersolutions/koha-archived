@@ -187,36 +187,6 @@ __PACKAGE__->set_primary_key("branchcode");
 
 =head1 RELATIONS
 
-=head2 account_credits
-
-Type: has_many
-
-Related object: L<Koha::Schema::Result::AccountCredit>
-
-=cut
-
-__PACKAGE__->has_many(
-  "account_credits",
-  "Koha::Schema::Result::AccountCredit",
-  { "foreign.branchcode" => "self.branchcode" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 account_debits
-
-Type: has_many
-
-Related object: L<Koha::Schema::Result::AccountDebit>
-
-=cut
-
-__PACKAGE__->has_many(
-  "account_debits",
-  "Koha::Schema::Result::AccountDebit",
-  { "foreign.branchcode" => "self.branchcode" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 aqbaskets
 
 Type: has_many
@@ -412,6 +382,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 creator_batches_tmps
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::CreatorBatchesTmp>
+
+=cut
+
+__PACKAGE__->has_many(
+  "creator_batches_tmps",
+  "Koha::Schema::Result::CreatorBatchesTmp",
+  { "foreign.branch_code" => "self.branchcode" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 default_branch_circ_rule
 
 Type: might_have
@@ -469,6 +454,21 @@ __PACKAGE__->has_many(
   "items_homebranches",
   "Koha::Schema::Result::Item",
   { "foreign.homebranch" => "self.branchcode" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 labels_batches_tmps
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::LabelsBatchesTmp>
+
+=cut
+
+__PACKAGE__->has_many(
+  "labels_batches_tmps",
+  "Koha::Schema::Result::LabelsBatchesTmp",
+  { "foreign.branch_code" => "self.branchcode" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
@@ -543,8 +543,8 @@ Composing rels: L</branchrelations> -> categorycode
 __PACKAGE__->many_to_many("categorycodes", "branchrelations", "categorycode");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-11-06 15:26:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CGNPB/MkGLOihDThj43/4A
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-14 08:45:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:a12SEZ3sGgRzgdphVkxWzg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
