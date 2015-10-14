@@ -32,6 +32,7 @@ __PACKAGE__->table("account_credits");
 =head2 borrowernumber
 
   data_type: 'integer'
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 type
@@ -69,12 +70,6 @@ __PACKAGE__->table("account_credits");
   data_type: 'text'
   is_nullable: 1
 
-=head2 branchcode
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 10
-
 =head2 manager_id
 
   data_type: 'integer'
@@ -92,13 +87,19 @@ __PACKAGE__->table("account_credits");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 branchcode
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 10
+
 =cut
 
 __PACKAGE__->add_columns(
   "credit_id",
   { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
   "borrowernumber",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "type",
   { data_type => "varchar", is_nullable => 0, size => 255 },
   "amount_received",
@@ -111,8 +112,6 @@ __PACKAGE__->add_columns(
   { data_type => "decimal", is_nullable => 1, size => [28, 6] },
   "notes",
   { data_type => "text", is_nullable => 1 },
-  "branchcode",
-  { data_type => "varchar", is_nullable => 1, size => 10 },
   "manager_id",
   { data_type => "integer", is_nullable => 1 },
   "created_on",
@@ -127,6 +126,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "branchcode",
+  { data_type => "varchar", is_nullable => 1, size => 10 },
 );
 
 =head1 PRIMARY KEY
@@ -158,9 +159,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 borrowernumber
 
-# Created by DBIx::Class::Schema::Loader v0.07040 @ 2015-01-14 08:52:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nxB+s5t2sdcV71a+ElhYmg
+Type: belongs_to
+
+Related object: L<Koha::Schema::Result::Borrower>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "borrowernumber",
+  "Koha::Schema::Result::Borrower",
+  { borrowernumber => "borrowernumber" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-14 08:41:52
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:uF7ltOCQCrABK9oEuQZJCg
 
 __PACKAGE__->belongs_to(
   "borrower",

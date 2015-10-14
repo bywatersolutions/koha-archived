@@ -209,12 +209,6 @@ __PACKAGE__->table("aqorders");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 subscriptionid
-
-  data_type: 'integer'
-  is_foreign_key: 1
-  is_nullable: 1
-
 =head2 parent_ordernumber
 
   data_type: 'integer'
@@ -226,6 +220,12 @@ __PACKAGE__->table("aqorders");
   default_value: 'new'
   is_nullable: 1
   size: 16
+
+=head2 subscriptionid
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 1
 
 =cut
 
@@ -299,8 +299,6 @@ __PACKAGE__->add_columns(
   { data_type => "integer", default_value => 0, is_nullable => 1 },
   "claimed_date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
-  "subscriptionid",
-  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "parent_ordernumber",
   { data_type => "integer", is_nullable => 1 },
   "orderstatus",
@@ -310,6 +308,8 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => 16,
   },
+  "subscriptionid",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY
@@ -492,8 +492,8 @@ Composing rels: L</aqorder_users> -> borrowernumber
 __PACKAGE__->many_to_many("borrowernumbers", "aqorder_users", "borrowernumber");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2015-05-14 11:27:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BCa/SxerJ+zEh8Pg9Jdkaw
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-14 08:41:52
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jyDjbHzYBmQ4HAk/GfqGaQ
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

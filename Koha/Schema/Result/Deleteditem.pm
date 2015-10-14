@@ -255,8 +255,9 @@ __PACKAGE__->table("deleteditems");
 
 =head2 enumchron
 
-  data_type: 'text'
+  data_type: 'varchar'
   is_nullable: 1
+  size: 80
 
 =head2 copynumber
 
@@ -367,7 +368,7 @@ __PACKAGE__->add_columns(
   "more_subfields_xml",
   { data_type => "longtext", is_nullable => 1 },
   "enumchron",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "varchar", is_nullable => 1, size => 80 },
   "copynumber",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "stocknumber",
@@ -387,8 +388,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("itemnumber");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2015-04-23 12:42:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+aDMnEj1EvLQTQPAEl1ocg
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-14 08:45:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mbEun9vt24Ydejh/VCbvYw
 
 __PACKAGE__->belongs_to(
   "biblio",
