@@ -2967,7 +2967,7 @@ sub PrepareItemrecordDisplay {
                 if (   $tagslib->{$tag}->{$subfield}->{kohafield} eq 'items.itemcallnumber'
                     && $defaultvalues
                     && $defaultvalues->{'callnumber'} ) {
-                    if( $itemrecord and $defaultvalues and not $itemrecord->field($subfield) ){
+                    if( $itemrecord and $defaultvalues and not $itemrecord->subfield($tag,$subfield) ){
                         # if the item record exists, only use default value if the item has no callnumber
                         $defaultvalue = $defaultvalues->{callnumber};
                     } elsif ( !$itemrecord and $defaultvalues ) {
@@ -2978,7 +2978,7 @@ sub PrepareItemrecordDisplay {
                 if (   ( $tagslib->{$tag}->{$subfield}->{kohafield} eq 'items.holdingbranch' || $tagslib->{$tag}->{$subfield}->{kohafield} eq 'items.homebranch' )
                     && $defaultvalues
                     && $defaultvalues->{'branchcode'} ) {
-                    if ( $itemrecord and $defaultvalues and not $itemrecord->field($subfield) ) {
+                    if ( $itemrecord and $defaultvalues and not $itemrecord->subfield($tag,$subfield) ) {
                         $defaultvalue = $defaultvalues->{branchcode};
                     }
                 }
@@ -2986,7 +2986,7 @@ sub PrepareItemrecordDisplay {
                     && $defaultvalues
                     && $defaultvalues->{'location'} ) {
 
-                    if ( $itemrecord and $defaultvalues and not $itemrecord->field($subfield) ) {
+                    if ( $itemrecord and $defaultvalues and not $itemrecord->subfield($tag,$subfield) ) {
                         # if the item record exists, only use default value if the item has no locationr
                         $defaultvalue = $defaultvalues->{location};
                     } elsif ( !$itemrecord and $defaultvalues ) {
@@ -3080,15 +3080,18 @@ sub PrepareItemrecordDisplay {
                     });
                     my $pars = { dbh => $dbh, record => undef, tagslib =>$tagslib, id => $subfield_data{id}, tabloop => undef };
                     $plugin->build( $pars );
+                    if ( $itemrecord and my $field = $itemrecord->field($tag) ) {
+                        $defaultvalue = $field->subfield($subfield);
+                    }
                     if( !$plugin->errstr ) {
                         #TODO Move html to template; see report 12176/13397
                         my $tab= $plugin->noclick? '-1': '';
                         my $class= $plugin->noclick? ' disabled': '';
                         my $title= $plugin->noclick? 'No popup': 'Tag editor';
-                        $subfield_data{marc_value} = qq[<input type="text" id="$subfield_data{id}" name="field_value" class="input_marceditor" size="50" maxlength="255" /><a href="#" id="buttonDot_$subfield_data{id}" tabindex="$tab" class="buttonDot $class" title="$title">...</a>\n].$plugin->javascript;
+                        $subfield_data{marc_value} = qq[<input type="text" id="$subfield_data{id}" name="field_value" class="input_marceditor" size="50" maxlength="255" value="$defaultvalue" /><a href="#" id="buttonDot_$subfield_data{id}" tabindex="$tab" class="buttonDot $class" title="$title">...</a>\n].$plugin->javascript;
                     } else {
                         warn $plugin->errstr;
-                        $subfield_data{marc_value} = qq(<input type="text" id="$subfield_data{id}" name="field_value" class="input_marceditor" size="50" maxlength="255" />); # supply default input form
+                        $subfield_data{marc_value} = qq(<input type="text" id="$subfield_data{id}" name="field_value" class="input_marceditor" size="50" maxlength="255" value="$defaultvalue" />); # supply default input form
                     }
                 }
                 elsif ( $tag eq '' ) {       # it's an hidden field
