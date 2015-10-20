@@ -154,6 +154,7 @@ sub AddDebit {
         carp("Something went wrong! Debit not created!");
     }
 
+    RecalculateAccountBalance( { borrower => $borrower } );
     return $debit;
 }
 
@@ -211,6 +212,7 @@ sub DebitLostItem {
             carp("Cannot add lost debit! Item has no replacement price!");
         }
     }
+    RecalculateAccountBalance( { borrower => $borrower } );
 }
 
 =head2 CreditLostItem
@@ -247,6 +249,7 @@ sub CreditLostItem {
     $params->{debit_id} = $debit->debit_id();
     $params->{notes}    = "Lost item found: " . $item->barcode();
 
+    RecalculateAccountBalance( { borrower => $borrower } );
     return AddCredit($params);
 }
 
