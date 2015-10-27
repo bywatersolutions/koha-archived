@@ -25,6 +25,7 @@
             "WRITEOFF"                  : _("Writeoff"),
             "FOUND"                     : _("Lost item found"),
             "FORGIVEN"                  : _("Forgiven"),
+            "FINE_REDUCTION"            : _("Fine reduction"),
             [% FOREACH a IN AuthorisedValues.Get('MANUAL_CREDIT') %]
                 "[% a.authorised_value %]" : "[% a.lib %]",
             [% END %]
