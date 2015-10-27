@@ -207,7 +207,7 @@ $(document).ready(function() {
             {
                 "mDataProp": "type",
                 "render": function ( data, type, full, meta ) {
-                    return STRINGS['CreditTypes'][data] || val;
+                    return STRINGS['CreditTypes'][data] || data;
                 },
             },
             {
