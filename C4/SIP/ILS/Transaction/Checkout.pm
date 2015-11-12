@@ -8,7 +8,6 @@ use warnings;
 use strict;
 
 use POSIX qw(strftime);
-use Sys::Syslog qw(syslog);
 use Data::Dumper;
 use CGI;
 
@@ -35,8 +34,9 @@ my %fields = (
 	);
 
 sub new {
-    my $class = shift;;
+    my ( $class, $server ) = @_;
     my $self = $class->SUPER::new();
+    $self->{server} = $server;
     foreach my $element (keys %fields) {
 		$self->{_permitted}->{$element} = $fields{$element};
     }
@@ -48,7 +48,7 @@ sub new {
 
 sub do_checkout {
 	my $self = shift;
-	syslog('LOG_DEBUG', "ILS::Transaction::Checkout performing checkout...");
+    $self->{server}->{logger}->debug("$self->{server}->{server}->{peeraddr}:$self->{server}->{account}->{id}: ILS::Transaction::Checkout performing checkout...");
 	my $pending        = $self->{item}->pending_queue;
 	my $shelf          = $self->{item}->hold_shelf;
 	my $barcode        = $self->{item}->id;
@@ -99,7 +99,7 @@ sub do_checkout {
             } else {
                 $self->screen_msg($needsconfirmation->{$confirmation});
                 $noerror = 0;
-                syslog('LOG_DEBUG', "Blocking checkout Reason:$confirmation");
+                $self->{server}->{logger}->debug("$self->{server}->{server}->{peeraddr}:$self->{server}->{account}->{id}: Blocking checkout Reason:$confirmation");
             }
         }
     }

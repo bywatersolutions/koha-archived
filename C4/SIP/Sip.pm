@@ -8,7 +8,6 @@ use strict;
 use warnings;
 use Exporter;
 use Encode;
-use Sys::Syslog qw(syslog);
 use POSIX qw(strftime);
 use Socket qw(:crlf);
 use IO::Handle;
@@ -47,6 +46,9 @@ our $field_delimiter = '|'; # Protocol Default
 
 our $last_response = '';
 
+# We need to have the server to do logging
+our $server = undef;
+
 sub timestamp {
     my $time = $_[0] || time();
     if ( ref $time eq 'DateTime') {
@@ -67,8 +69,7 @@ sub add_field {
     my ($i, $ent);
 
     if (!defined($value)) {
-	syslog("LOG_DEBUG", "add_field: Undefined value being added to '%s'",
-	       $field_id);
+        $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: add_field: Undefined value being added to '$field_id'");
 		$value = '';
     }
     $value=~s/\r/ /g; # CR terminates a sip message
@@ -121,10 +122,9 @@ sub add_count {
     }
 
     $count = sprintf("%04d", $count);
-    if (length($count) != 4) {
-		syslog("LOG_WARNING", "handle_patron_info: %s wrong size: '%s'",
-	       $label, $count);
-		$count = ' ' x 4;
+    if ( length($count) != 4 ) {
+        $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_patron_info: $label wrong size: '$count'");
+        $count = ' ' x 4;
     }
     return $count;
 }
@@ -162,7 +162,10 @@ sub boolspace {
 #
 sub read_SIP_packet {
     my $record;
-    my $fh = shift or syslog("LOG_ERR", "read_SIP_packet: no filehandle argument!");
+    my $fh;
+    unless ( $fh = shift ) {
+        $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: read_SIP_packet: no filehandle argument!");
+    }
     my $len1 = 999;
 
     # local $/ = "\r";      # don't need any of these here.  use whatever the prevailing $/ is.
@@ -173,7 +176,7 @@ sub read_SIP_packet {
             if ( defined($record) ) {
                 while ( chomp($record) ) { 1; }
                 $len1 = length($record);
-                syslog( "LOG_DEBUG", "read_SIP_packet, INPUT MSG: '$record'" );
+                $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: read_SIP_packet, INPUT MSG: '$record'");
                 $record =~ s/^\s*[^A-z0-9]+//s; # Every line must start with a "real" character.  Not whitespace, control chars, etc. 
                 $record =~ s/[^A-z0-9]+$//s;    # Same for the end.  Note this catches the problem some clients have sending empty fields at the end, like |||
                 $record =~ s/\015?\012//g;      # Extra line breaks must die
@@ -186,10 +189,17 @@ sub read_SIP_packet {
     }
     if ($record) {
         my $len2 = length($record);
-        syslog("LOG_INFO", "read_SIP_packet, INPUT MSG: '$record'") if $record;
-        ($len1 != $len2) and syslog("LOG_DEBUG", "read_SIP_packet, trimmed %s character(s) (after chomps).", $len1-$len2);
+        if ( $record ) {
+            $server->{logger}->info("$server->{server}->{peeraddr}:$server->{account}->{id}: read_SIP_packet, INPUT MSG: '$record'");
+        }
+        if ($len1 != $len2) {
+            $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: read_SIP_packet, trimmed " . $len1-$len2 . " character(s) (after chomps).");
+        }
     } else {
-        syslog("LOG_WARNING", "read_SIP_packet input %s, end of input.", (defined($record) ? "empty ($record)" : 'undefined'));
+        $server->{logger}->debug( "$server->{server}->{peeraddr}:$server->{account}->{id}: "
+              . "read_SIP_packet input "
+              . ( defined($record) ? "empty ($record)" : 'undefined' )
+              . ", end of input." );
     }
     #
     # Cen-Tec self-check terminals transmit '\r\n' line terminators.
@@ -203,8 +213,9 @@ sub read_SIP_packet {
     # on the input.
     #  
     # This is now handled by the vigorous cleansing above.
-    # syslog("LOG_INFO", encode_utf8("INPUT MSG: '$record'")) if $record;
-    syslog("LOG_INFO", "INPUT MSG: '$record'") if $record;
+    if ( $record ) {
+        $server->{logger}->debug( "$server->{server}->{peeraddr}:$server->{account}->{id}: INPUT MSG: '$record'" );
+    }
     return $record;
 }
 
@@ -246,7 +257,7 @@ sub write_msg {
     } else {
         STDOUT->autoflush(1);
         print $msg, $terminator;
-        syslog("LOG_INFO", "OUTPUT MSG: '$msg'");
+        $server->{logger}->info( "$server->{server}->{peeraddr}:$server->{account}->{id}: OUTPUT MSG: '$msg'");
     }
 
     $last_response = $msg;

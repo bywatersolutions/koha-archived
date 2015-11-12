@@ -69,13 +69,14 @@ sub accounts {
 # }
 
 sub find_service {
-    my ($self, $sockaddr, $port, $proto) = @_;
+    my ( $self, $sockaddr, $port, $proto ) = @_;
+    my $logger = Koha::Logger->get({ interface => 'sip' });
     my $portstr;
-	foreach my $addr ('', '*:', "$sockaddr:", "[$sockaddr]:") {
-		$portstr = sprintf("%s%s/%s", $addr, $port, lc $proto);
-		Sys::Syslog::syslog("LOG_DEBUG", "Configuration::find_service: Trying $portstr");
-		last if (exists(($self->{listeners})->{$portstr}));
-	}
+    foreach my $addr ( '', '*:', "$sockaddr:", "[$sockaddr]:" ) {
+        $portstr = sprintf( "%s%s/%s", $addr, $port, lc $proto );
+        $logger->debug("Configuration::find_service: Trying $portstr");
+        last if ( exists( ( $self->{listeners} )->{$portstr} ) );
+    }
     return $self->{listeners}->{$portstr};
 }
 

@@ -9,7 +9,6 @@ package C4::SIP::Sip::MsgType;
 use strict;
 use warnings;
 use Exporter;
-use Sys::Syslog qw(syslog);
 
 use C4::SIP::Sip qw(:all);
 use C4::SIP::Sip::Constants qw(:all);
@@ -276,7 +275,7 @@ foreach my $i (keys(%handlers)) {
 }
 
 sub new {
-    my ($class, $msg, $seqno) = @_;
+    my ($class, $msg, $seqno, $server) = @_;
     my $self = {};
     my $msgtag = substr($msg, 0, 2);
 
@@ -287,21 +286,21 @@ sub new {
 	# it's using the 2.00 login process, so it must support 2.00.
 		$protocol_version = 2;
     }
-    syslog("LOG_DEBUG", "Sip::MsgType::new('%s', '%s...', '%s'): seq.no '%s', protocol %s",
-		$class, substr($msg, 0, 10), $msgtag, $seqno, $protocol_version);
-	# warn "SIP PROTOCOL: $protocol_version";	
+    my $id = $server->{account} ? $server->{account}->{id} . ':' : q{};
+    $server->{logger}->debug( "$server->{server}->{peeraddr}:$id Sip::MsgType::new('$class', '" . substr($msg, 0, 10)
+                    . "...', '$msgtag'): seq.no '$seqno', protocol $protocol_version" );
+	# warn "SIP PROTOCOL: $protocol_version";
     if (!exists($handlers{$msgtag})) {
-		syslog("LOG_WARNING", "new Sip::MsgType: Skipping message of unknown type '%s' in '%s'",
-	       $msgtag, $msg);
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$id new Sip::MsgType: Skipping message of unknown type '$msgtag' in '$msg'");
         return;
     } elsif (!exists($handlers{$msgtag}->{protocol}->{$protocol_version})) {
-		syslog("LOG_WARNING", "new Sip::MsgType: Skipping message '%s' unsupported by protocol rev. '%d'",
-	       $msgtag, $protocol_version);
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$id new Sip::MsgType: Skipping message '$msgtag' unsupported by protocol rev. '$protocol_version'");
         return;
     }
 
     bless $self, $class;
 
+    $self->{server} = $server;
     $self->{seqno} = $seqno;
     $self->_initialize(substr($msg,2), $handlers{$msgtag});
 
@@ -328,8 +327,8 @@ sub _initialize {
 		$self->{fields}->{$field} = undef;
 	}
 
-    syslog("LOG_DEBUG", "Sip::MsgType::_initialize('%s', '%s', '%s', '%s', ...)",
-		$self->{name}, $msg, $proto->{template}, $proto->{template_len});
+    my $id = $self->{server}->{account} ? $self->{server}->{account}->{id} . ':' : q{};
+    $self->{server}->{logger}->debug("$self->{server}->{server}->{peeraddr}:$id Sip::MsgType::_initialize('$self->{name}', '$msg', '$proto->{template}', '$proto->{template_len}', ...)");
 
     $self->{fixed_fields} = [ unpack($proto->{template}, $msg) ];   # see http://perldoc.perl.org/5.8.8/functions/unpack.html
 
@@ -339,11 +338,9 @@ sub _initialize {
 		$fn = substr($field, 0, 2);
 
 	if (!exists($self->{fields}->{$fn})) {
-		syslog("LOG_WARNING", "Unsupported field '%s' in %s message '%s'",
-			$fn, $self->{name}, $msg);
+        $self->{server}->{logger}->warn("$self->{server}->{server}->{peeraddr}:$id: Unsupported field '$fn' in $self->{name}, message '$msg'");
 	} elsif (defined($self->{fields}->{$fn})) {
-		syslog("LOG_WARNING", "Duplicate field '%s' (previous value '%s') in %s message '%s'",
-			$fn, $self->{fields}->{$fn}, $self->{name}, $msg);
+        $self->{server}->{logger}->warn("$self->{server}->{server}->{peeraddr}:$id: Duplicate field '$fn' (previous value '$self->{fields}->{$fn}') in $self->{name} message '$msg'");
 	} else {
 		$self->{fields}->{$fn} = substr($field, 2);
 	}
@@ -373,12 +370,12 @@ sub handle {
     if ($msg eq REQUEST_ACS_RESEND_CKSUM) {
 		# Special case
 		$error_detection = 1;
-		$self = C4::SIP::Sip::MsgType->new((REQUEST_ACS_RESEND), 0);
+        $self = C4::SIP::Sip::MsgType->new( (REQUEST_ACS_RESEND), 0, $server );
     } elsif((length($msg) > 11) && (substr($msg, -9, 2) eq "AY")) {
 		$error_detection = 1;
 
 	if (!verify_cksum($msg)) {
-	    syslog("LOG_WARNING", "Checksum failed on message '%s'", $msg);
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: Checksum failed on message '$msg'");
 	    # REQUEST_SC_RESEND with error detection
 	    $last_response = REQUEST_SC_RESEND_CKSUM;
 	    print("$last_response\r");
@@ -386,17 +383,16 @@ sub handle {
 	} else {
 	    # Save the sequence number, then strip off the
 	    # error detection data to process the message
-	    $self = C4::SIP::Sip::MsgType->new(substr($msg, 0, -9), substr($msg, -7, 1));
+    $self = C4::SIP::Sip::MsgType->new( substr( $msg, 0, -9 ), substr( $msg, -7, 1 ), $server );
 	}
     } elsif ($error_detection) {
 	# We received a non-ED message when ED is supposed to be active.
 	# Warn about this problem, then process the message anyway.
-		syslog("LOG_WARNING",
-	       "Received message without error detection: '%s'", $msg);
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: Received message without error detection: '$msg'");
 		$error_detection = 0;
-		$self = C4::SIP::Sip::MsgType->new($msg, 0);
+        $self = C4::SIP::Sip::MsgType->new( $msg, 0, $server );
     } else {
-		$self = C4::SIP::Sip::MsgType->new($msg, 0);
+        $self = C4::SIP::Sip::MsgType->new( $msg, 0, $server );
     }
 
 	if ((substr($msg, 0, 2) ne REQUEST_ACS_RESEND) &&
@@ -404,7 +400,7 @@ sub handle {
 		return substr($msg, 0, 2);
 	}
 	unless ($self->{handler}) {
-		syslog("LOG_WARNING", "No handler defined for '%s'", $msg);
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: No handler defined for '$msg'");
         $last_response = REQUEST_SC_RESEND;
         print("$last_response\r");
         return REQUEST_ACS_RESEND;
@@ -437,7 +433,7 @@ sub build_patron_status {
     my $resp = (PATRON_STATUS_RESP);
 
     if ($patron) {
-	$resp .= patron_status_string($patron);
+	$resp .= patron_status_string($patron, $server);
 	$resp .= $lang . timestamp();
 	$resp .= add_field(FID_PERSONAL_NAME, $patron->name);
 
@@ -518,7 +514,7 @@ sub handle_checkout {
 
         # Off-line transactions need to be recorded, but there's
         # not a lot we can do about it
-        syslog( "LOG_WARNING", "received no-block checkout from terminal '%s'", $account->{id} );
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: received no-block checkout from terminal '$account->{id}'");
 
         $status = $ils->checkout_no_block( $patron_id, $item_id, $sc_renewal_policy, $trans_date, $nb_due_date );
     }
@@ -640,7 +636,7 @@ sub handle_checkin {
 
     if ($no_block eq 'Y') {
         # Off-line transactions, ick.
-        syslog("LOG_WARNING", "received no-block checkin from terminal '%s'", $account->{id});
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: received no-block checkin from terminal '$account->{id}'");
         $status = $ils->checkin_no_block($item_id, $trans_date, $return_date, $item_props, $cancel);
     } else {
         $status = $ils->checkin($item_id, $trans_date, $return_date, $my_branch, $item_props, $cancel);
@@ -759,21 +755,19 @@ sub handle_sc_status {
 	} elsif ($sc_protocol_version =~ /^2\./) {
 		$new_proto = 2;
 	} else {
-		syslog("LOG_WARNING", "Unrecognized protocol revision '%s', falling back to '1'", $sc_protocol_version);
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: Unrecognized protocol revision '$sc_protocol_version', falling back to '1'");
 		$new_proto = 1;
 	}
 
 	if ($new_proto != $protocol_version) {
-		syslog("LOG_INFO", "Setting protocol level to $new_proto");
+        $server->{logger}->info("$server->{server}->{peeraddr}:$server->{account}->{id}: Setting protocol level to $new_proto");
 		$protocol_version = $new_proto;
 	}
 
     if ($status == SC_STATUS_PAPER) {
-	syslog("LOG_WARNING", "Self-Check unit '%s@%s' out of paper",
-	       $self->{account}->{id}, $self->{account}->{institution});
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: Self-Check unit '$self->{account}->{id}@$self->{account}->{institution}' out of paper");
     } elsif ($status == SC_STATUS_SHUTDOWN) {
-	syslog("LOG_WARNING", "Self-Check unit '%s@%s' shutting down",
-	       $self->{account}->{id}, $self->{account}->{institution});
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: Self-Check unit '$self->{account}->{id}@$self->{account}->{institution}' shutting down");
     }
 
     $self->{account}->{print_width} = $print_width;
@@ -810,10 +804,10 @@ sub login_core  {
 	my $pwd = shift;
     my $status = 1;		# Assume it all works
     if (!exists($server->{config}->{accounts}->{$uid})) {
-		syslog("LOG_WARNING", "MsgType::login_core: Unknown login '$uid'");
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: MsgType::login_core: Unknown login '$uid'");
 		$status = 0;
     } elsif ($server->{config}->{accounts}->{$uid}->{password} ne $pwd) {
-		syslog("LOG_WARNING", "MsgType::login_core: Invalid password for login '$uid'");
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: MsgType::login_core: Invalid password for login '$uid'");
 		$status = 0;
     } else {
 	# Store the active account someplace handy for everybody else to find.
@@ -826,31 +820,30 @@ sub login_core  {
 
         my $auth_status = api_auth($uid,$pwd,$inst);
 		if (!$auth_status or $auth_status !~ /^ok$/i) {
-			syslog("LOG_WARNING", "api_auth failed for SIP terminal '%s' of '%s': %s",
-						$uid, $inst, ($auth_status||'unknown'));
+            $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: api_auth failed for SIP terminal '$uid' of '$inst': " . ($auth_status||'unknown') );
 			$status = 0;
 		} else {
-			syslog("LOG_INFO", "Successful login/auth for '%s' of '%s'", $server->{account}->{id}, $inst);
+            $server->{logger}->info("$server->{server}->{peeraddr}:$server->{account}->{id}: Successful login/auth for '$server->{account}->{id}' of '$inst'");
 			#
 			# initialize connection to ILS
 			#
 			my $module = $server->{config}->{institutions}->{$inst}->{implementation};
-			syslog("LOG_DEBUG", 'login_core: ' . Dumper($module));
-            # Suspect this is always ILS but so we dont break any eccentic install (for now)
+            $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: login_core: " . Dumper($module) );
+            # Suspect this is always ILS but so we don't break any eccentic install (for now)
             if ($module eq 'ILS') {
                 $module = 'C4::SIP::ILS';
             }
 			$module->use;
 			if ($@) {
-				syslog("LOG_ERR", "%s: Loading ILS implementation '%s' for institution '%s' failed",
-						$server->{service}, $module, $inst);
+                $server->{logger}->error("$server->{server}->{peeraddr}:$server->{service}: Loading ILS implementation '$module' for institution '$inst' failed");
 				die("Failed to load ILS implementation '$module' for $inst");
 			}
 
 			# like   ILS->new(), I think.
-			$server->{ils} = $module->new($server->{institution}, $server->{account});
+
+			$server->{ils} = $module->new($server->{institution}, $server->{account}, $server);
 			if (!$server->{ils}) {
-			    syslog("LOG_ERR", "%s: ILS connection to '%s' failed", $server->{service}, $inst);
+                $server->{logger}->error("$server->{server}->{peeraddr}:$server->{account}->{id}: $server->{service}: ILS connection to '$inst' failed");
 			    die("Unable to connect to ILS '$inst'");
 			}
 		}
@@ -873,7 +866,7 @@ sub handle_login {
     $pwd = $fields->{(FID_LOGIN_PWD)}; # Terminal PWD, not patron PWD.
 
     if ($uid_algorithm || $pwd_algorithm) {
-		syslog("LOG_ERR", "LOGIN: Unsupported non-zero encryption method(s): uid = $uid_algorithm, pwd = $pwd_algorithm");
+        $server->{logger}->error("$server->{server}->{peeraddr}:$server->{account}->{id}: LOGIN: Unsupported non-zero encryption method(s): uid = $uid_algorithm, pwd = $pwd_algorithm");
 		$status = 0;
     }
 	else { $status = login_core($server,$uid,$pwd); }
@@ -890,7 +883,7 @@ sub handle_login {
 # and we're going to believe it.
 #
 sub summary_info {
-    my ($ils, $patron, $summary, $start, $end) = @_;
+    my ($server, $ils, $patron, $summary, $start, $end) = @_;
     my $resp = '';
     my $summary_type;
     #
@@ -910,14 +903,13 @@ sub summary_info {
         return '';  # No detailed information required
     }
 
-    syslog("LOG_DEBUG", "Summary_info: index == '%d', field '%s'",
-        $summary_type, $summary_map[$summary_type]->{fid});
+    $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: Summary_info: index == '$summary_type', field '$summary_map[$summary_type]->{fid}'");
 
     my $func = $summary_map[$summary_type]->{func};
     my $fid  = $summary_map[$summary_type]->{fid};
     my $itemlist = &$func($patron, $start, $end);
 
-    syslog("LOG_DEBUG", "summary_info: list = (%s)", join(", ", @{$itemlist}));
+    $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: summary_info: list = (" . join(", ", @{$itemlist}) . ")");
     foreach my $i (@{$itemlist}) {
         $resp .= add_field($fid, $i->{barcode});
     }
@@ -944,7 +936,7 @@ sub handle_patron_info {
 
     $resp = (PATRON_INFO_RESP);
     if ($patron) {
-        $resp .= patron_status_string($patron);
+        $resp .= patron_status_string($patron, $server);
         $resp .= (defined($lang) and length($lang) ==3) ? $lang : $patron->language;
         $resp .= timestamp();
 
@@ -991,7 +983,7 @@ sub handle_patron_info {
         #          fine_items
         #        recall_items
 
-        $resp .= summary_info($ils, $patron, $summary, $start, $end);
+        $resp .= summary_info($server, $ils, $patron, $summary, $start, $end);
 
         $resp .= maybe_add(FID_HOME_ADDR,  $patron->address);
         $resp .= maybe_add(FID_EMAIL,      $patron->email_addr);
@@ -1177,8 +1169,7 @@ sub handle_item_status_update {
     $item_props = $fields->{(FID_ITEM_PROPS)};
 
 	if (!defined($item_id)) {
-		syslog("LOG_WARNING",
-			"handle_item_status: received message without Item ID field");
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_item_status: received message without Item ID field");
     } else {
 		$item = $ils->find_item($item_id);
 	}
@@ -1221,8 +1212,7 @@ sub handle_patron_enable {
     $patron_id = $fields->{(FID_PATRON_ID)};
     $patron_pwd = $fields->{(FID_PATRON_PWD)};
 
-    syslog("LOG_DEBUG", "handle_patron_enable: patron_id: '%s', patron_pwd: '%s'",
-	   $patron_id, $patron_pwd);
+    $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_patron_enable: patron_id: '$patron_id', patron_pwd: '$patron_pwd'");
 
     $patron = $ils->find_patron($patron_id);
 
@@ -1239,7 +1229,7 @@ sub handle_patron_enable {
 	    # Don't enable the patron if there was an invalid password
 	    $status = $patron->enable;
 	}
-	$resp .= patron_status_string($patron);
+	$resp .= patron_status_string($patron, $server);
 	$resp .= $patron->language . timestamp();
 
 	$resp .= add_field(FID_PATRON_ID, $patron->id);
@@ -1292,10 +1282,9 @@ sub handle_hold {
 	$status = $ils->alter_hold($patron_id, $patron_pwd, $item_id, $title_id,
 						$expiry_date, $pickup_locn, $hold_type, $fee_ack);
     } else {
-	syslog("LOG_WARNING", "handle_hold: Unrecognized hold mode '%s' from terminal '%s'",
-	       $hold_mode, $server->{account}->{id});
-	$status = $ils->Transaction::Hold;		# new?
-	$status->screen_msg("System error. Please contact library staff.");
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_hold: Unrecognized hold mode '$hold_mode' from terminal '$server->{account}->{id}'");
+        $status = $ils->Transaction::Hold;		# new?
+        $status->screen_msg("System error. Please contact library staff.");
     }
 
     $resp .= $status->ok;
@@ -1342,9 +1331,7 @@ sub handle_renew {
     $ils->check_inst_id($fields->{(FID_INST_ID)}, "handle_renew");
 
     if ($no_block eq 'Y') {
-	syslog("LOG_WARNING",
-	       "handle_renew: recieved 'no block' renewal from terminal '%s'",
-	       $server->{account}->{id});
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_renew: received 'no block' renewal from terminal '$server->{account}->{id}'");
     }
 
     $patron_id  = $fields->{(FID_PATRON_ID)};
@@ -1511,15 +1498,13 @@ sub send_acs_status {
     $retries = sprintf("%03d", $policy->{retries});
 
     if (length($timeout) != 3) {
-	syslog("LOG_ERR", "handle_acs_status: timeout field wrong size: '%s'",
-	       $timeout);
-	$timeout = '000';
+        $server->{logger}->error("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_acs_status: timeout field wrong size: '$timeout'");
+        $timeout = '000';
     }
 
     if (length($retries) != 3) {
-	syslog("LOG_ERR", "handle_acs_status: retries field wrong size: '%s'",
-	       $retries);
-	$retries = '000';
+        $server->{logger}->error("$server->{server}->{peeraddr}:$server->{account}->{id}: handle_acs_status: retries field wrong size: '$retries'");
+        $retries = '000';
     }
 
     $msg .= "$online_status$checkin_ok$checkout_ok$ACS_renewal_policy";
@@ -1531,10 +1516,8 @@ sub send_acs_status {
     } elsif ($protocol_version == 2) {
 	$msg .= '2.00';
     } else {
-	syslog("LOG_ERR",
-	       'Bad setting for $protocol_version, "%s" in send_acs_status',
-	       $protocol_version);
-	$msg .= '1.00';
+        $server->{logger}->error("$server->{server}->{peeraddr}:$server->{account}->{id}: Bad setting for \$protocol_version, '$protocol_version' in send_acs_status");
+        $msg .= '1.00';
     }
 
     # Institution ID
@@ -1552,7 +1535,7 @@ sub send_acs_status {
 	    }
 	}
 	if (length($supported_msgs) < 16) {
-	    syslog("LOG_ERR", 'send_acs_status: supported messages "%s" too short', $supported_msgs);
+        $server->{logger}->error("$server->{server}->{peeraddr}:$server->{account}->{id}: send_acs_status: supported messages '$supported_msgs' too short");
 	}
 	$msg .= add_field(FID_SUPPORTED_MSGS, $supported_msgs);
     }
@@ -1561,9 +1544,8 @@ sub send_acs_status {
 
     if (defined($account->{print_width}) && defined($print_line)
 	&& $account->{print_width} < length($print_line)) {
-	syslog("LOG_WARNING", "send_acs_status: print line '%s' too long.  Truncating",
-	       $print_line);
-	$print_line = substr($print_line, 0, $account->{print_width});
+        $server->{logger}->warn("$server->{server}->{peeraddr}:$server->{account}->{id}: send_acs_status: print line '$print_line' too long.  Truncating");
+        $print_line = substr($print_line, 0, $account->{print_width});
     }
 
     $msg .= maybe_add(FID_PRINT_LINE, $print_line);
@@ -1580,9 +1562,10 @@ sub send_acs_status {
 #
 sub patron_status_string {
     my $patron = shift;
+    my $server = shift;
     my $patron_status;
 
-    syslog("LOG_DEBUG", "patron_status_string: %s charge_ok: %s", $patron->id, $patron->charge_ok);
+    $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: patron_status_string: $patron->id charge_ok: $patron->charge_ok");
     $patron_status = sprintf(
         '%s%s%s%s%s%s%s%s%s%s%s%s%s%s',
         denied($patron->charge_ok),

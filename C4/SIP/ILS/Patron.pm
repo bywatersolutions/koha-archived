@@ -12,7 +12,6 @@ use warnings;
 use Exporter;
 use Carp;
 
-use Sys::Syslog qw(syslog);
 use Data::Dumper;
 
 use C4::Debug;
@@ -29,13 +28,14 @@ our $VERSION = 3.07.00.049;
 our $kp;    # koha patron
 
 sub new {
-    my ($class, $patron_id) = @_;
+    my ($class, $patron_id, $server) = @_;
     my $type = ref($class) || $class;
     my $self;
+
     $kp = GetMember(cardnumber=>$patron_id) || GetMember(userid=>$patron_id);
     $debug and warn "new Patron (GetMember): " . Dumper($kp);
     unless (defined $kp) {
-        syslog("LOG_DEBUG", "new ILS::Patron(%s): no such patron", $patron_id);
+        $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: new ILS::Patron($patron_id): no such patron");
         return;
     }
     $kp = GetMemberDetails($kp->{borrowernumber});
@@ -121,8 +121,9 @@ sub new {
     $ilspatron{unavail_holds} = _get_outstanding_holds($kp->{borrowernumber});
     $ilspatron{items} = GetPendingIssues($kp->{borrowernumber});
     $self = \%ilspatron;
+    $self->{server} = $server;
     $debug and warn Dumper($self);
-    syslog("LOG_DEBUG", "new ILS::Patron(%s): found patron '%s'", $patron_id,$self->{id});
+    $self->{server}->{logger}->debug("$self->{server}->{server}->{peeraddr}:$self->{server}->{account}->{id}: new ILS::Patron($patron_id): found patron '$self->{id}'");
     bless $self, $type;
     return $self;
 }
@@ -322,9 +323,9 @@ sub enable {
     foreach my $field ('charge_ok', 'renew_ok', 'recall_ok', 'hold_ok', 'inet') {
         $self->{$field} = 1;
     }
-    syslog("LOG_DEBUG", "Patron(%s)->enable: charge: %s, renew:%s, recall:%s, hold:%s",
-       $self->{id}, $self->{charge_ok}, $self->{renew_ok},
-       $self->{recall_ok}, $self->{hold_ok});
+    $self->{server}->{logger}->debug( "$self->{server}->{server}->{peeraddr}:$self->{server}->{account}->{id}: "
+          . "Patron($self->{id})->enable: charge: $self->{charge_ok}, "
+          . "renew:$self->{renew_ok}, recall:$self->{recall_ok}, hold:$self->{hold_ok}" );
     $self->{screen_msg} = "Enable feature not implemented."; # "All privileges restored.";   # TODO: not really affecting patron record
     return $self;
 }

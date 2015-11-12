@@ -9,7 +9,6 @@ package C4::SIP::ILS::Item;
 use strict;
 use warnings;
 
-use Sys::Syslog qw(syslog);
 use Carp;
 
 use C4::SIP::ILS::Transaction;
@@ -74,13 +73,13 @@ sub priority_sort {
 }
 
 sub new {
-	my ($class, $item_id) = @_;
+	my ($class, $item_id, $server) = @_;
 	my $type = ref($class) || $class;
 	my $self;
     my $itemnumber = GetItemnumberFromBarcode($item_id);
 	my $item = GetBiblioFromItemNumber($itemnumber);    # actually biblio.*, biblioitems.* AND items.*  (overkill)
 	if (! $item) {
-		syslog("LOG_DEBUG", "new ILS::Item('%s'): not found", $item_id);
+        $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: new ILS::Item('$item_id'): not found");
 		warn "new ILS::Item($item_id) : No item '$item_id'.";
         return;
 	}
@@ -106,10 +105,10 @@ sub new {
 	$item->{hold_shelf}    = [( grep {   defined $_->{found}  and $_->{found} eq 'W' } @{$item->{hold_queue}} )];
 	$item->{pending_queue} = [( grep {(! defined $_->{found}) or  $_->{found} ne 'W' } @{$item->{hold_queue}} )];
 	$self = $item;
+  $self->{server} = $server;
 	bless $self, $type;
 
-    syslog("LOG_DEBUG", "new ILS::Item('%s'): found with title '%s'",
-	   $item_id, $self->{title});
+    $server->{logger}->debug("$server->{server}->{peeraddr}:$server->{account}->{id}: new ILS::Item('$item_id'): found with title '$self->{title}'");
 
     return $self;
 }
@@ -171,7 +170,7 @@ sub hold_patron_name {
     my $borrowernumber = (@_ ? shift: $self->hold_patron_id()) or return;
     my $holder = GetMember(borrowernumber=>$borrowernumber);
     unless ($holder) {
-        syslog("LOG_ERR", "While checking hold, GetMember failed for borrowernumber '$borrowernumber'");
+        $self->{server}->{logger}->debug("$self->{server}->{server}->{peeraddr}:$self->{server}->{account}->{id}: While checking hold, GetMember failed for borrowernumber '$borrowernumber'");
         return;
     }
     my $email = $holder->{email} || '';
