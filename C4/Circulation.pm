@@ -1734,6 +1734,7 @@ patron who last borrowed the book.
 
 sub AddReturn {
     my ( $barcode, $branch, $exemptfine, $dropbox, $return_date, $dropboxdate ) = @_;
+warn "AddReturn( $barcode, $branch, $exemptfine, $dropbox, $return_date, $dropboxdate )";
 
     if ($branch and not GetBranchDetail($branch)) {
         warn "AddReturn error: branch '$branch' not found.  Reverting to " . C4::Context->userenv->{'branch'};
@@ -1883,6 +1884,7 @@ sub AddReturn {
                 if ( $amount > 0
                     && C4::Context->preference('finesMode') eq 'production' )
                 {
+warn "RETURN DATE NOT SPECIFIED";
                     C4::Overdues::UpdateFine(
                         {
                             itemnumber     => $issue->{itemnumber},
@@ -1894,6 +1896,7 @@ sub AddReturn {
                     );
                 }
                 elsif ($return_date) {
+warn "RETURN DATE SPECIFIED";
 
                     # Backdated returns may have fines that shouldn't exist,
                     # so in this case, we need to drop those fines to 0
@@ -2295,6 +2298,8 @@ sub _FinalizeFine {
             }
         );
     }
+
+    RecalculateAccountBalance( { borrower => $fine->borrowernumber() } );
 
     return $fine->update();
 }
