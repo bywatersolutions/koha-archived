@@ -31,6 +31,7 @@ use C4::Log; # logaction
 use C4::Debug;
 use Koha::Database;
 use Koha::DateUtils;
+use Koha::Accounts;
 use Koha::Accounts::OffsetTypes;
 use Koha::Accounts::DebitTypes;
 
@@ -497,6 +498,13 @@ sub UpdateFine {
     my $due            = $params->{due};
     my $issue_id       = $params->{issue_id};
 
+warn "UpdateFine";
+warn "ITEMNUMBER: $itemnumber";
+warn "BORROWERNUMBER: $borrowernumber";
+warn "AMOUNT: $amount";
+warn "DUE: $due";
+warn "ISSUE ID: $issue_id";
+
     my $schema = Koha::Database->new()->schema;
 
     my $borrower = $schema->resultset('Borrower')->find($borrowernumber);
@@ -596,8 +604,7 @@ sub UpdateFine {
         }
     ) if $offset;
 
-    $borrower->account_balance( $borrower->account_balance + $fine->amount_last_increment() );
-    $borrower->update();
+    RecalculateAccountBalance( { borrower => $borrower } );
 
     logaction( "FINES", Koha::Accounts::DebitTypes::Fine(),
         $borrowernumber,
