@@ -525,13 +525,16 @@ sub preference {
     my $value;
     if ( defined $ENV{"OVERRIDE_SYSPREF_$var"} ) {
         $value = $ENV{"OVERRIDE_SYSPREF_$var"};
+    } elsif ( $use_syspref_cache ) {
+        foreach ( @{ Koha::Config::SysPrefs->search()->unblessed } ) {
+            $value = $_->{value} if ( lc $_->{variable} eq $var );
+            $syspref_cache->set_in_cache( "syspref_" . lc $_->{variable}, $_->{value} || undef );
+        }
     } else {
-        my $syspref;
-        eval { $syspref = Koha::Config::SysPrefs->find( lc $var ) };
-        $value = $syspref ? $syspref->value() : undef;
+        my $syspref = Koha::Config::SysPrefs->find($var);
+        $value = $syspref ? $syspref->value : undef;
     }
 
-    $syspref_cache->set_in_cache("syspref_$var", $value) if $use_syspref_cache;
     return $value;
 }
 
