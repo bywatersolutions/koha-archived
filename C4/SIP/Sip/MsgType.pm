@@ -18,7 +18,7 @@ use C4::SIP::Sip::Checksum qw(verify_cksum);
 use Data::Dumper;
 use CGI;
 use C4::Auth qw(&check_api_auth);
-use C4::Members qw(_prefix_cardnum);
+use C4::Members qw(); #_prefix_cardnum
 
 use UNIVERSAL qw(can);	# make sure this is *after* C4 modules.
 
