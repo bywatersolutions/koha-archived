@@ -67,6 +67,7 @@ $template->param(
     action            => $action,
     hidden            => GetHiddenFields( $mandatory, 'registration' ),
     mandatory         => $mandatory,
+    minpassw          => C4::Context->preference('minPasswordLength'),
     member_titles     => GetTitles() || undef,
     branches          => GetBranchesLoop(),
     OPACPatronDetails => C4::Context->preference('OPACPatronDetails'),
@@ -145,7 +146,6 @@ if ( $action eq 'create' ) {
 
             my $verification_token = md5_hex( \%borrower );
             $borrower{'password'} = random_string("..........");
-
             Koha::Borrower::Modifications->new(
                 verification_token => $verification_token )
               ->AddModifications(\%borrower);
@@ -337,6 +337,7 @@ sub CheckMandatoryFields {
 }
 
 sub CheckForInvalidFields {
+    my $minpw = C4::Context->preference('minPasswordLength');
     my $borrower = shift;
     my @invalidFields;
     if ($borrower->{'email'}) {
@@ -348,6 +349,13 @@ sub CheckForInvalidFields {
     if ($borrower->{'B_email'}) {
         push(@invalidFields, "B_email") if (!Email::Valid->address($borrower->{'B_email'}));
     }
+    if ( $borrower->{'password'} ne $borrower->{'password2'} ){
+        push(@invalidFields, "password_match");
+    }
+    if ( $borrower->{'password'}  && $minpw && (length($borrower->{'password'}) < $minpw) ) {
+       push(@invalidFields, "password_invalid");
+    }
+
     return \@invalidFields;
 }
 
