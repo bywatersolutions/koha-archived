@@ -91,6 +91,8 @@ if ( $action eq 'create' ) {
     %borrower = DelEmptyFields(%borrower);
 
     my @empty_mandatory_fields = CheckMandatoryFields( \%borrower, $action );
+    my $invalidformfields = CheckForInvalidFields(\%borrower);
+    delete $borrower{'password2'};
     my $cardnumber_error_code;
     if ( !grep { $_ eq 'cardnumber' } @empty_mandatory_fields ) {
         # No point in checking the cardnumber if it's missing and mandatory, it'll just generate a
@@ -98,7 +100,7 @@ if ( $action eq 'create' ) {
         $cardnumber_error_code = checkcardnumber( $borrower{cardnumber}, $borrower{borrowernumber} );
     }
 
-    if ( @empty_mandatory_fields || $cardnumber_error_code || $conflicting_attribute ) {
+    if ( @empty_mandatory_fields || @$invalidformfields || $cardnumber_error_code || $conflicting_attribute ) {
         if ( $cardnumber_error_code == 1 ) {
             $template->param( cardnumber_already_exists => 1 );
         } elsif ( $cardnumber_error_code == 2 ) {
@@ -107,6 +109,7 @@ if ( $action eq 'create' ) {
 
         $template->param(
             empty_mandatory_fields => \@empty_mandatory_fields,
+            invalid_form_fields    => $invalidformfields,
             borrower               => \%borrower
         );
         $template->param( patron_attribute_classes => GeneratePatronAttributesForm( undef, $attributes ) );
@@ -138,7 +141,6 @@ if ( $action eq 'create' ) {
 
             my $verification_token = md5_hex( \%borrower );
             $borrower{'password'} = random_string("..........");
-
             Koha::Borrower::Modifications->new(
                 verification_token => $verification_token )
               ->AddModifications(\%borrower);
@@ -316,6 +318,32 @@ sub CheckMandatoryFields {
     }
 
     return @empty_mandatory_fields;
+}
+
+sub CheckForInvalidFields {
+    my $minpw = C4::Context->preference('minPasswordLength');
+    my $borrower = shift;
+    my @invalidFields;
+    if ($borrower->{'email'}) {
+        push(@invalidFields, "email") if (!Email::Valid->address($borrower->{'email'}));
+    }
+    if ($borrower->{'emailpro'}) {
+        push(@invalidFields, "emailpro") if (!Email::Valid->address($borrower->{'emailpro'}));
+    }
+    if ($borrower->{'B_email'}) {
+        push(@invalidFields, "B_email") if (!Email::Valid->address($borrower->{'B_email'}));
+    }
+    if ( $borrower->{'password'} ne $borrower->{'password2'} ){
+        push(@invalidFields, "password_match");
+    }
+    if ( $borrower->{'password'}  && $minpw && (length($borrower->{'password'}) < $minpw) ) {
+       push(@invalidFields, "password_invalid");
+    }
+    if ( $borrower->{'password'} ) {
+       push(@invalidFields, "password_spaces") if ($borrower->{'password'} =~ /^\s/ or $borrower->{'password'} =~ /\s$/);
+    }
+
+    return \@invalidFields;
 }
 
 sub ParseCgiForBorrower {
