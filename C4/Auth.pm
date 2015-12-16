@@ -327,7 +327,7 @@ sub get_template_and_user {
         # the user to attemp login via shibboleth.
         if ($shib) {
             $template->param( shibbolethAuthentication => $shib,
-                shibbolethLoginUrl => login_shib_url( $in->{'query'} ),
+                shibbolethLoginUrl => login_shib_url( $in->{'query'}, $in->{type} ),
             );
 
             # If shibboleth is enabled and we have a shibboleth login attribute,
@@ -808,7 +808,7 @@ sub checkauth {
 
             # If we are in a shibboleth session (shibboleth is enabled, a shibboleth match attribute is set and matches koha matchpoint)
             if ( $shib and $shib_login and $shibSuccess ) {
-                logout_shib($query);
+                logout_shib($query, $type);
             }
         }
         elsif ( !$lasttime || ( $lasttime < time() - $timeout ) ) {
@@ -1242,7 +1242,7 @@ sub checkauth {
     if ($shib) {
         $template->param(
             shibbolethAuthentication => $shib,
-            shibbolethLoginUrl       => login_shib_url($query),
+            shibbolethLoginUrl       => login_shib_url($query, $type),
         );
     }
 
