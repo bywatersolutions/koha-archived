@@ -1056,6 +1056,20 @@
     <target_index>Title-later:w</target_index>
     <target_index>Related-periodical:w</target_index>
   </index_data_field>
+  <!-- 791$b: LocalCorporateName -->
+  <index_subfields tag="791" subfields="b">
+    <target_index>LocalCorporateName:w</target_index>
+    <target_index>LocalCorporateName:p</target_index>
+  </index_subfields>
+  <!-- 796$a, 796$e: LocalPersonalName -->
+  <index_subfields tag="796" subfields="a">
+    <target_index>LocalPersonalName:w</target_index>
+    <target_index>LocalPersonalName:p</target_index>
+  </index_subfields>
+  <index_subfields tag="796" subfields="e">
+    <target_index>LocalPersonalName:w</target_index>
+    <target_index>LocalPersonalName:p</target_index>
+  </index_subfields>
   <!--record.abs line 242: melm 787$w      Record-control-number-->
   <index_subfields tag="787" subfields="w">
     <target_index>Record-control-number:w</target_index>
