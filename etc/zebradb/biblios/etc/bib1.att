@@ -366,5 +366,5 @@ att 9906    ln-audio
 att 9907    ln-subtitle
 
 # Pacific-Specific
-att 9660    PacificaProgram
-att 9661    ThesisAdvisor
+att 9660    LocalCorporateName
+att 9661    LocalPersonalName
