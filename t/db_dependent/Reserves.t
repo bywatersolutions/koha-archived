@@ -448,14 +448,6 @@ $p = C4::Reserves::CalculatePriority($bibnum, $resdate);
 is($p, 3, 'CalculatePriority should now return priority 3');
 # End of tests for bug 8918
 
-# Test for bug 5144
-warning_is {
-    $reserve_id = AddReserve('CPL',  $requesters{'CPL3'}, $bibnum,
-           $bibitems,  $p, output_pref($resdate), $expdate, $notes,
-           $title,      $checkitem, $found)
-} "AddReserve: borrower $requesters{CPL3} already has a hold for biblionumber $bibnum";
-is( $reserve_id, undef, 'Attempt to add a second reserve on a given record for the same patron fails.' );
-
 # Tests for cancel reserves by users from OPAC.
 $dbh->do('DELETE FROM reserves', undef, ($bibnum));
 AddReserve('CPL',  $requesters{'CPL'}, $item_bibnum,

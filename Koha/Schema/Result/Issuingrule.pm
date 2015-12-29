@@ -159,6 +159,12 @@ __PACKAGE__->table("issuingrules");
   default_value: 0
   is_nullable: 0
 
+=head2 holds_per_record
+
+  data_type: 'smallint'
+  default_value: 1
+  is_nullable: 0
+
 =head2 branchcode
 
   data_type: 'varchar'
@@ -248,6 +254,8 @@ __PACKAGE__->add_columns(
   { data_type => "tinyint", default_value => 0, is_nullable => 1 },
   "reservesallowed",
   { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "holds_per_record",
+  { data_type => "smallint", default_value => 1, is_nullable => 0 },
   "branchcode",
   { data_type => "varchar", default_value => "", is_nullable => 0, size => 10 },
   "overduefinescap",
@@ -282,8 +290,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("branchcode", "categorycode", "itemtype");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-05-16 14:14:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iJlfMVJ7sZVT4zMnqG8xpw
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-12-28 16:26:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/3xm7W/T/nWlYVlokMTgjQ
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
