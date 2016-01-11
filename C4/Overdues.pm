@@ -504,6 +504,7 @@ warn "BORROWERNUMBER: $borrowernumber";
 warn "AMOUNT: $amount";
 warn "DUE: $due";
 warn "ISSUE ID: $issue_id";
+warn "LIBRARIAN: " . C4::Context->userenv->{'number'} if C4::Context->userenv;
 
     my $schema = Koha::Database->new()->schema;
 

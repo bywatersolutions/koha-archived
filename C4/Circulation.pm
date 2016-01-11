@@ -2801,6 +2801,7 @@ sub AddRenewal {
     my $branch          = shift;
     my $datedue         = shift;
     my $lastreneweddate = shift || DateTime->now(time_zone => C4::Context->tz)->ymd();
+warn "AddRenewal( borrowernumber => $borrowernumber, itemnumber => $itemnumber, branch => $branch, datedue => $datedue, lastreneweddate => $lastreneweddate";
 
     my $item   = GetItem($itemnumber) or return;
     my $biblio = GetBiblioFromItemNumber($itemnumber) or return;
@@ -2832,6 +2833,8 @@ sub AddRenewal {
                                         DateTime->now( time_zone => C4::Context->tz());
         $datedue =  CalcDateDue($datedue, $itemtype, $issue->get_column('branchcode'), $borrower, 'is a renewal');
     }
+
+    _FinalizeFine( { issue => $issue } );
 
     # Update the issues record to have the new due date, and a new count
     # of how many times it has been renewed.
@@ -2909,7 +2912,6 @@ sub AddRenewal {
                 ccode => $item->{'ccode'}}
                 );
 
-    _FinalizeFine( { issue => $issue } );
 
 	return $datedue;
 }
