@@ -823,7 +823,7 @@ sub checkauth {
             $session->flush;
             C4::Context->_unset_userenv($sessionID);
 
-            #_session_log(sprintf "%20s from %16s logged out at %30s (manually).\n", $userid,$ip,(strftime "%c",localtime));
+            _session_log(sprintf "%20s from %16s logged out at %30s (manually).\n", $userid,$ip,(strftime "%c",localtime));
             $sessionID = undef;
             $userid    = undef;
 
@@ -848,7 +848,7 @@ sub checkauth {
             }
             C4::Context->_unset_userenv($sessionID);
 
-            #_session_log(sprintf "%20s from %16s logged out at %30s (inactivity).\n", $userid,$ip,(strftime "%c",localtime));
+            _session_log(sprintf "%20s from %16s logged out at %30s (inactivity).\n", $userid,$ip,(strftime "%c",localtime));
             $userid    = undef;
             $sessionID = undef;
         }
@@ -862,7 +862,7 @@ sub checkauth {
             $session->flush;
             C4::Context->_unset_userenv($sessionID);
 
-            #_session_log(sprintf "%20s from %16s logged out at %30s (ip changed to %16s).\n", $userid,$ip,(strftime "%c",localtime), $info{'newip'});
+            _session_log(sprintf "%20s from %16s logged out at %30s (ip changed to %16s).\n", $userid,$ip,(strftime "%c",localtime), $info{'newip'});
             $sessionID = undef;
             $userid    = undef;
         }
@@ -1005,7 +1005,7 @@ sub checkauth {
             # $return: 1 = valid user, 2 = superlibrarian
             if ($return) {
 
-                #_session_log(sprintf "%20s from %16s logged in  at %30s.\n", $userid,$ENV{'REMOTE_ADDR'},(strftime '%c', localtime));
+                _session_log(sprintf "%20s from %16s logged in  at %30s.\n", $userid,$ENV{'REMOTE_ADDR'},(strftime '%c', localtime));
                 if ( $flags = haspermission( $userid, $flagsrequired ) ) {
                     $loggedin = 1;
                 }
