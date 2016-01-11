@@ -65,7 +65,7 @@ my $borrowers_rs = Koha::Database->new()->schema->resultset('Borrower')->search(
 
 while ( my $borrower = $borrowers_rs->next() ) {
     print "Setting balance for " . $borrower->firstname() . " " . $borrower->surname() . " ( " . $borrower->cardnumber() . " ) to " if ( $verbose );
-    my $account_balance = RecalculateAccountBalance({
+    my $account_balance = NormalizeBalances({
         borrower => $borrower
     });
     say $account_balance if ( $verbose );
