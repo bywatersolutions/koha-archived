@@ -351,6 +351,7 @@ $template->param(
     ordernumber           => $ordernumber,
     # basket informations
     basketno             => $basketno,
+    basket               => $basket,
     basketname           => $basket->{'basketname'},
     basketnote           => $basket->{'note'},
     booksellerid         => $basket->{'booksellerid'},
