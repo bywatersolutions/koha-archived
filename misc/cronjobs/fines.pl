@@ -44,12 +44,14 @@ my $help;
 my $verbose;
 my $output_dir;
 my $log;
+my $borrowernumber;
 
 GetOptions(
     'h|help'    => \$help,
     'v|verbose' => \$verbose,
     'l|log'     => \$log,
     'o|out:s'   => \$output_dir,
+    'b|borrowernumber:s' => \$borrowernumber,
 );
 my $usage = << 'ENDUSAGE';
 
@@ -99,6 +101,7 @@ my $counted = 0;
 my $overdues = Getoverdues();
 for my $overdue ( @{$overdues} ) {
     next if $overdue->{itemlost};
+    next if $borrowernumber && $overdue->{borrowernumber} ne $borrowernumber;
 
     if ( !defined $overdue->{borrowernumber} ) {
         carp
