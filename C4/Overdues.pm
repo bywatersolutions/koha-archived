@@ -554,7 +554,8 @@ warn "LIBRARIAN: " . C4::Context->userenv->{'number'} if C4::Context->userenv;
                         {
                             borrowernumber => $borrowernumber,
                             type => Koha::Accounts::CreditTypes::FineReduction(),
-                            amount_remaining => abs($difference),
+                            amount_paid      => abs($difference),
+                            amount_remaining => 0,
                             created_on       => $timestamp,
                         }
                       );
@@ -605,7 +606,7 @@ warn "LIBRARIAN: " . C4::Context->userenv->{'number'} if C4::Context->userenv;
         }
     ) if $offset;
 
-    RecalculateAccountBalance( { borrower => $borrower } );
+    NormalizeBalances( { borrower => $borrower } );
 
     logaction( "FINES", Koha::Accounts::DebitTypes::Fine(),
         $borrowernumber,
