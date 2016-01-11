@@ -126,7 +126,8 @@ if ($op eq ""){
                      "allmatch" => $allmatch,
                      );
     import_biblios_list($template, $cgiparams->{'import_batch_id'});
-    if ( C4::Context->preference('AcqCreateItem') eq 'ordering' ) {
+    my $basket = GetBasket($cgiparams->{basketno});
+    if ( C4::Context->preference('AcqCreateItem') eq 'ordering' && !$basket->{is_standing} ) {
         # prepare empty item form
         my $cell = PrepareItemrecordDisplay( '', '', '', 'ACQ' );
 
@@ -280,7 +281,8 @@ if ($op eq ""){
         # 4th, add items if applicable
         # parse the item sent by the form, and create an item just for the import_record_id we are dealing with
         # this is not optimised, but it's working !
-        if ( C4::Context->preference('AcqCreateItem') eq 'ordering' ) {
+        my $basket = GetBasket($cgiparams->{basketno});
+        if ( C4::Context->preference('AcqCreateItem') eq 'ordering' && !$basket->{is_standing} ) {
             my @tags         = $input->multi_param('tag');
             my @subfields    = $input->multi_param('subfield');
             my @field_values = $input->multi_param('field_value');
