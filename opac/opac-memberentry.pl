@@ -95,6 +95,7 @@ if ( $action eq 'create' ) {
 
     my @empty_mandatory_fields = CheckMandatoryFields( \%borrower, $action );
     my $invalidformfields = CheckForInvalidFields(\%borrower);
+    delete $borrower{'password2'};
 
     delete $borrower{'password2'};
     my $cardnumber_error_code;
