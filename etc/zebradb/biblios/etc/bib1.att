@@ -203,7 +203,7 @@ att 1218    Equinox
 att 1219    Compression
 att 1220    Format
 att 1221    Subject-occupation
-att 1222    Subject-function
+att 1222    Theme
 att 1223    Edition
 att 1224    GPO-Item-Number
 att 1225    Provider
@@ -368,3 +368,4 @@ att 9907    ln-subtitle
 # Pacific-Specific
 att 9660    LocalCorporateName
 att 9661    LocalPersonalName
+att 1222    Theme
