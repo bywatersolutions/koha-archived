@@ -1236,6 +1236,7 @@ sub getIndexes{
                     'Term-genre-form-heading',
                     'Term-genre-form-see',
                     'Term-genre-form-seealso',
+                    'Theme',
                     'ti',
                     'Title',
                     'Title-cover',
