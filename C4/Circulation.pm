@@ -672,6 +672,7 @@ C<$issuingimpossible> and C<$needsconfirmation> are some hashref.
 =item C<$duedates> is a DateTime object.
 
 =item C<$inprocess> boolean switch
+
 =item C<$ignore_reserves> boolean switch
 
 =item C<$params> Hashref of additional parameters
@@ -1998,7 +1999,53 @@ sub AddReturn {
 
         if ($borrowernumber) {
             if ( ( C4::Context->preference('CalculateFinesOnReturn') && $issue->{'overdue'} ) || $return_date ) {
-                _CalculateAndUpdateFine( { issue => $issue, item => $item, borrower => $borrower, return_date => $return_date } );
+                # we only need to calculate and change the fines if we want to do that on return
+                # Should be on for hourly loans
+                my $control = C4::Context->preference('CircControl');
+                my $control_branchcode =
+                    ( $control eq 'ItemHomeLibrary' ) ? $item->{homebranch}
+                  : ( $control eq 'PatronLibrary' )   ? $borrower->{branchcode}
+                  :                                     $issue->{branchcode};
+
+                my $date_returned =
+                  $return_date ? dt_from_string($return_date) : $today;
+
+                my ( $amount, $type, $unitcounttotal ) =
+                  C4::Overdues::CalcFine( $item, $borrower->{categorycode},
+                    $control_branchcode, $datedue, $date_returned );
+
+                $type ||= q{};
+
+                if ( C4::Context->preference('finesMode') eq 'production' ) {
+                    if ( $amount > 0 ) {
+                        C4::Overdues::UpdateFine(
+                            {
+                                issue_id       => $issue->{issue_id},
+                                itemnumber     => $issue->{itemnumber},
+                                borrowernumber => $issue->{borrowernumber},
+                                amount         => $amount,
+                                type           => $type,
+                                due            => output_pref($datedue),
+                            }
+                        );
+                    }
+                    elsif ($return_date) {
+
+                        # Backdated returns may have fines that shouldn't exist,
+                        # so in this case, we need to drop those fines to 0
+
+                        C4::Overdues::UpdateFine(
+                            {
+                                issue_id       => $issue->{issue_id},
+                                itemnumber     => $issue->{itemnumber},
+                                borrowernumber => $issue->{borrowernumber},
+                                amount         => 0,
+                                type           => $type,
+                                due            => output_pref($datedue),
+                            }
+                        );
+                    }
+                }
             }
 
             eval {
