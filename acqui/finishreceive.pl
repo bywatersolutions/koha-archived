@@ -33,6 +33,7 @@ use C4::Items;
 use C4::Search;
 
 use Koha::Acquisition::Bookseller;
+use Koha::Acquisition::Order;
 
 use List::MoreUtils qw/any/;
 
@@ -61,10 +62,11 @@ my $bookfund         = $input->param("bookfund");
 my $order            = GetOrder($ordernumber);
 my $new_ordernumber  = $ordernumber;
 
-#need old receivedate if we update the order, parcel.pl only shows the right parcel this way FIXME
+my $basket = Koha::Acquisition::Order->find($ordernumber)->basket;
+
 if ($quantityrec > $origquantityrec ) {
     my @received_items = ();
-    if(C4::Context->preference('AcqCreateItem') eq 'ordering') {
+    if ($basket->effective_create_items eq 'ordering') {
         @received_items = $input->multi_param('items_to_receive');
         my @affects = split q{\|}, C4::Context->preference("AcqItemSetSubfieldsWhenReceived");
         if ( @affects ) {
@@ -120,7 +122,7 @@ if ($quantityrec > $origquantityrec ) {
     }
 
     # now, add items if applicable
-    if (C4::Context->preference('AcqCreateItem') eq 'receiving') {
+    if ($basket->effective_create_items eq 'receiving') {
 
         my @tags         = $input->multi_param('tag');
         my @subfields    = $input->multi_param('subfield');
