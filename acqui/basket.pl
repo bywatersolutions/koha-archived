@@ -367,6 +367,7 @@ elsif ( $op eq 'ediorder' ) {
     }
 
     $template->param(
+        basket               => $basket,
         basketno             => $basketno,
         basket               => $basket,
         basketname           => $basket->{'basketname'},
