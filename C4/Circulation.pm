@@ -3104,9 +3104,14 @@ sub _get_discount_from_rule {
 sub AddIssuingCharge {
     my ( $itemnumber, $borrowernumber, $amount ) = @_;
 
+    my $schema = Koha::Database->new()->schema();
+    my $item = $schema->resultset('Item')->find( $itemnumber );
+    my $biblio = $item->biblio();
+
     return AddDebit(
         {
-            borrower       => Koha::Database->new()->schema->resultset('Borrower')->find($borrowernumber),
+            description    => $biblio->title(),
+            borrower       => $schema->resultset('Borrower')->find($borrowernumber),
             itemnumber     => $itemnumber,
             amount         => $amount,
             type           => Koha::Accounts::DebitTypes::Rental(),
