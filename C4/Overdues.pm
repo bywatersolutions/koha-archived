@@ -546,30 +546,40 @@ warn "LIBRARIAN: " . C4::Context->userenv->{'number'} if C4::Context->userenv;
                 # Fine was reduced by a change in circulation rules or another reason
                 # we need to credit the account the difference and zero out the amount outstanding
                 if ( $difference < 0 ) {
-                    $fine->amount_outstanding( $fine->amount_outstanding() + $difference );
+                    #$fine->amount_outstanding( $fine->amount_outstanding() + $difference );
 
-                    $credit =
-                      Koha::Database->new()->schema->resultset('AccountCredit')
-                      ->create(
+                    AddCredit(
                         {
-                            borrowernumber => $borrowernumber,
+                            borrower => $borrower,
+                            debit_id => $fine->id(),
                             type => Koha::Accounts::CreditTypes::FineReduction(),
-                            amount_paid      => abs($difference),
-                            amount_remaining => 0,
+                            amount      => abs($difference),
+                            amount_received => abs($difference),
                             created_on       => $timestamp,
                         }
-                      );
+                    );
+
+#                    $credit =
+#                      Koha::Database->new()->schema->resultset('AccountCredit')
+#                      ->create(
+#                        {
+#                            borrowernumber => $borrowernumber,
+#                            type => Koha::Accounts::CreditTypes::FineReduction(),
+#                            amount_paid      => abs($difference),
+#                            amount_remaining => abs($difference),
+#                            created_on       => $timestamp,
+#                        }
+#                      );
 
                 } else {
                     $fine->amount_outstanding( $amount );
+                    $offset = 1;
                 }
 
                 $fine->amount_last_increment($difference);
                 $fine->amount_original( $fine->amount_original() + $difference );
                 $fine->updated_on($timestamp);
                 $fine->update();
-
-                $offset = 1;
             }
         }
     }
