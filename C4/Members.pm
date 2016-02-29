@@ -2265,9 +2265,6 @@ sub IssueSlip {
         if ((substr $it->{'issuedate'}, 0, 10) eq $now || (substr $it->{'lastreneweddate'}, 0, 10) eq $now) {
             $it->{'now'} = 1;
         }
-        elsif ((substr $it->{'date_due'}, 0, 10) le $now) {
-            $it->{'overdue'} = 1;
-        }
         my $dt = dt_from_string( $it->{'date_due'} );
         $it->{'date_due'} = output_pref( $dt );;
     }
