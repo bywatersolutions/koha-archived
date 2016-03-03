@@ -507,7 +507,7 @@ with this method.
 
 =cut
 
-my $syspref_cache = Koha::Cache->get_instance();
+my $syspref_cache;
 my $use_syspref_cache = 1;
 sub preference {
     my $self = shift;
@@ -515,9 +515,11 @@ sub preference {
 
     $var = lc $var;
 
-    my $cached_var = $use_syspref_cache
-        ? $syspref_cache->get_from_cache("syspref_$var")
-        : undef;
+    my $cached_var;
+    if ( $use_syspref_cache ) {
+	$syspref_cache =  Koha::Cache->get_instance() unless ( $syspref_cache );
+        $cached_var = $syspref_cache->get_from_cache("syspref_$var");
+}
     return $cached_var if defined $cached_var;
 
     my $dbh  = C4::Context->dbh or return 0;
