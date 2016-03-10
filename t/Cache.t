@@ -17,7 +17,7 @@
 
 use Modern::Perl;
 
-use Test::More tests => 32;
+use Test::More tests => 37;
 
 my $destructorcount = 0;
 
@@ -33,7 +33,7 @@ SKIP: {
     $ENV{ MEMCACHED_NAMESPACE } = 'unit_tests';
     my $cache = Koha::Cache->get_instance();
 
-    skip "Cache not enabled", 28
+    skip "Cache not enabled", 33
       unless ( $cache->is_cache_active() && defined $cache );
 
     # test fetching an item that isnt in the cache
@@ -43,6 +43,7 @@ SKIP: {
     # test expiry time in cache
     $cache->set_in_cache( "timeout", "I AM DATA", 1 ); # expiry time of 1 second
     sleep 2;
+    $cache->flush_L1_cache();
     is( $cache->get_from_cache("timeout"),
         undef, "fetching expired item from cache" );
 
@@ -88,7 +89,9 @@ SKIP: {
     );
     ok( defined($myscalar), 'Created tied scalar' );
     is( $$myscalar, 1, 'Constructor called to first initialize' );
+    $cache->flush_L1_cache();
     is( $$myscalar, 1, 'Data retrieved from cache' );
+    $cache->flush_L1_cache();
     sleep 2;
     is( $$myscalar, 2, 'Constructor called again when timeout reached' );
     $$myscalar = 5;
@@ -119,6 +122,7 @@ SKIP: {
     is($myhash->{'key2'}, 'surprise', 'Setting hash member worked');
     $hash{'key2'} = 'nosurprise';
     sleep 2;
+    $cache->flush_L1_cache();
     is($myhash->{'key2'}, 'nosurprise', 'Cache change caught');
 
 
@@ -134,6 +138,7 @@ SKIP: {
     $hash{'anotherkey'} = 'anothervalue';
 
     sleep 2;
+    $cache->flush_L1_cache();
 
     ok(exists $myhash->{'anotherkey'}, 'Cache reset properly');
 
@@ -162,6 +167,32 @@ SKIP: {
     is(length($utf8_res), 1, 'UTF8 string length correct');
     # ...and that it's really the character we intend
     is(ord($utf8_res), 8364, 'UTF8 string value correct');
+
+    # Make sure the item will be deep copied
+    # Scalar
+    my $item = "just a simple scalar";
+    $cache->set_in_cache('test_deep_copy', $item);
+    my $item_from_cache = $cache->get_from_cache('test_deep_copy');
+    $item_from_cache = "a modified scalar";
+    is( $cache->get_from_cache('test_deep_copy'), 'just a simple scalar', 'A scalar will not be modified in the cache if get from the cache' );
+    # Array
+    my @item = qw( an array ref );
+    $cache->set_in_cache('test_deep_copy_array', \@item);
+    $item_from_cache = $cache->get_from_cache('test_deep_copy_array');
+    @$item_from_cache = qw( another array ref );
+    is_deeply( $cache->get_from_cache('test_deep_copy_array'), [ qw ( an array ref ) ], 'An array will be deep copied');
+    $item_from_cache = $cache->get_from_cache('test_deep_copy_array', { unsafe => 1 });
+    @$item_from_cache = qw( another array ref );
+    is_deeply( $cache->get_from_cache('test_deep_copy_array'), [ qw ( another array ref ) ], 'An array will not be deep copied if the unsafe flag is set');
+    # Hash
+    my %item = ( a => 'hashref' );
+    $cache->set_in_cache('test_deep_copy_hash', \%item);
+    $item_from_cache = $cache->get_from_cache('test_deep_copy_hash');
+    %$item_from_cache = ( another => 'hashref' );
+    is_deeply( $cache->get_from_cache('test_deep_copy_hash'), { a => 'hashref' }, 'A hash will be deep copied');
+    $item_from_cache = $cache->get_from_cache('test_deep_copy_hash', { unsafe => 1});
+    %$item_from_cache = ( another => 'hashref' );
+    is_deeply( $cache->get_from_cache('test_deep_copy_hash'), { another => 'hashref' }, 'A hash will not be deep copied if the unsafe flag is set');
 }
 
 END {

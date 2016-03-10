@@ -38,6 +38,7 @@ The first, traditional OO interface provides the following functions:
 use strict;
 use warnings;
 use Carp;
+use Clone qw( clone );
 use Module::Load::Conditional qw(can_load);
 use Koha::Cache::Object;
 
@@ -45,6 +46,8 @@ use base qw(Class::Accessor);
 
 __PACKAGE__->mk_ro_accessors(
     qw( cache memcached_cache fastmmap_cache memory_cache ));
+
+our %L1_cache;
 
 =head2 get_instance
 
@@ -263,6 +266,10 @@ sub set_in_cache {
     my $expiry = $options->{expiry};
     $expiry //= $self->{timeout};
     my $set_sub = $self->{ref($self->{$cache}) . "_set"};
+
+    # Set in L1 cache
+    $L1_cache{ $key } = $value;
+
     # We consider an expiry of 0 to be inifinite
     if ( $expiry ) {
         return $set_sub
@@ -278,21 +285,43 @@ sub set_in_cache {
 
 =head2 get_from_cache
 
-    my $value = $cache->get_from_cache($key);
+    my $value = $cache->get_from_cache($key, [ $options ]);
 
 Retrieve the value stored under the specified key in the default cache.
+
+The options can set an unsafe flag to avoid a deep copy.
+When this flag is set, you have to know what you are doing!
+If you are retrieving a structure and modify it, you will modify the contain
+of the cache!
 
 =cut
 
 sub get_from_cache {
-    my ( $self, $key, $cache ) = @_;
+    my ( $self, $key, $options ) = @_;
+    my $cache  = $options->{cache}  || 'cache';
+    my $unsafe = $options->{unsafe} || 0;
     $key =~ s/[\x00-\x20]/_/g;
-    $cache ||= 'cache';
     croak "No key" unless $key;
     $ENV{DEBUG} && carp "get_from_cache for $key";
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
+
+    # Return L1 cache value if exists
+    if ( exists $L1_cache{$key} ) {
+        # No need to deep copy if it's a scalar
+        # Or if we do not need to deep copy
+        return $L1_cache{$key}
+            if not ref $L1_cache{$key} or $unsafe;
+        return clone $L1_cache{$key};
+    }
+
     my $get_sub = $self->{ref($self->{$cache}) . "_get"};
-    return $get_sub ? $get_sub->($key) : $self->{$cache}->get($key);
+    my $value = $get_sub ? $get_sub->($key) : $self->{$cache}->get($key);
+
+    # Update the L1 cache when fetching the L2 cache
+    # Otherwise the L1 cache won't ever be populated
+    $L1_cache{$key} = $value;
+
+    return $value;
 }
 
 =head2 clear_from_cache
@@ -309,6 +338,10 @@ sub clear_from_cache {
     $cache ||= 'cache';
     croak "No key" unless $key;
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
+
+    # Clear from L1 cache
+    delete $L1_cache{$key};
+
     return $self->{$cache}->delete($key)
       if ( ref( $self->{$cache} ) =~ m'^Cache::Memcached' );
     return $self->{$cache}->remove($key);
@@ -326,9 +359,17 @@ sub flush_all {
     my ( $self, $cache ) = shift;
     $cache ||= 'cache';
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
+
+    $self->flush_L1_cache();
+
     return $self->{$cache}->flush_all()
       if ( ref( $self->{$cache} ) =~ m'^Cache::Memcached' );
     return $self->{$cache}->clear();
+}
+
+sub flush_L1_cache {
+    my( $self ) = @_;
+    %L1_cache = ();
 }
 
 =head1 TIED INTERFACE
