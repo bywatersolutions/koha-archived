@@ -40,6 +40,7 @@ use warnings;
 use Carp;
 use Module::Load::Conditional qw(can_load);
 use Koha::Cache::Object;
+use Time::HiRes qw(time);
 
 use base qw(Class::Accessor);
 
@@ -68,6 +69,9 @@ sub get_instance {
 Create a new Koha::Cache object. This is required for all cache-related functionality.
 
 =cut
+
+our %l1_cache;
+our $l1_cache_time;
 
 sub new {
     my ( $class, $self ) = @_;
@@ -126,6 +130,22 @@ sub new {
     return
       bless $self,
       $class;
+}
+
+sub flush_l1_if_needed {
+    my ($self) = @_;
+
+    if ( $self->{cache} ) {
+        if ( $l1_cache_time ) {
+            my $upstream_cache_mtime = $self->{cache}->get('upstream_cache_mtime');
+
+            if ( $upstream_cache_mtime && $upstream_cache_mtime > $l1_cache_time ) {
+                $self->flush_l1();
+            }
+        }
+
+        $l1_cache_time = time();
+    }
 }
 
 sub _initialize_memcached {
@@ -277,6 +297,12 @@ sub set_in_cache {
     my $expiry = $options->{expiry};
     $expiry //= $self->{timeout};
     my $set_sub = $self->{ref($self->{$cache}) . "_set"};
+
+    carp "Setting $key in l1 cache";
+    $l1_cache{$key} = $value;
+
+    $self->{$cache}->set( 'upstream_cache_mtime', time() );
+
     # We consider an expiry of 0 to be inifinite
     if ( $expiry ) {
         return $set_sub
@@ -304,9 +330,15 @@ sub get_from_cache {
     $cache ||= 'cache';
     croak "No key" unless $key;
     $ENV{DEBUG} && carp "get_from_cache for $key";
+    return $l1_cache{$key} if exists $l1_cache{$key};
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
+
     my $get_sub = $self->{ref($self->{$cache}) . "_get"};
-    return $get_sub ? $get_sub->($key) : $self->{$cache}->get($key);
+    my $value = $get_sub ? $get_sub->($key) : $self->{$cache}->get($key);
+
+    $l1_cache{$key} = $value unless ( exists $l1_cache{$key} || !$value );
+
+    return $value;
 }
 
 =head2 clear_from_cache
@@ -323,6 +355,8 @@ sub clear_from_cache {
     $cache ||= 'cache';
     croak "No key" unless $key;
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
+    delete $l1_cache{$key};
+    $self->{$cache}->set( 'upstream_cache_mtime', time() );
     return $self->{$cache}->delete($key)
       if ( ref( $self->{$cache} ) =~ m'^Cache::Memcached' );
     return $self->{$cache}->remove($key);
@@ -336,10 +370,16 @@ Clear the entire default cache.
 
 =cut
 
+sub flush_l1 {
+    %l1_cache = ();
+}
+
 sub flush_all {
     my ( $self, $cache ) = shift;
     $cache ||= 'cache';
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
+    $self->flush_l1();
+    $self->{$cache}->set( 'upstream_cache_mtime', time() );
     return $self->{$cache}->flush_all()
       if ( ref( $self->{$cache} ) =~ m'^Cache::Memcached' );
     return $self->{$cache}->clear();
