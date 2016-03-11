@@ -41,6 +41,7 @@ use Carp;
 use Storable qw(dclone);
 use Module::Load::Conditional qw(can_load);
 use Koha::Cache::Object;
+use Time::HiRes qw(time);
 
 use base qw(Class::Accessor);
 
@@ -48,6 +49,7 @@ __PACKAGE__->mk_ro_accessors(
     qw( cache memcached_cache fastmmap_cache memory_cache ));
 
 our %L1_cache;
+our $L1_cache_time;
 
 =head2 get_instance
 
@@ -115,6 +117,22 @@ sub new {
     return
       bless $self,
       $class;
+}
+
+sub flush_L1_if_needed {
+    my ($self) = @_;
+
+    if ( $self->{cache} ) {
+        if ( $L1_cache_time ) {
+            my $upstream_cache_mtime = $self->{cache}->get('upstream_cache_mtime');
+
+            if ( $upstream_cache_mtime && $upstream_cache_mtime > $L1_cache_time ) {
+                $self->flush_L1_cache();
+            }
+        }
+
+        $L1_cache_time = time();
+    }
 }
 
 sub _initialize_memcached {
@@ -266,16 +284,19 @@ sub set_in_cache {
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
     my $expiry = $options->{expiry};
     $expiry //= $self->{timeout};
+    my $unsafe = $options->{unsafe} || 0;
     my $set_sub = $self->{ref($self->{$cache}) . "_set"};
 
     # Deep copy if it's not a scalar and unsafe is not passed
-    $value = dclone( $value ) if ref($value) and not $unsafe;
+    $value = clone( $value ) if ref($value) and not $unsafe;
 
-    # Set in L1 cache; exit if we are caching an undef
+    # Set in L1 cache
     $L1_cache{ $key } = $value;
     return if !defined $value;
 
-    # We consider an expiry of 0 to be infinite
+    $self->{$cache}->set( 'upstream_cache_mtime', time() );
+
+    # We consider an expiry of 0 to be inifinite
     if ( $expiry ) {
         return $set_sub
           ? $set_sub->( $key, $value, $expiry )

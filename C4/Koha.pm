@@ -1210,6 +1210,13 @@ C<$opac> If set to a true value, displays OPAC descriptions rather than normal o
 
 =cut
 
+sub _AddSelectedAuthVal {
+    my ( $authorised_values, $selected ) = @_;
+    foreach my $data ( @$authorised_values ) {
+        $data->{selected} = $selected eq $data->{authorised_value} ? 1 : 0;
+    }
+}
+
 sub GetAuthorisedValues {
     my ( $category, $opac ) = @_;
 
@@ -1221,7 +1228,10 @@ sub GetAuthorisedValues {
       "AuthorisedValues-$category-$opac-$branch_limit";
     my $cache  = Koha::Cache->get_instance();
     my $result = $cache->get_from_cache($cache_key);
-    return $result if $result;
+    if ($result) {
+        _AddSelectedAuthVal( $result, $selected ) if defined $selected;
+        return $result;
+    }
 
     my @results;
     my $dbh      = C4::Context->dbh;
@@ -1261,7 +1271,8 @@ sub GetAuthorisedValues {
     }
     $sth->finish;
 
-    $cache->set_in_cache( $cache_key, \@results, { deepcopy => 1, expiry => 5 } );
+    $cache->set_in_cache( $cache_key, \@results );
+    _AddSelectedAuthVal( \@results, $selected );
     return \@results;
 }
 
