@@ -1098,7 +1098,7 @@ sub GetMarcStructure {
     $forlibrarian = $forlibrarian ? 1 : 0;
     my $cache = Koha::Cache->get_instance();
     my $cache_key = "MarcStructure-$forlibrarian-$frameworkcode";
-    my $cached = $cache->get_from_cache($cache_key);
+    my $cached = $cache->get_from_cache( $cache_key, { unsafe => 1 } );
     return $cached if $cached;
 
     my $sth = $dbh->prepare(
