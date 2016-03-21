@@ -75,9 +75,9 @@ if ( $op eq 'add_form' ) {
                 {   shelfname          => $query->param('shelfname'),
                     sortfield          => $query->param('sortfield'),
                     category           => $query->param('category') || 1,
-                    allow_add          => $query->param('allow_add'),
-                    allow_delete_own   => $query->param('allow_delete_own'),
-                    allow_delete_other => $query->param('allow_delete_other'),
+                    allow_add          => $query->param('allow_add') // 1,
+                    allow_delete_own   => $query->param('allow_delete_own') // 0,
+                    allow_delete_other => $query->param('allow_delete_other') // 0,
                     owner              => $loggedinuser,
                 }
             );
