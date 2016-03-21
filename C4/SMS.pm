@@ -79,9 +79,11 @@ sub send_sms {
     my ($sent, $sender);
     eval {
         # Create a sender
-        $sender = SMS::Send->new( $driver,
-                                 _login    => C4::Context->preference('SMSSendUsername'),
+        # TEMP hardcoded for RT 33100 - 20160321.jpw
+        $sender = SMS::Send->new( 'RedOxygen',
+                                 _accountid    => C4::Context->preference('SMSSendUsername'),
                                  _password => C4::Context->preference('SMSSendPassword'),
+                                 _email => 'rkuiper@roundrocktexas.gov',
                             );
     
         # Send a message
