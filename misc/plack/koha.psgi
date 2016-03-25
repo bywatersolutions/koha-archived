@@ -12,7 +12,7 @@ use CGI qw(-utf8 ); # we will lose -utf8 under plack
     *CGI::new = sub {
         my $q = $old_new->( @_ );
         $CGI::PARAM_UTF8 = 1;
-        Koha::Cache->flush_L1_if_needed();
+        Koha::Cache->get_instance->flush_L1_if_needed();
         Koha::Cache::Memory::Lite->flush();
         return $q;
     };
