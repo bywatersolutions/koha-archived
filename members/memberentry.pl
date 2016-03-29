@@ -554,7 +554,7 @@ if (@{$city_arrayref} ) {
     }
 }
   
-my $roadtypes = C4::Koha::GetAuthorisedValues( 'ROADTYPE', $data{streettype} );
+my $roadtypes = C4::Koha::GetAuthorisedValues( 'ROADTYPE' );
 $template->param( roadtypes => $roadtypes);
 
 my $default_borrowertitle = '';
