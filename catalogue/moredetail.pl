@@ -135,8 +135,8 @@ foreach ( keys %{$data} ) {
 
 ($itemnumber) and @items = (grep {$_->{'itemnumber'} == $itemnumber} @items);
 foreach my $item (@items){
-    $item->{itemlostloop}= GetAuthorisedValues(GetAuthValCode('items.itemlost',$fw),$item->{itemlost}) if GetAuthValCode('items.itemlost',$fw);
-    $item->{itemdamagedloop}= GetAuthorisedValues(GetAuthValCode('items.damaged',$fw),$item->{damaged}) if GetAuthValCode('items.damaged',$fw);
+    $item->{itemlostloop}= GetAuthorisedValues(GetAuthValCode('items.itemlost',$fw)) if GetAuthValCode('items.itemlost',$fw);
+    $item->{itemdamagedloop}= GetAuthorisedValues(GetAuthValCode('items.damaged',$fw)) if GetAuthValCode('items.damaged',$fw);
     $item->{'collection'}              = $ccodes->{ $item->{ccode} } if ($ccodes);
     $item->{'itype'}                   = $itemtypes->{ $item->{'itype'} }->{'translated_description'};
     $item->{'replacementprice'}        = sprintf( "%.2f", $item->{'replacementprice'} );
