@@ -120,7 +120,7 @@ if ( $op eq 'add_form' ) {
         $remote_image = $data->{imageurl};
     }
 
-    my $searchcategory = GetAuthorisedValues("ITEMTYPECAT", $data->{'searchcategory'});
+    my $searchcategory = GetAuthorisedValues("ITEMTYPECAT");
     my $translated_languages = C4::Languages::getTranslatedLanguages( undef , C4::Context->preference('template') );
 
     $template->param(
