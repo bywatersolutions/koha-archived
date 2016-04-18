@@ -75,6 +75,7 @@ sub transformMARCXML4XSLT {
         @fields = $record->fields();
     };
     if ($@) { warn "PROBLEM WITH RECORD"; next; }
+    my $marcflavour = C4::Context->preference('marcflavour');
     my $av = getAuthorisedValues4MARCSubfields($frameworkcode);
     foreach my $tag ( keys %$av ) {
         foreach my $field ( $record->field( $tag ) ) {
@@ -82,10 +83,13 @@ sub transformMARCXML4XSLT {
                 my @new_subfields = ();
                 for my $subfield ( $field->subfields() ) {
                     my ( $letter, $value ) = @$subfield;
-                    $value = GetAuthorisedValueDesc( $tag, $letter, $value, '', $tagslib )
-                        if $av->{ $tag }->{ $letter };
+                    # Replace the field value with the authorised value *except* for 942$n ( record supression )
+                    if ( $tag ne '942' && $subfield ne 'n' && $marcflavour ne 'UNIMARC' ) {
+                        $value = GetAuthorisedValueDesc( $tag, $letter, $value, '', $tagslib )
+                            if $av->{ $tag }->{ $letter };
+                    }
                     push( @new_subfields, $letter, $value );
-                } 
+                }
                 $field ->replace_with( MARC::Field->new(
                     $tag,
                     $field->indicator(1),
@@ -202,12 +206,12 @@ sub XSLTParse4Display {
                               DisplayOPACiconsXSLT URLLinkText viewISBD
                               OPACBaseURL TraceCompleteSubfields UseICU
                               UseAuthoritiesForTracings TraceSubjectSubdivisions
-                              Display856uAsImage OPACDisplay856uAsImage 
+                              Display856uAsImage OPACDisplay856uAsImage
                               UseControlNumber IntranetBiblioDefaultView BiblioDefaultView
                               singleBranchMode OPACItemLocation DisplayIconsXSLT
                               AlternateHoldingsField AlternateHoldingsSeparator
                               TrackClicks opacthemes IdRef
-                              OPACResultsLibrary / )
+                              OPACResultsLibrar IdRefi OpacSuppression / )
     {
         my $sp = C4::Context->preference( $syspref );
         next unless defined($sp);
@@ -261,10 +265,10 @@ sub buildKohaItemsNamespace {
         my $reservestatus = C4::Reserves::GetReserveStatus( $item->{itemnumber} );
 
         if ( $itemtypes->{ $item->{itype} }->{notforloan} || $item->{notforloan} || $item->{onloan} || $item->{withdrawn} || $item->{itemlost} || $item->{damaged} ||
-             (defined $transfertwhen && $transfertwhen ne '') || $item->{itemnotforloan} || (defined $reservestatus && $reservestatus eq "Waiting") ){ 
+             (defined $transfertwhen && $transfertwhen ne '') || $item->{itemnotforloan} || (defined $reservestatus && $reservestatus eq "Waiting") ){
             if ( $item->{notforloan} < 0) {
                 $status = "On order";
-            } 
+            }
             if ( $item->{itemnotforloan} > 0 || $item->{notforloan} > 0 || $itemtypes->{ $item->{itype} }->{notforloan} == 1 ) {
                 $status = "reference";
             }
@@ -278,7 +282,7 @@ sub buildKohaItemsNamespace {
                 $status = "Lost";
             }
             if ($item->{damaged}) {
-                $status = "Damaged"; 
+                $status = "Damaged";
             }
             if (defined $transfertwhen && $transfertwhen ne '') {
                 $status = 'In transit';
