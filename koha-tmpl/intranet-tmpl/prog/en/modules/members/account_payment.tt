@@ -75,6 +75,8 @@ $( document ).ready(function() {
         });
         $('#amount_to_pay').val( sum.toFixed(2) );
     });
+
+    $("#amount_to_pay").val($("#amount_to_pay").val().replace(/[^\d.]/g, ''));
 });
 
 function checkForm(){
