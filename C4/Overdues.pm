@@ -617,6 +617,7 @@ sub UpdateFine {
                     amountoutstanding => $amount,
                     lastincrement     => $amount,
                     accountno         => $nextaccntno,
+                    issue_id          => $issue_id,
                 }
             )->store();
         }
