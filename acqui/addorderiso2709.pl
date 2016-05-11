@@ -169,6 +169,7 @@ if ($op eq ""){
     my @sort2 = $input->multi_param('sort2');
     my $matcher_id = $input->param('matcher_id');
     my $cur = GetCurrency();
+    my $matcher_id = $input->param('matcher_id');
     for my $biblio (@$biblios){
         # Check if this import_record_id was selected
         next if not grep { $_ eq $$biblio{import_record_id} } @import_record_id_selected;
