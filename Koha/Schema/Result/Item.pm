@@ -425,6 +425,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 article_requests
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::ArticleRequest>
+
+=cut
+
+__PACKAGE__->has_many(
+  "article_requests",
+  "Koha::Schema::Result::ArticleRequest",
+  { "foreign.itemnumber" => "self.itemnumber" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 biblioitemnumber
 
 Type: belongs_to
@@ -616,8 +631,8 @@ __PACKAGE__->might_have(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2015-11-04 12:00:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jkgJfulDrGaUpQ6jC40vpQ
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-05-16 14:14:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rkSQa6RWOdD/8wlpL0p67A
 
 __PACKAGE__->belongs_to( biblioitem => "Koha::Schema::Result::Biblioitem", "biblioitemnumber" );
 
