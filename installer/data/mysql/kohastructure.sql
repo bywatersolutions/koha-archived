@@ -3611,6 +3611,7 @@ CREATE TABLE `article_requests` (
   `date` text,
   `pages` text,
   `chapters` text,
+  `patron_notes` text,
   `status` enum('PENDING','PROCESSING','COMPLETED','CANCELED') NOT NULL DEFAULT 'PENDING',
   `notes` text,
   `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
