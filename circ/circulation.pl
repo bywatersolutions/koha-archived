@@ -623,7 +623,7 @@ $template->param(
     canned_bor_notes_loop     => $canned_notes,
     debarments                => GetDebarments({ borrowernumber => $borrowernumber }),
     todaysdate                => output_pref( { dt => dt_from_string()->set(hour => 23)->set(minute => 59), dateformat => 'sql' } ),
-    nopermission              => scalar $query->param('nopermission'),
+    nopermission              => scalar $query->param('nopermission') || undef,
     modifications             => Koha::Borrower::Modifications->GetModifications({ borrowernumber => $borrowernumber }),
     override_high_holds       => $override_high_holds,
 );
