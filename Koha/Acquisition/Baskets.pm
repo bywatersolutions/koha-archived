@@ -40,7 +40,7 @@ Koha::Acquisition::Baskets - Koha Basket Object set class
 
 =cut
 
-sub type {
+sub _type {
     return 'Aqbasket';
 }
 
