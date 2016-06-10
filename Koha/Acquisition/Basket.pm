@@ -47,7 +47,7 @@ sub effective_create_items {
 
 =cut
 
-sub type {
+sub _type {
     return 'Aqbasket';
 }
 
