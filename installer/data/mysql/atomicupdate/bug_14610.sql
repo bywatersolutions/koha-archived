@@ -42,5 +42,5 @@ INSERT IGNORE INTO `letter` (`module`, `code`, `branchcode`, `name`, `is_html`, 
 
 ALTER TABLE article_requests ADD COLUMN patron_notes text AFTER chapters;
 
-ALTER TABLE `issuingrules` ADD `article_requests` ENUM( 'no', 'yes', 'bib_only', 'item_only' ) NOT NULL DEFAULT 'no' AFTER `opacitemholds`;
+-- ALTER TABLE `issuingrules` ADD `article_requests` ENUM( 'no', 'yes', 'bib_only', 'item_only' ) NOT NULL DEFAULT 'no' AFTER `opacitemholds`;
 
