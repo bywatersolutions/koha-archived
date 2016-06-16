@@ -20,7 +20,7 @@ use strict;
 # You should have received a copy of the GNU General Public License
 # along with Koha; if not, see <http://www.gnu.org/licenses>.
 
-use C4::Accounts qw(recordpayment);
+use C4::Accounts qw(recordpayment makepayment);
 use parent qw(C4::SIP::ILS::Transaction);
 
 
@@ -46,8 +46,16 @@ sub pay {
     my $borrowernumber = shift;
     my $amt            = shift;
     my $type           = shift;
+    my $fee_id         = shift;
+
     warn("RECORD:$borrowernumber::$amt");
-    recordpayment( $borrowernumber, $amt,$type );
+
+    if ($fee_id) {
+        makepayment( $fee_id, $borrowernumber, undef, $amt );
+    }
+    else {
+        recordpayment( $borrowernumber, $amt, $type );
+    }
 }
 
 #sub DESTROY {
