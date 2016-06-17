@@ -607,7 +607,7 @@ if ( C4::Context->preference('OPACAcquisitionDetails' ) ) {
     });
     my $total_quantity = 0;
     for my $order ( @$orders ) {
-        my $basket = Koha::Acquisition::Order->find( $order->{ordernumber} )->basket;
+        my $basket = Koha::Acquisition::Order->fetch( { ordernumber => $order->{ordernumber} } )->basket;
         if ( $basket->effective_create_items eq 'ordering' ) {
             for my $itemnumber ( C4::Acquisition::GetItemnumbersFromOrder( $order->{ordernumber} ) ) {
                 push @itemnumbers_on_order, $itemnumber;
