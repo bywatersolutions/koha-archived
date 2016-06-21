@@ -79,11 +79,17 @@ sub send_sms {
     my ($sent, $sender);
     eval {
         # Create a sender
-        # TEMP hardcoded for RT 33100 - 20160321.jpw
-        $sender = SMS::Send->new( 'RedOxygen',
-                                 _accountid    => C4::Context->preference('SMSSendUsername'),
-                                 _password => C4::Context->preference('SMSSendPassword'),
-                                 _email => 'rkuiper@roundrocktexas.gov',
+        ## TEMP hardcoded for RT 33100 - 20160321.jpw
+        #$sender = SMS::Send->new( 'RedOxygen',
+        #                         _accountid    => C4::Context->preference('SMSSendUsername'),
+        #                         _password => C4::Context->preference('SMSSendPassword'),
+        #                         _email => 'rkuiper@roundrocktexas.gov',
+        #                    );
+        # TEMP hardcoded for RT 35511 - 20160621.jpw
+        $sender = SMS::Send->new( 'Twilio',
+                                 _accountsid => 'AC9141b8d1f0f2360bb08f9bf480df3c27',
+                                 _authtoken  => '81bd096f3361dcf13248d5af4258374f',
+                                 _from       => '+15129826106',
                             );
     
         # Send a message
