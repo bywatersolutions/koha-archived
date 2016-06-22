@@ -44,8 +44,10 @@ my $patron_cardnumber = $cgi->param('patron_cardnumber');
 my $patron_id         = $cgi->param('patron_id');
 
 my $biblio = Koha::Biblios->find($biblionumber);
-my $patron = Koha::Borrowers->find(
-    $patron_id ? $patron_id : { cardnumber => $patron_cardnumber } );
+my $patron =
+    $patron_id         ? Koha::Borrowers->find($patron_id)
+  : $patron_cardnumber ? Koha::Borrowers->find( { cardnumber => $patron_cardnumber } )
+  : undef;
 
 if ( $action eq 'create' ) {
     my $borrowernumber = $cgi->param('borrowernumber');
