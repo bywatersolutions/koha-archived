@@ -23,6 +23,7 @@ use C4::Debug;
 use C4::Context;
 use C4::Members qw( AddMember_Auto );
 use C4::Members::Messaging;
+use Koha::AuthUtils qw(get_script_name);
 use Koha::Database;
 use Carp;
 use CGI;
@@ -60,7 +61,7 @@ sub logout_shib {
 sub login_shib_url {
     my ($query, $type) = @_;
 
-    my $param = _get_uri($query, $type) . $query->script_name();
+    my $param = _get_uri($query, $type) . get_script_name();
     if ( $query->query_string() ) {
         $param = $param . '%3F' . $query->query_string();
     }
