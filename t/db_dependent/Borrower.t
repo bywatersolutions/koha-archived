@@ -17,11 +17,12 @@
 
 use Modern::Perl;
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Test::Warn;
 
 use C4::Context;
 use Koha::Database;
+use Koha::Account::Line;
 
 BEGIN {
     use_ok('Koha::Object');
@@ -49,6 +50,26 @@ my $borrowernumber = $object->borrowernumber;
 
 my $borrower = $schema->resultset('Borrower')->find( $borrowernumber );
 is( $borrower->surname(), "Test Surname", "Object found in database" );
+
+my $accountline_1 = Koha::Account::Line->new(
+    {
+        borrowernumber    => $patron->id,
+        accountno         => 1,
+        amount            => 10.00,
+        amountoutstanding => 5.00,
+    }
+)->store();
+
+my $accountline_2 = Koha::Account::Line->new(
+    {
+        borrowernumber    => $patron->id,
+        accountno         => 2,
+        amount            => 7.00,
+        amountoutstanding => 7.00,
+    }
+)->store();
+
+is( $object->account_balance, '12.000000', "Got correct patron account balance" );
 
 is( $object->is_changed(), 0, "Object is unchanged" );
 $object->surname("Test Surname");
