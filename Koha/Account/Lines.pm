@@ -36,6 +36,16 @@ Koha::Account::Lines - Koha Account Line Object set class
 
 =cut
 
+=head3 amount_outstanding
+
+=cut
+
+sub amount_outstanding {
+    my ( $self ) = @_;
+
+    return $self->_resultset()->get_column('amountoutstanding')->sum();
+}
+
 =head3 type
 
 =cut

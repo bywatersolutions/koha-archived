@@ -22,6 +22,7 @@ use Modern::Perl;
 use Carp;
 
 use Koha::Database;
+use Koha::Account::Lines;
 
 use base qw(Koha::Object);
 
@@ -34,6 +35,22 @@ Koha::Borrower - Koha Borrower Object class
 =head2 Class Methods
 
 =cut
+
+=head3 account_balance
+	
+Returns the total amount owed by this patron
+
+=cut
+
+sub account_balance {
+    my ($self) = @_;
+
+    return Koha::Account::Lines->search(
+	{
+	    borrowernumber => $self->id
+	}
+    )->amount_outstanding();
+}
 
 =head3 type
 
