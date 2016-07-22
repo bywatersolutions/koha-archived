@@ -110,7 +110,7 @@ unless ( $results and @$results) {
 
 # prepare the form for receiving
 my $order = $results->[0];
-my $basket = Koha::Acquisition::Order->find($ordernumber)->basket;
+my $basket = Koha::Acquisition::Order->fetch( { ordernumber => $ordernumber } )->basket;
 
 # Check if ACQ framework exists
 my $acq_fw = GetMarcStructure(1, 'ACQ');
