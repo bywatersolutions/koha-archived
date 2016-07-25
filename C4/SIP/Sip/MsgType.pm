@@ -712,21 +712,12 @@ sub handle_block_patron {
     my ( $inst_id, $blocked_card_msg, $patron_id, $terminal_pwd );
     my ( $fields, $resp, $patron );
 
-<<<<<<< HEAD
     ( $card_retained, $trans_date ) = @{ $self->{fixed_fields} };
     $fields           = $self->{fields};
     $inst_id          = $fields->{ (FID_INST_ID) };
     $blocked_card_msg = $fields->{ (FID_BLOCKED_CARD_MSG) };
-    $patron_id        = $fields->{ (FID_PATRON_ID) };
-    $terminal_pwd     = $fields->{ (FID_TERMINAL_PWD) };
-=======
-    ($card_retained, $trans_date) = @{$self->{fixed_fields}};
-    $fields = $self->{fields};
-    $inst_id          = $fields->{(FID_INST_ID)};
-    $blocked_card_msg = $fields->{(FID_BLOCKED_CARD_MSG)};
     $patron_id        = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $terminal_pwd     = $fields->{(FID_TERMINAL_PWD)};
->>>>>>> 9177537... BARCODE PREFIXES
+    $terminal_pwd     = $fields->{ (FID_TERMINAL_PWD) };
 
     # Terminal passwords are different from account login
     # passwords, but I have no idea what to do with them.  So,
@@ -945,21 +936,12 @@ sub handle_patron_info {
     my ( $inst_id, $patron_id, $terminal_pwd, $patron_pwd, $start, $end );
     my ( $resp, $patron );
 
-<<<<<<< HEAD
     $inst_id      = $fields->{ (FID_INST_ID) };
-    $patron_id    = $fields->{ (FID_PATRON_ID) };
+    $patron_id    = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $terminal_pwd = $fields->{ (FID_TERMINAL_PWD) };
     $patron_pwd   = $fields->{ (FID_PATRON_PWD) };
     $start        = $fields->{ (FID_START_ITEM) };
     $end          = $fields->{ (FID_END_ITEM) };
-=======
-    $inst_id      = $fields->{(FID_INST_ID)};
-    $patron_id    = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $terminal_pwd = $fields->{(FID_TERMINAL_PWD)};
-    $patron_pwd   = $fields->{(FID_PATRON_PWD)};
-    $start        = $fields->{(FID_START_ITEM)};
-    $end          = $fields->{(FID_END_ITEM)};
->>>>>>> 9177537... BARCODE PREFIXES
 
     $patron = $ils->find_patron($patron_id);
 
@@ -1093,21 +1075,12 @@ sub handle_fee_paid {
     my $status;
     my $resp = FEE_PAID_RESP;
 
-<<<<<<< HEAD
     $fee_amt    = $fields->{ (FID_FEE_AMT) };
     $inst_id    = $fields->{ (FID_INST_ID) };
-    $patron_id  = $fields->{ (FID_PATRON_ID) };
+    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd = $fields->{ (FID_PATRON_PWD) };
     $fee_id     = $fields->{ (FID_FEE_ID) };
     $trans_id   = $fields->{ (FID_TRANSACTION_ID) };
-=======
-    $fee_amt = $fields->{(FID_FEE_AMT)};
-    $inst_id = $fields->{(FID_INST_ID)};
-    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $patron_pwd = $fields->{(FID_PATRON_PWD)};
-    $fee_id = $fields->{(FID_FEE_ID)};
-    $trans_id = $fields->{(FID_TRANSACTION_ID)};
->>>>>>> 9177537... BARCODE PREFIXES
 
     $ils->check_inst_id( $inst_id, "handle_fee_paid" );
 
@@ -1254,15 +1227,9 @@ sub handle_patron_enable {
     my ( $status, $patron );
     my $resp = PATRON_ENABLE_RESP;
 
-<<<<<<< HEAD
     ($trans_date) = @{ $self->{fixed_fields} };
-    $patron_id  = $fields->{ (FID_PATRON_ID) };
-    $patron_pwd = $fields->{ (FID_PATRON_PWD) };
-=======
-    ($trans_date) = @{$self->{fixed_fields}};
     $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $patron_pwd = $fields->{(FID_PATRON_PWD)};
->>>>>>> 9177537... BARCODE PREFIXES
+    $patron_pwd = $fields->{ (FID_PATRON_PWD) };
 
     syslog( "LOG_DEBUG", "handle_patron_enable: patron_id: '%s', patron_pwd: '%s'", $patron_id, $patron_pwd );
 
@@ -1314,12 +1281,11 @@ sub handle_hold {
     my $status;
     my $resp = HOLD_RESP;
 
-<<<<<<< HEAD
     ( $hold_mode, $trans_date ) = @{ $self->{fixed_fields} };
 
     $ils->check_inst_id( $fields->{ (FID_INST_ID) }, "handle_hold" );
 
-    $patron_id   = $fields->{ (FID_PATRON_ID) };
+    $patron_id   = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $expiry_date = $fields->{ (FID_EXPIRATION) } || '';
     $pickup_locn = $fields->{ (FID_PICKUP_LOCN) } || '';
     $hold_type   = $fields->{ (FID_HOLD_TYPE) } || '2';    # Any copy of title
@@ -1334,29 +1300,6 @@ sub handle_hold {
         $status = $ils->cancel_hold( $patron_id, $patron_pwd, $item_id, $title_id );
     } elsif ( $hold_mode eq '*' ) {
         $status = $ils->alter_hold( $patron_id, $patron_pwd, $item_id, $title_id, $expiry_date, $pickup_locn, $hold_type, $fee_ack );
-=======
-    ($hold_mode, $trans_date) = @{$self->{fixed_fields}};
-
-    $ils->check_inst_id($fields->{(FID_INST_ID)}, "handle_hold");
-
-    $patron_id   = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $expiry_date = $fields->{(FID_EXPIRATION) } || '';
-    $pickup_locn = $fields->{(FID_PICKUP_LOCN)} || '';
-    $hold_type   = $fields->{(FID_HOLD_TYPE)  } || '2'; # Any copy of title
-    $patron_pwd  = $fields->{(FID_PATRON_PWD) };
-    $item_id     = $fields->{(FID_ITEM_ID)    } || '';
-    $title_id    = $fields->{(FID_TITLE_ID)   } || '';
-    $fee_ack     = $fields->{(FID_FEE_ACK)    } || 'N';
-
-    if ($hold_mode eq '+') {
-	$status = $ils->add_hold($patron_id, $patron_pwd, $item_id, $title_id,
-						$expiry_date, $pickup_locn, $hold_type, $fee_ack);
-    } elsif ($hold_mode eq '-') {
-	$status = $ils->cancel_hold($patron_id, $patron_pwd, $item_id, $title_id);
-    } elsif ($hold_mode eq '*') {
-	$status = $ils->alter_hold($patron_id, $patron_pwd, $item_id, $title_id,
-						$expiry_date, $pickup_locn, $hold_type, $fee_ack);
->>>>>>> 9177537... BARCODE PREFIXES
     } else {
         syslog( "LOG_WARNING", "handle_hold: Unrecognized hold mode '%s' from terminal '%s'", $hold_mode, $server->{account}->{id} );
         $status = $ils->Transaction::Hold;    # new?
@@ -1409,21 +1352,12 @@ sub handle_renew {
         syslog( "LOG_WARNING", "handle_renew: received 'no block' renewal from terminal '%s'", $server->{account}->{id} );
     }
 
-<<<<<<< HEAD
-    $patron_id  = $fields->{ (FID_PATRON_ID) };
+    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd = $fields->{ (FID_PATRON_PWD) };
     $item_id    = $fields->{ (FID_ITEM_ID) };
     $title_id   = $fields->{ (FID_TITLE_ID) };
     $item_props = $fields->{ (FID_ITEM_PROPS) };
     $fee_ack    = $fields->{ (FID_FEE_ACK) };
-=======
-    $patron_id  = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $patron_pwd = $fields->{(FID_PATRON_PWD)};
-    $item_id    = $fields->{(FID_ITEM_ID)};
-    $title_id   = $fields->{(FID_TITLE_ID)};
-    $item_props = $fields->{(FID_ITEM_PROPS)};
-    $fee_ack    = $fields->{(FID_FEE_ACK)};
->>>>>>> 9177537... BARCODE PREFIXES
 
     $status = $ils->renew( $patron_id, $patron_pwd, $item_id, $title_id, $no_block, $nb_due_date, $third_party, $item_props, $fee_ack );
 
@@ -1501,17 +1435,10 @@ sub handle_renew_all {
 
     ($trans_date) = @{ $self->{fixed_fields} };
 
-<<<<<<< HEAD
-    $patron_id    = $fields->{ (FID_PATRON_ID) };
+    $patron_id    = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
     $patron_pwd   = $fields->{ (FID_PATRON_PWD) };
     $terminal_pwd = $fields->{ (FID_TERMINAL_PWD) };
     $fee_ack      = $fields->{ (FID_FEE_ACK) };
-=======
-    $patron_id    = C4::Members::_prefix_cardnum( $fields->{(FID_PATRON_ID)} );
-    $patron_pwd   = $fields->{(FID_PATRON_PWD)};
-    $terminal_pwd = $fields->{(FID_TERMINAL_PWD)};
-    $fee_ack      = $fields->{(FID_FEE_ACK)};
->>>>>>> 9177537... BARCODE PREFIXES
 
     $status = $ils->renew_all( $patron_id, $patron_pwd, $fee_ack );
 
