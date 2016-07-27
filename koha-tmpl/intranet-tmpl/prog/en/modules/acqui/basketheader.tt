@@ -122,8 +122,7 @@
                     [% END %]
                     <div class="hint">Standing orders do not close when received.</div>
                 </li>
-                [% UNLESS basketno %]
-                 <li>
+                <li>
                     <label for="create_items">Create items when:</label>
                     <select name="create_items" id="create_items">
                         [% SWITCH Koha.Preference('AcqCreateItem') %]
@@ -131,12 +130,26 @@
                             [% CASE 'cataloguing' %]<option value="">use default (cataloging the record).</option>
                             [% CASE %]<option value="">use default (placing an order).</option>
                         [% END %]
-                        <option value="ordering">placing an order.</option>
-                        <option value="receiving">receiving an order.</option>
-                        <option value="cataloguing">cataloging the record.</option>
+
+                        [% IF create_items == 'ordering' %]
+                            <option value="ordering" selected="selected">placing an order.</option>
+                        [% ELSE %]
+                            <option value="ordering">placing an order.</option>
+                        [% END %]
+
+                        [% IF create_items == 'receiving' %]
+                            <option value="receiving" selected="selected">receiving an order.</option>
+                        [% ELSE %]
+                            <option value="receiving">receiving an order.</option>
+                        [% END %]
+
+                        [% IF create_items == 'cataloguing' %]
+                            <option value="cataloguing" selected="selected">cataloging the record.</option>
+                        [% ELSE %]
+                            <option value="cataloguing">cataloging the record.</option>
+                        [% END %]
                     </select>
                 </li>
-                [% END %]
             </ol>
         </fieldset>
         <fieldset class="action">
