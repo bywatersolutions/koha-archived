@@ -62,7 +62,7 @@ my $bookfund         = $input->param("bookfund");
 my $order            = GetOrder($ordernumber);
 my $new_ordernumber  = $ordernumber;
 
-my $basket = Koha::Acquisition::Order->find($ordernumber)->basket;
+my $basket = Koha::Acquisition::Order->fetch( { ordernumber => $ordernumber } )->basket;
 
 #need old recievedate if we update the order, parcel.pl only shows the right parcel this way FIXME
 if ($quantityrec > $origquantityrec ) {
