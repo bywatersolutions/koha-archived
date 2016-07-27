@@ -136,7 +136,7 @@ __PACKAGE__->belongs_to(
   "message_transport_type",
   "Koha::Schema::Result::MessageTransportType",
   { message_transport_type => "message_transport_type" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 message_transports
@@ -159,8 +159,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07025 @ 2014-05-02 18:04:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HFUQ+/BKlweHglzOlm0lUQ
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-07-27 09:50:18
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zRGgM45h0ie9kT2ruS6T0Q
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

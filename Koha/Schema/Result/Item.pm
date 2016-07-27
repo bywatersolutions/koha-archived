@@ -259,8 +259,9 @@ __PACKAGE__->table("items");
 
 =head2 enumchron
 
-  data_type: 'text'
+  data_type: 'varchar'
   is_nullable: 1
+  size: 80
 
 =head2 copynumber
 
@@ -381,7 +382,7 @@ __PACKAGE__->add_columns(
   "more_subfields_xml",
   { data_type => "longtext", is_nullable => 1 },
   "enumchron",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "varchar", is_nullable => 1, size => 80 },
   "copynumber",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "stocknumber",
@@ -502,6 +503,21 @@ Related object: L<Koha::Schema::Result::CreatorBatch>
 __PACKAGE__->has_many(
   "creator_batches",
   "Koha::Schema::Result::CreatorBatch",
+  { "foreign.item_number" => "self.itemnumber" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 creator_batches_tmps
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::CreatorBatchesTmp>
+
+=cut
+
+__PACKAGE__->has_many(
+  "creator_batches_tmps",
+  "Koha::Schema::Result::CreatorBatchesTmp",
   { "foreign.item_number" => "self.itemnumber" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -637,8 +653,8 @@ __PACKAGE__->might_have(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-05-16 10:36:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fA9/ZhwGEnOpdWhp56wGGw
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-07-27 09:50:18
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YbuuNgUyE6sqjCRhsmZsVA
 
 __PACKAGE__->belongs_to( biblioitem => "Koha::Schema::Result::Biblioitem", "biblioitemnumber" );
 
