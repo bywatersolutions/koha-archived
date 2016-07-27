@@ -89,7 +89,7 @@ __PACKAGE__->table("borrowers");
 
 =head2 state
 
-  data_type: 'text'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =head2 zipcode
@@ -170,7 +170,7 @@ __PACKAGE__->table("borrowers");
 =head2 B_state
 
   accessor: 'b_state'
-  data_type: 'text'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =head2 B_zipcode
@@ -363,7 +363,7 @@ __PACKAGE__->table("borrowers");
 
 =head2 altcontactstate
 
-  data_type: 'text'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =head2 altcontactzipcode
@@ -423,7 +423,7 @@ __PACKAGE__->add_columns(
   "city",
   { data_type => "mediumtext", is_nullable => 0 },
   "state",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "mediumtext", is_nullable => 1 },
   "zipcode",
   { data_type => "varchar", is_nullable => 1, size => 25 },
   "country",
@@ -466,7 +466,7 @@ __PACKAGE__->add_columns(
   "B_city",
   { accessor => "b_city", data_type => "mediumtext", is_nullable => 1 },
   "B_state",
-  { accessor => "b_state", data_type => "text", is_nullable => 1 },
+  { accessor => "b_state", data_type => "mediumtext", is_nullable => 1 },
   "B_zipcode",
   {
     accessor => "b_zipcode",
@@ -549,7 +549,7 @@ __PACKAGE__->add_columns(
   "altcontactaddress3",
   { data_type => "varchar", is_nullable => 1, size => 255 },
   "altcontactstate",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "mediumtext", is_nullable => 1 },
   "altcontactzipcode",
   { data_type => "varchar", is_nullable => 1, size => 50 },
   "altcontactcountry",
@@ -808,6 +808,21 @@ Related object: L<Koha::Schema::Result::CreatorBatch>
 __PACKAGE__->has_many(
   "creator_batches",
   "Koha::Schema::Result::CreatorBatch",
+  { "foreign.borrower_number" => "self.borrowernumber" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 creator_batches_tmps
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::CreatorBatchesTmp>
+
+=cut
+
+__PACKAGE__->has_many(
+  "creator_batches_tmps",
+  "Koha::Schema::Result::CreatorBatchesTmp",
   { "foreign.borrower_number" => "self.borrowernumber" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -1153,8 +1168,8 @@ Composing rels: L</aqorder_users> -> ordernumber
 __PACKAGE__->many_to_many("ordernumbers", "aqorder_users", "ordernumber");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2015-10-21 19:50:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QafovaRBnm36nyoyQTGIgQ
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-07-27 09:50:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HGV8OClUzKEOUf8sHexmqg
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

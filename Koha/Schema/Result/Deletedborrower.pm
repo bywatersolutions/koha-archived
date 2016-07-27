@@ -89,7 +89,7 @@ __PACKAGE__->table("deletedborrowers");
 
 =head2 state
 
-  data_type: 'text'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =head2 zipcode
@@ -170,7 +170,7 @@ __PACKAGE__->table("deletedborrowers");
 =head2 B_state
 
   accessor: 'b_state'
-  data_type: 'text'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =head2 B_zipcode
@@ -214,8 +214,7 @@ __PACKAGE__->table("deletedborrowers");
 =head2 categorycode
 
   data_type: 'varchar'
-  default_value: (empty string)
-  is_nullable: 0
+  is_nullable: 1
   size: 10
 
 =head2 dateenrolled
@@ -361,7 +360,7 @@ __PACKAGE__->table("deletedborrowers");
 
 =head2 altcontactstate
 
-  data_type: 'text'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =head2 altcontactzipcode
@@ -421,7 +420,7 @@ __PACKAGE__->add_columns(
   "city",
   { data_type => "mediumtext", is_nullable => 0 },
   "state",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "mediumtext", is_nullable => 1 },
   "zipcode",
   { data_type => "varchar", is_nullable => 1, size => 25 },
   "country",
@@ -464,7 +463,7 @@ __PACKAGE__->add_columns(
   "B_city",
   { accessor => "b_city", data_type => "mediumtext", is_nullable => 1 },
   "B_state",
-  { accessor => "b_state", data_type => "text", is_nullable => 1 },
+  { accessor => "b_state", data_type => "mediumtext", is_nullable => 1 },
   "B_zipcode",
   {
     accessor => "b_zipcode",
@@ -483,7 +482,7 @@ __PACKAGE__->add_columns(
   "branchcode",
   { data_type => "varchar", default_value => "", is_nullable => 0, size => 10 },
   "categorycode",
-  { data_type => "varchar", default_value => "", is_nullable => 0, size => 10 },
+  { data_type => "varchar", is_nullable => 1, size => 10 },
   "dateenrolled",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
   "dateexpiry",
@@ -535,7 +534,7 @@ __PACKAGE__->add_columns(
   "altcontactaddress3",
   { data_type => "varchar", is_nullable => 1, size => 255 },
   "altcontactstate",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "mediumtext", is_nullable => 1 },
   "altcontactzipcode",
   { data_type => "varchar", is_nullable => 1, size => 50 },
   "altcontactcountry",
@@ -549,8 +548,8 @@ __PACKAGE__->add_columns(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-02-26 14:46:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EDI8cewAT21LU7zuKc6LqA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-07-27 09:50:18
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nZGj4v3t7hy20G+ZhLCxPw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
