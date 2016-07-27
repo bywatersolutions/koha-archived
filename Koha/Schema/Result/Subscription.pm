@@ -113,15 +113,15 @@ __PACKAGE__->table("subscription");
   data_type: 'integer'
   is_nullable: 1
 
+=head2 lastvalue2
+
+  data_type: 'integer'
+  is_nullable: 1
+
 =head2 innerloop1
 
   data_type: 'integer'
   default_value: 0
-  is_nullable: 1
-
-=head2 lastvalue2
-
-  data_type: 'integer'
   is_nullable: 1
 
 =head2 innerloop2
@@ -130,15 +130,15 @@ __PACKAGE__->table("subscription");
   default_value: 0
   is_nullable: 1
 
-=head2 lastvalue3
-
-  data_type: 'integer'
-  is_nullable: 1
-
 =head2 innerloop3
 
   data_type: 'integer'
   default_value: 0
+  is_nullable: 1
+
+=head2 lastvalue3
+
+  data_type: 'integer'
   is_nullable: 1
 
 =head2 firstacquidate
@@ -292,16 +292,16 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", default_value => "", is_nullable => 0, size => 100 },
   "lastvalue1",
   { data_type => "integer", is_nullable => 1 },
-  "innerloop1",
-  { data_type => "integer", default_value => 0, is_nullable => 1 },
   "lastvalue2",
   { data_type => "integer", is_nullable => 1 },
+  "innerloop1",
+  { data_type => "integer", default_value => 0, is_nullable => 1 },
   "innerloop2",
+  { data_type => "integer", default_value => 0, is_nullable => 1 },
+  "innerloop3",
   { data_type => "integer", default_value => 0, is_nullable => 1 },
   "lastvalue3",
   { data_type => "integer", is_nullable => 1 },
-  "innerloop3",
-  { data_type => "integer", default_value => 0, is_nullable => 1 },
   "firstacquidate",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
   "manualhistory",
@@ -429,8 +429,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-11 09:26:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:57kc1/B3eNKQXAk9tlOy0A
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-07-27 09:50:18
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XNZLze2bwqfxvFx9/hDidA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

@@ -112,6 +112,12 @@ __PACKAGE__->table("aqbasket");
   default_value: 0
   is_nullable: 0
 
+=head2 create_items
+
+  data_type: 'enum'
+  extra: {list => ["ordering","receiving","cataloguing"]}
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -150,6 +156,12 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 1, size => 10 },
   "is_standing",
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "create_items",
+  {
+    data_type => "enum",
+    extra => { list => ["ordering", "receiving", "cataloguing"] },
+    is_nullable => 1,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -297,9 +309,9 @@ Composing rels: L</aqbasketusers> -> borrowernumber
 __PACKAGE__->many_to_many("borrowernumbers", "aqbasketusers", "borrowernumber");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-01-14 16:28:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CuP/8SFJOD4h4XZf7AdeiA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2016-07-27 09:48:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IVleYF9dX028Zr7ArZ0aTg
 
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
