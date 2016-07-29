@@ -91,8 +91,10 @@
                         <th>Type</th>
                         <th>Amount</th>
                         <th>Paid</th>
+<!--
                         <th>Outstanding</th>
                         <th>Date</th>
+-->
                     </tr>
                 [% END %]
             [% ELSIF debit %]
@@ -128,8 +130,10 @@
                         <td>[% ao.debit.type %]</td>
                         <td>[% ao.debit.amount_original | $Currency highlight => 'debit' %]</td>
                         <td>[% ao.amount | $Currency highlight => 'offset' %]</td>
+<!--
                         <td>[% ao.debit.amount_outstanding | $Currency highlight => 'debit' %]</td>
                         <td>[% ao.debit.created_on | $KohaDates %]</td>
+-->
                     </tr>
                 [% END %]
             [% ELSIF debit.account_offsets %]
