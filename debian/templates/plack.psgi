@@ -64,10 +64,39 @@ my $opac = Plack::App::CGIBin->new(
 #     root => '/usr/share/koha/api/'
 # );
 
-builder {
+my $allowed_setenvs = qr/^(
+    MEMCACHED_SERVERS |
+    MEMCACHED_NAMESPACE |
+    OVERRIDE_SYSPREF_(\w+) |
+    OVERRIDE_SYSPREF_NAMES |
+    OPAC_CSS_OVERRIDE |
+    OPAC_SEARCH_LIMIT |
+    OPAC_LIMIT_OVERRIDE |
+    TMPDIR
+)\ /x;
 
+builder {
     enable "ReverseProxy";
     enable "Plack::Middleware::Static";
+    # Pass through config options as SetEnv
+    enable sub {
+        my ($app) = @_;
+
+        return sub {
+            my ($env) = @_;
+            my $req = Plack::Request->new($env);
+
+            # Transforms X-Koha-SetEnv: OPAC_SEARCH_LIMIT potato to OPAC_SEARCH_LIMIT=potato
+            $env = {
+                %$env,
+                map { /(\w+) (.*)/ }
+                grep /$allowed_setenvs/,
+                split( /, /, $req->header('X-Koha-SetEnv') || '' )
+            };
+
+            return $app->($env);
+        };
+    };
 
     mount '/opac'     => $opac;
     mount '/intranet' => $intranet;
