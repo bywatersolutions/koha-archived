@@ -588,7 +588,7 @@ sub UpdateFine {
                 {
                     date          => dt_from_string(),
                     amount        => $amount,
-                    outstanding   => $out,
+                    amountoutstanding   => $out,
                     lastincrement => $diff,
                     accounttype   => 'FU',
                 }
