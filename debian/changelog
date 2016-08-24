@@ -1,3 +1,9 @@
+koha (3.22.08~edi+20160824033104.039fec01) stable; urgency=medium
+
+  * Building git snapshot.
+
+ -- root <root@changeme.bywatersolutions.com>  Wed, 24 Aug 2016 03:31:04 -0700
+
 koha (3.22.00~beta1) squeeze-dev; urgency=medium
 
   * New beta release (3.22.00-beta)
