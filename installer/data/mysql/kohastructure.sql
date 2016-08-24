@@ -3090,7 +3090,6 @@ CREATE TABLE aqinvoices (
 
 
 --
->>>>>>> 5b786c6... EDI
 -- Table structure for table `fieldmapping`
 --
 
@@ -3550,7 +3549,6 @@ CREATE TABLE audio_alerts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
-<<<<<<< HEAD
 -- Table structure for table `courses`
 --
 
