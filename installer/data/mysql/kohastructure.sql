@@ -3046,16 +3046,16 @@ CREATE TABLE IF NOT EXISTS vendor_edi_accounts (
 
 DROP TABLE IF EXISTS edifact_messages;
 CREATE TABLE IF NOT EXISTS edifact_messages (
-  id int(11) NOT NULL auto_increment,
-  message_type varchar(10) NOT NULL,
-  transfer_date date,
-  vendor_id int(11) references aqbooksellers( id ),
-  edi_acct  integer references vendor_edi_accounts( id ),
-  status text,
-  basketno int(11) references aqbasket( basketno),
-  raw_msg mediumtext,
-  filename text,
-  deleted boolean not null default 0,
+  id INT(11) NOT NULL auto_increment,
+  message_type VARCHAR(10) NOT NULL,
+  transfer_date DATE,
+  vendor_id INT(11) REFERENCES aqbooksellers( id ),
+  edi_acct  INTEGER REFERENCES vendor_edi_accounts( id ),
+  status TEXT,
+  basketno INT(11) REFERENCES aqbasket( basketno),
+  raw_msg MEDIUMTEXT,
+  filename TEXT,
+  deleted BOOLEAN NOT NULL DEFAULT 0,
   PRIMARY KEY  (id),
   KEY vendorid ( vendor_id),
   KEY ediacct (edi_acct),
@@ -3678,9 +3678,11 @@ CREATE TABLE `hold_fill_targets` (
 
 DROP TABLE IF EXISTS edifact_ean;
 CREATE TABLE IF NOT EXISTS edifact_ean (
-  branchcode varchar(10) not null references branches (branchcode),
-  ean varchar(15) NOT NULL,
-  id_code_qualifier varchar(3) NOT NULL default '14',
+  ee_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  description VARCHAR(128) NULL DEFAULT NULL,
+  branchcode VARCHAR(10) NOT NULL REFERENCES branches (branchcode),
+  ean VARCHAR(15) NOT NULL,
+  id_code_qualifier VARCHAR(3) NOT NULL DEFAULT '14',
   CONSTRAINT efk_branchcode FOREIGN KEY ( branchcode ) REFERENCES branches ( branchcode )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
