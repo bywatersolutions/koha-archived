@@ -73,6 +73,7 @@ DELIMITER ;
 -- hold the EAN/SAN used in ordering
 CREATE TABLE IF NOT EXISTS `edifact_ean` (
   `id` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  description VARCHAR(128) NULL DEFAULT NULL,
   `branchcode` varchar(10) NOT NULL,
   `ean` varchar(15) NOT NULL,
   `id_code_qualifier` varchar(3) NOT NULL DEFAULT '14',
@@ -95,6 +96,20 @@ BEGIN
     SET _count = ( SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'vendor_edi_accounts' AND column_name = 'plugin' ) ;
     IF _count = 0 THEN
         ALTER TABLE vendor_edi_accounts ADD COLUMN plugin varchar(256) NOT NULL DEFAULT "";
+    END IF;
+END $$
+CALL Alter_Table $$
+DELIMITER ;
+
+-- Update edifact_ean, add description column
+DELIMITER $$
+DROP PROCEDURE IF EXISTS Alter_Table $$
+CREATE PROCEDURE Alter_Table()
+BEGIN
+    DECLARE _count INT;
+    SET _count = ( SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'edifact_ean' AND column_name = 'description' ) ;
+    IF _count = 0 THEN
+        ALTER TABLE edifact_ean ADD COLUMN description VARCHAR(128) NULL DEFAULT NULL;
     END IF;
 END $$
 CALL Alter_Table $$
