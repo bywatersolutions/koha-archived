@@ -284,11 +284,10 @@ sub set_in_cache {
     return unless ( $self->{$cache} && ref( $self->{$cache} ) =~ m/^Cache::/ );
     my $expiry = $options->{expiry};
     $expiry //= $self->{timeout};
-    my $unsafe = $options->{unsafe} || 0;
     my $set_sub = $self->{ref($self->{$cache}) . "_set"};
 
     # Deep copy if it's not a scalar and unsafe is not passed
-    $value = clone( $value ) if ref($value) and not $unsafe;
+    $value = dclone( $value ) if ref($value) and not $unsafe;
 
     # Set in L1 cache
     $L1_cache{ $key } = $value;
