@@ -2423,7 +2423,7 @@ rule value for a given patron id and record id.
 sub GetMaxPatronHoldsForRecord {
     my ( $borrowernumber, $biblionumber ) = @_;
 
-    my $patron = Koha::Patrons->find($borrowernumber);
+    my $patron = Koha::Borrowers->find($borrowernumber);
     my @items = Koha::Items->search( { biblionumber => $biblionumber } );
 
     my $controlbranch = C4::Context->preference('ReservesControlBranch');
