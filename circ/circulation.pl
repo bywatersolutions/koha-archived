@@ -228,7 +228,7 @@ if ( $print eq 'yes' && $borrowernumber ne '' ) {
 #
 my $message;
 if ($findborrower) {
-    my $borrower = C4::Members::GetMember( cardnumber => $findborrower );
+    my $borrower = C4::Members::GetMember( cardnumber => C4::Members::_prefix_cardnum( $findborrower ) );
     if ( $borrower ) {
         $borrowernumber = $borrower->{borrowernumber};
     } else {
