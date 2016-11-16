@@ -242,6 +242,8 @@ if ($op eq ""){
         my @budget_codes = $input->multi_param('budget_code_' . $biblio_count);
         my @itemprices = $input->multi_param('itemprice_' . $biblio_count);
         my $itemcreation = 0;
+
+        my @itemnumbers;
         for (my $i = 0; $i < $count; $i++) {
             $itemcreation = 1;
             my ($item_bibnum, $item_bibitemnum, $itemnumber) = AddItem({
@@ -257,6 +259,8 @@ if ($op eq ""){
                 copynumber => $copynos[$i],
                 price => $itemprices[$i],
             }, $biblionumber);
+
+            push( @itemnumbers, $itemnumber );
         }
         if ($itemcreation == 1) {
             # Group orderlines from MarcItemFieldsToOrder
@@ -312,6 +316,9 @@ if ($op eq ""){
                     # remove uncertainprice flag if we have found a price in the MARC record
                     $orderinfo{uncertainprice} = 0 if $orderinfo{listprice};
                     my $order = Koha::Acquisition::Order->new( \%orderinfo )->insert;
+                    foreach my $itemnumber ( @itemnumbers ) {
+                        $order->add_item( $itemnumber );
+                    }
                 }
             }
         } else {
