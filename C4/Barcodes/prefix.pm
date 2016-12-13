@@ -24,7 +24,6 @@ use Carp;
 use C4::Context;
 use C4::Branch;
 use C4::Debug;
-use C4::Dates;
 
 use vars qw($VERSION @ISA);
 use vars qw($debug $cgi_debug);        # from C4::Debug, of course
