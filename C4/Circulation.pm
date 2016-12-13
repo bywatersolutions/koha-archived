@@ -1351,6 +1351,7 @@ sub AddIssue {
                 $borrower->{'borrowernumber'},
                 $item->{'itemnumber'},
                 $branch,
+                $actualissue->{branchcode},
                 $datedue,
                 $issuedate,    # here interpreted as the renewal date
             );
