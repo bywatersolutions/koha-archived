@@ -33,6 +33,8 @@ use C4::Csv;
 use utf8;
 my $query = new CGI;
 
+my $eds_data ="";if((eval{C4::Context->preference('EDSEnabled')})){my $PluginDir = C4::Context->config("pluginsdir");$PluginDir = $PluginDir.'/Koha/Plugin/EDS';require $PluginDir.'/opac/eds-methods.pl';$eds_data = $query->param('eds_data');} #EDS Patch
+
 my ( $template, $borrowernumber, $cookie ) = get_template_and_user (
     {
         template_name   => "opac-downloadcart.tt",
@@ -65,6 +67,7 @@ if ($bib_list && $format) {
         foreach my $biblio (@bibs) {
 
             my $record = GetMarcBiblio($biblio, 1);
+            if((eval{C4::Context->preference('EDSEnabled')})){my $dat = "";if($biblio =~m/\|/){($record,$dat)= ProcessEDSCartItems($biblio,$eds_data,$record,$dat);}} #EDS Patch
             next unless $record;
 
             if ($format eq 'iso2709') {

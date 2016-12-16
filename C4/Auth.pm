@@ -434,6 +434,7 @@ sub get_template_and_user {
         marcflavour        => C4::Context->preference("marcflavour"),
         persona            => C4::Context->preference("persona"),
         OPACBaseURL        => C4::Context->preference('OPACBaseURL'),
+        EDSEnabled         => C4::Context->preference("EDSEnabled"), #EDS-patch
     );
     if ( $in->{'type'} eq "intranet" ) {
         $template->param(

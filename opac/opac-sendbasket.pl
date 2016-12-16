@@ -37,6 +37,8 @@ use Koha::Email;
 
 my $query = new CGI;
 
+my $eds_data ="";if((eval{C4::Context->preference('EDSEnabled')})){my $PluginDir = C4::Context->config("pluginsdir");$PluginDir = $PluginDir.'/Koha/Plugin/EDS';require $PluginDir.'/opac/eds-methods.pl';$eds_data = $query->param('eds_data');} #EDS Patch
+
 my ( $template, $borrowernumber, $cookie ) = get_template_and_user (
     {
         template_name   => "opac-sendbasketform.tt",
@@ -84,8 +86,10 @@ if ( $email_add ) {
         $template2->param( biblionumber => $biblionumber );
 
         my $dat              = GetBiblioData($biblionumber);
-        next unless $dat;
+#next unless $dat;
         my $record           = GetMarcBiblio($biblionumber, 1);
+        if((eval{C4::Context->preference('EDSEnabled')})){if($biblionumber =~m/\|/){($record,$dat)= ProcessEDSCartItems($biblionumber,$eds_data,$record,$dat);}} #EDS Patch
+        next unless $dat;#EDS Patch
         my $marcnotesarray   = GetMarcNotes( $record, $marcflavour );
         my $marcauthorsarray = GetMarcAuthors( $record, $marcflavour );
         my $marcsubjctsarray = GetMarcSubjects( $record, $marcflavour );
@@ -122,6 +126,7 @@ if ( $email_add ) {
     # Getting template result
     my $template_res = $template2->output();
     my $body;
+    if((eval{C4::Context->preference('EDSEnabled')})){$template_res = CartSendLinks($template_res,@bibs);} #EDS Patch
 
     # Analysing information and getting mail properties
 
