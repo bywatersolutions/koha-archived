@@ -21,6 +21,8 @@ use Modern::Perl;
 
 use Carp;
 
+use C4::Biblio qw( GetRecordValue GetMarcBiblio GetFrameworkCode );
+
 use Koha::Database;
 
 use base qw(Koha::Object);
