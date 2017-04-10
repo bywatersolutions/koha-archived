@@ -14,7 +14,7 @@ $( document ).ready(function() {
         $(this).html( STRINGS['DebitTypes'][ $(this).html() ] );
     });
 
-    // Show amount recieved only if the "Receive different amount" checkbox is checked
+    // Show amount received only if the "Receive different amount" checkbox is checked
     $("#amount-received-p").hide();
     $("#receive_different_amount").bind('click focus blur', function() {
         if( $(this).is(':checked')) {
@@ -32,7 +32,7 @@ $( document ).ready(function() {
         $(this).val($(this).val().replace(/[^\d.]/g, ''));
 
         if ( $("#receive_different_amount").attr('checked') ) {
-            // Make sure the amount recieved is greater than the amount to pay if it is being used
+            // Make sure the amount received is greater than the amount to pay if it is being used
             amount_received = parseFloat( $("#amount_received").val() ) || 0;
             amount_to_pay = parseFloat( $("#amount_to_pay").val() ) || 0;
             if ( amount_received < amount_to_pay ) {
@@ -80,7 +80,7 @@ $( document ).ready(function() {
 });
 
 function checkForm(){
-    // If using the "amount to receive" field, make sure the librarian is recieving at
+    // If using the "amount to receive" field, make sure the librarian is receiving at
     // least enough to pay those fees.
     if ( $('#amount_received').val() ) {
         if ( parseFloat( $('#amount_received').val() ) < parseFloat( $('#amount_to_pay').val() ) ) {
@@ -202,7 +202,7 @@ function checkForm(){
                                     </p>
 
                                     <p id="amount-received-p">
-                                        <label for="amount_received">Amount recieved: [% Currency.symbol() %]</label>
+                                        <label for="amount_received">Amount received: [% Currency.symbol() %]</label>
                                         <input type="text" name="amount_received" id="amount_received" />
                                     </p>
 
