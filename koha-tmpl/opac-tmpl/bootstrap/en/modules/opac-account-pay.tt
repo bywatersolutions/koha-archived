@@ -49,7 +49,7 @@
                                     [% total = total + a.amountoutstanding %]
                                     <tr>
                                         <td>
-                                            [% a.description %]
+                                            [% a.description | html %]
                                         </td>
 
                                         <td>
@@ -92,7 +92,8 @@
                             <input type="hidden" name="BillingEmail" value="[% borrower.email %]" />
 
                             [% SET i = 0 %]
-                            <input type="hidden" name="LineItems" value="[% FOREACH a IN accountlines %][% i = i + 1 %][[% i %]*[% a.accountlines_id %]*[% a.description || 'No description' %]*[% a.amountoutstanding %]][% IF !loop.last %],[% END %][% END %]" />
+                            [% UNLESS a.description %][% SET a.description = 'No description' %][% END %]
+                            <input type="hidden" name="LineItems" value="[% FOREACH a IN accountlines %][% i = i + 1 %][[% i %]*[% a.accountlines_id %]*[% a.description | html' %]*[% a.amountoutstanding %]][% IF !loop.last %],[% END %][% END %]" />
 
                             <input type="submit" class="btn" value="Yes, proceed with payment" />
                         </form>
