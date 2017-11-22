@@ -25,6 +25,7 @@ my $MakeFile = read_file('Makefile.PL');
 my @MakeFile = split "\n", $MakeFile;
 
 my @ignored = qw(
+    .travis.yml
     .editorconfig
     .mailmap
     LICENSE

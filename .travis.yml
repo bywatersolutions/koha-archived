@@ -1,0 +1,22 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - cd ..
+  - ls -alh
+  - pwd
+  - export SYNC_REPO=/home/travis/build/bywatersolutions/bywater-koha
+  - export LOCAL_USER_ID="$(id -u)"
+  - git clone https://github.com/bywatersolutions/koha-testing-docker.git
+  - cd koha-testing-docker
+  - git checkout origin/master
+  - docker-compose build
+  - sudo sysctl -w vm.max_map_count=262144
+
+script:
+  - docker-compose down
+  - docker-compose run koha
+  - cat /home/travis/build/bywatersolutions/bywater-koha/testing.success
