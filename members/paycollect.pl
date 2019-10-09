@@ -68,9 +68,9 @@ my $total_due = $patron->account->outstanding_debits->total_outstanding;
 
 my $total_paid = $input->param('paid');
 
-my $select_lines = $input->param('selected');
+my $selected_lines = $input->param('selected'); # comes from pay.pl
 my $pay_individual   = $input->param('pay_individual');
-my $select       = $input->param('selected_accts');
+my $selected_accts   = $input->param('selected_accts'); # comes from paycollect.pl
 my $payment_note = uri_unescape scalar $input->param('payment_note');
 my $payment_type = scalar $input->param('payment_type');
 my $accountlines_id;
@@ -99,14 +99,35 @@ if ( $pay_individual || $writeoff_individual ) {
         individual_description => $description,
         payment_note    => $payment_note,
     );
-} elsif ($select_lines) {
+} elsif ($selected_lines) {
     $total_due = $input->param('amt');
     $template->param(
-        selected_accts => $select_lines,
+        selected_accts => $selected_lines,
         amt            => $total_due,
         selected_accts_notes => scalar $input->param('notes'),
     );
 }
+
+my @selected_accountlines;
+if ( $selected_accts ) {
+    if ( $selected_accts =~ /^([\d,]*).*/ ) {
+        $selected_accts = $1;    # ensure passing no junk
+    }
+    my @acc = split /,/, $selected_accts;
+
+    @selected_accountlines = Koha::Account::Lines->search(
+        {
+            borrowernumber    => $borrowernumber,
+            amountoutstanding => { '<>' => 0 },
+            accountlines_id   => { 'in' => \@acc },
+        },
+        { order_by => 'date' }
+    );
+
+    $total_due = 0; # Reset and recalculate total due
+    map { $total_due += $_->amountoutstanding } @selected_accountlines;
+}
+
 
 if ( $total_paid and $total_paid ne '0.00' ) {
     if ( $total_paid < 0 or $total_paid > $total_due ) {
@@ -135,35 +156,28 @@ if ( $total_paid and $total_paid ne '0.00' ) {
             print $input->redirect(
                 "/cgi-bin/koha/members/pay.pl?borrowernumber=$borrowernumber&payment_id=$payment_id&change_given=$change_given");
         } else {
-            if ($select) {
-                if ( $select =~ /^([\d,]*).*/ ) {
-                    $select = $1;    # ensure passing no junk
+            if ($selected_accts) {
+                if ( $total_paid > $total_due ) {
+                    $template->param(
+                        error_over => 1,
+                        total_due => $total_due
+                    );
+                } else {
+                    my $note = $input->param('selected_accts_notes');
+                    $payment_id = Koha::Account->new(
+                        {
+                            patron_id => $borrowernumber,
+                        }
+                      )->pay(
+                        {
+                            type         => $type,
+                            amount       => $total_paid,
+                            lines        => \@selected_accountlines,
+                            note         => $note,
+                            payment_type => $payment_type,
+                        }
+                      );
                 }
-                my @acc = split /,/, $select;
-                my $note = $input->param('selected_accts_notes');
-
-                my @lines = Koha::Account::Lines->search(
-                    {
-                        borrowernumber    => $borrowernumber,
-                        amountoutstanding => { '<>' => 0 },
-                        accountlines_id   => { 'IN' => \@acc },
-                    },
-                    { order_by => 'date' }
-                );
-
-                $payment_id = Koha::Account->new(
-                    {
-                        patron_id => $borrowernumber,
-                    }
-                  )->pay(
-                    {
-                        type         => $type,
-                        amount       => $total_paid,
-                        lines        => \@lines,
-                        note         => $note,
-                        payment_type => $payment_type,
-                    }
-                  );
             }
             else {
                 my $note = $input->param('selected_accts_notes');
