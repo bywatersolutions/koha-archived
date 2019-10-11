@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+use lib '.';
 
 # Database Updater
 # This script checks for required updates to the database.
